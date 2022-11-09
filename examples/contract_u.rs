@@ -34,10 +34,6 @@ fn main(){
             let depth = contract_u_d.get_snapshot();
 
             let depth_level = contract_u_ld.get_snapshot();
-            if depth_level.is_none() || depth.is_none(){
-                println!("depth_level {}, depth {}", depth_level.is_none(), depth.is_none());
-                continue
-            }
             //
 
             let depth_time = depth.event_time;
