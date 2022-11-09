@@ -4,16 +4,9 @@ use std::borrow::Cow;
 pub mod connection;
 mod format;
 
-use format::DepthRow;
+pub use connection::*;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+use format::DepthRow;
 
 /// 行情类型: 现货、永续合约
 pub enum OrderbookType {
@@ -44,4 +37,43 @@ pub trait OrderbookSnapshot {
     fn get_ts(&self) -> i64;
     /// BTC_USD_SWAP
     fn get_symbol(&self) -> Cow<str>;
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn receiver_works() {
+        use tokio::runtime::Runtime;
+        
+        use crate::connection::BinanceOrderBookType;
+        use crate::connection::BinanceConnectionType;
+
+        Runtime::new().unwrap().block_on(async {
+            let contract_c = BinanceConnectionType::new_with_type(BinanceOrderBookType::PrepetualC);
+            let contract_u = BinanceConnectionType::new_with_type(BinanceOrderBookType::PrepetualU);
+            let spot = BinanceConnectionType::new_with_type(BinanceOrderBookType::Spot);
+
+            let mut spot_rx_d= spot.depth().unwrap();
+            let mut spot_rx_ld= spot.level_depth().unwrap();
+
+            let mut con_u_rx_d = contract_u.depth().unwrap();
+            let mut con_u_rx_ld = contract_u.level_depth().unwrap();
+
+            let mut con_c_rx_d = contract_c.depth().unwrap();
+            let mut con_c_rx_ld = contract_c.level_depth().unwrap();
+
+            assert!(spot_rx_d.recv().await.is_some(),"spot.depth!");
+            assert!(spot_rx_ld.recv().await.is_some(), "spot.level_depth!");
+
+            assert!(con_u_rx_d.recv().await.is_some(), "contract_u.depth!");
+            assert!(con_u_rx_ld.recv().await.is_some(), "contract_u.level_depth!");
+
+            assert!(con_c_rx_d.recv().await.is_some(), "contract_c.depth");
+            assert!(con_c_rx_ld.recv().await.is_some(), "contract_c.level_depth!");
+
+        });
+        
+    }
 }

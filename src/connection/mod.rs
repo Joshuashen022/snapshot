@@ -14,6 +14,9 @@ use crate::connection::binance_perpetual_c::BinanceSpotOrderBookPerpetualC;
 use serde::Deserialize;
 use std::borrow::Cow;
 use tracing::{error, info, trace};
+use anyhow::Result;
+use tokio::sync::mpsc::UnboundedReceiver;
+
 pub enum BinanceOrderBookType{
     Spot,
     PrepetualU,
@@ -25,6 +28,33 @@ pub enum BinanceConnectionType{
     Spot(BinanceSpotOrderBookSpot),
     PrepetualU(BinanceSpotOrderBookPerpetualU),
     PrepetualC(BinanceSpotOrderBookPerpetualC),
+}
+
+impl BinanceConnectionType{
+    pub fn new_with_type(types: BinanceOrderBookType) -> Self {
+        match types {
+            BinanceOrderBookType::Spot => BinanceConnectionType::Spot(BinanceSpotOrderBookSpot::new()),
+            BinanceOrderBookType::PrepetualU => BinanceConnectionType::PrepetualU(BinanceSpotOrderBookPerpetualU::new()),
+            BinanceOrderBookType::PrepetualC => BinanceConnectionType::PrepetualC(BinanceSpotOrderBookPerpetualC::new()),
+        }
+    }
+
+    pub fn depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>{
+        match self {
+            BinanceConnectionType::Spot(inner) => inner.depth(),
+            BinanceConnectionType::PrepetualU(inner) => inner.depth(),
+            BinanceConnectionType::PrepetualC(inner) => inner.depth(),
+        }
+    }
+
+    pub fn level_depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>{
+        match self {
+            BinanceConnectionType::Spot(inner) => inner.level_depth(),
+            BinanceConnectionType::PrepetualU(inner) => inner.level_depth(),
+            BinanceConnectionType::PrepetualC(inner) => inner.level_depth(),
+        }
+    }
+
 }
 
 
@@ -81,7 +111,6 @@ impl BinanceSpotOrderBookSnapshot{
         (bid_different, ask_different)
     }
 }
-
 
 impl OrderbookSnapshot for BinanceSpotOrderBookSnapshot {
     
