@@ -215,7 +215,7 @@ impl BinanceSpotOrderBookSpot {
 
                             let snapshot = orderbook.get_snapshot();
                             if let Err(e) = sender.send(snapshot){
-                                error!("Send Snapshot error, {:?}", e);
+                                error!("Send Snapshot error");
                             };
 
                         }
@@ -291,8 +291,9 @@ impl BinanceSpotOrderBookSpot {
                         (*guard).set_level_event(level_event, time.as_millis() as i64);
 
                         let snapshot = (*guard).get_snapshot();
-                        if let Err(e) = sender.send(snapshot){
-                            error!("Send Snapshot error, {:?}", e);
+
+                        if let Err(_) = sender.send(snapshot){
+                            error!("Send Snapshot error");
                         };
                     }
                 };

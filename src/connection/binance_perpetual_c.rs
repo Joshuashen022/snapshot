@@ -205,7 +205,7 @@ impl BinanceSpotOrderBookPerpetualC {
 
                             let snapshot = orderbook.get_snapshot();
                             if let Err(e) = sender.send(snapshot){
-                                error!("Send Snapshot error, {:?}", e);
+                                error!("Send Snapshot error");
                             };
 
                         }
@@ -289,7 +289,7 @@ impl BinanceSpotOrderBookPerpetualC {
 
                         let snapshot = (*guard).get_snapshot();
                         if let Err(e) = sender.send(snapshot){
-                            error!("Send Snapshot error, {:?}", e);
+                            error!("Send Snapshot error");
                         };
 
                     }
