@@ -72,8 +72,9 @@ impl BinanceSpotOrderBookPerpetualC {
                     info!("Calling {} success",DEPTH_URL);
                     let mut buffer_events = VecDeque::new();
                     while let Ok(message) = stream.next().await.unwrap(){ //
-                        let event = deserialize_message(message);
+                        let event = deserialize_message(message.clone());
                         if event.is_none(){
+                            error!("Message decode error {:?}", message);
                             continue
                         }
                         let event = event.unwrap();
