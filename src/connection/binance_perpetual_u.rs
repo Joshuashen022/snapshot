@@ -175,7 +175,6 @@ impl BinanceSpotOrderBookPerpetualU {
 
                     }
 
-
                     if overbook_setup {
                         if let Ok(mut guard) = status.lock(){
                             (*guard) = true;
