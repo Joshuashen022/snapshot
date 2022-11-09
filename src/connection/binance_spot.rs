@@ -182,7 +182,7 @@ impl BinanceSpotOrderBookSpot {
                     if overbook_setup {
                         if let Ok(mut guard) = status.lock(){
                     
-                            (*guard) = false;
+                            (*guard) = true;
                         }
                     } else {
 

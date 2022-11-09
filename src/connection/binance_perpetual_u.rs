@@ -109,6 +109,7 @@ impl BinanceSpotOrderBookPerpetualU {
 
                         if event.match_snapshot(snapshot.last_update_id) {
                             info!(" Found match snapshot 1");
+                            println!(" Found match snapshot 1");
                             let mut orderbook = shared.write().unwrap();
                             orderbook.load_snapshot(&snapshot);
                             orderbook.add_event(event);
@@ -155,7 +156,7 @@ impl BinanceSpotOrderBookPerpetualU {
                             // [E.U,..,S.u,..,E.u]
                             if event.match_snapshot(snapshot.last_update_id) {
                                 info!(" Found match snapshot 2");
-
+                                println!(" Found match snapshot 2");
                                 orderbook.load_snapshot(&snapshot);
                                 orderbook.add_event(event);
 
@@ -177,8 +178,7 @@ impl BinanceSpotOrderBookPerpetualU {
 
                     if overbook_setup {
                         if let Ok(mut guard) = status.lock(){
-                    
-                            (*guard) = false;
+                            (*guard) = true;
                         }
                     } else {
 
