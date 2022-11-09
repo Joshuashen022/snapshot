@@ -72,9 +72,9 @@ impl EventPerpetualU {
     /// only for contract_U
     /// Rule: `U<= id <= u`
     pub fn match_snapshot(&self, snapshot_updated_id: i64) -> bool {
-        let first = self.first_update_id <= snapshot_updated_id ;
-        let second = snapshot_updated_id <= self.last_update_id;
-        println!("{}, {}", first, second);
+        // let first = self.first_update_id <= snapshot_updated_id ;
+        // let second = snapshot_updated_id <= self.last_update_id;
+        // println!("{}, {}", first, second);
         self.first_update_id <= snapshot_updated_id && snapshot_updated_id <= self.last_update_id
     }
 }

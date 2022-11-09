@@ -32,9 +32,9 @@ impl EventSpot {
     }
 
     pub fn match_snapshot(&self, updated_id: i64) -> bool {
-        let first = self.first_update_id <= updated_id + 1;
-        let second = updated_id + 1 <= self.last_update_id;
-        println!("{}, {}", first, second);
+        // let first = self.first_update_id <= updated_id + 1;
+        // let second = updated_id + 1 <= self.last_update_id;
+        // println!("{}, {}", first, second);
         self.first_update_id <= updated_id + 1 && updated_id + 1 <= self.last_update_id
     }
 }
