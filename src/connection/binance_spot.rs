@@ -308,9 +308,10 @@ impl BinanceSpotOrderBookSpot {
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock(){
-            println!("Not ready");
             current_status = (*status_guard).clone();
-
+            println!("Ready {} ",current_statuss );
+        } else {
+            println!("Can not get the lock "s);
         }
 
         if current_status{
