@@ -305,14 +305,14 @@ impl BinanceSpotOrderBookSpot {
 
     /// Get the snapshot of the current Order Book
     pub fn snapshot(&self) -> Option<BinanceSpotOrderBookSnapshot>{
-        println!("snapshot ");
+
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock(){
             current_status = (*status_guard).clone();
-            println!("Ready {} ",current_status );
+
         } else {
-            println!("Can not get the lock ");
+
         }
 
         if current_status{
