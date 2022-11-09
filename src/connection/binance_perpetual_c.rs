@@ -21,9 +21,9 @@ use anyhow::anyhow;
 use std::sync::{Arc, RwLock, Mutex};
 use tokio_tungstenite::tungstenite::Message;
 
-const DEPTH_URL: &str = "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
-const LEVEL_DEPTH_URL: &str = "wss://dstream.binance.com/stream?streams=btcusd_221230@depth20@100ms";
-const REST: &str = "https://dapi.binance.com/dapi/v1/depth?symbol=BTCUSD_221230&limit=1000";
+// const DEPTH_URL: &str = "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
+// const LEVEL_DEPTH_URL: &str = "wss://dstream.binance.com/stream?streams=btcusd_221230@depth20@100ms";
+// const REST: &str = "https://dapi.binance.com/dapi/v1/depth?symbol=BTCUSD_221230&limit=1000";
 const MAX_BUFFER_EVENTS: usize = 5;
 
 pub struct BinanceSpotOrderBookPerpetualC {
@@ -41,7 +41,7 @@ impl BinanceSpotOrderBookPerpetualC {
     }
 
     /// acquire a order book with "depth method"
-    pub fn depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -57,19 +57,19 @@ impl BinanceSpotOrderBookPerpetualC {
                         (*guard) = false;
                     }
 
-                    let url = Url::parse(DEPTH_URL).expect("Bad URL");
+                    let url = Url::parse(&depth_address).expect("Bad URL");
 
                     let res = connect_async(url).await;
                     let mut stream = match res{
                         Ok((stream, _)) => stream,
                         Err(e) => {
                             default_exit += 1;
-                            error!("Error calling {}, {:?}",DEPTH_URL, e);
+                            error!("Error calling {}, {:?}",depth_address, e);
                             continue
                         },
                     };
 
-                    info!("Calling {} success",DEPTH_URL);
+                    info!("Calling {} success", depth_address);
                     let mut buffer_events = VecDeque::new();
                     while let Ok(message) = stream.next().await.unwrap(){ //
                         let event = deserialize_message(message.clone());
@@ -87,8 +87,8 @@ impl BinanceSpotOrderBookPerpetualC {
                     };
 
                     // Wait for a while to collect event into buffer
-                    info!("Calling {} success", REST);
-                    let snapshot: BinanceSnapshotPerpetualC = reqwest::get(REST)
+                    info!("Calling {} success", rest_address);
+                    let snapshot: BinanceSnapshotPerpetualC = reqwest::get(&rest_address)
                         .await?
                         .json()
                         .await?;
@@ -233,7 +233,7 @@ impl BinanceSpotOrderBookPerpetualC {
         Ok(receiver)
     }
 
-    pub fn level_depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
         let shared = self.shared.clone();
 
         // This is not actually used
@@ -245,13 +245,13 @@ impl BinanceSpotOrderBookPerpetualC {
         let _ = tokio::spawn(async move {
             info!("Start Level Buffer maintain thread");
             loop{
-                let url = Url::parse(LEVEL_DEPTH_URL).expect("Bad URL");
+                let url = Url::parse(&level_address).expect("Bad URL");
 
                 let res = connect_async(url).await;
                 let mut stream = match res{
                     Ok((stream, _)) => stream,
                     Err(e) => {
-                        error!("Error {:?}, reconnecting {}", e, LEVEL_DEPTH_URL);
+                        error!("Error {:?}, reconnecting {}", e, level_address);
                         continue
                     },
                 };

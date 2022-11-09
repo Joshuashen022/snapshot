@@ -41,19 +41,22 @@ impl BinanceConnectionType{
         }
     }
 
-    pub fn depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>{
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>{
         match self {
-            BinanceConnectionType::Spot(inner) => inner.depth(),
-            BinanceConnectionType::PrepetualU(inner) => inner.depth(),
-            BinanceConnectionType::PrepetualC(inner) => inner.depth(),
+            BinanceConnectionType::Spot(inner) =>
+                inner.depth(rest_address, depth_address),
+            BinanceConnectionType::PrepetualU(inner) =>
+                inner.depth(rest_address, depth_address),
+            BinanceConnectionType::PrepetualC(inner) =>
+                inner.depth(rest_address, depth_address),
         }
     }
 
-    pub fn level_depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>{
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>{
         match self {
-            BinanceConnectionType::Spot(inner) => inner.level_depth(),
-            BinanceConnectionType::PrepetualU(inner) => inner.level_depth(),
-            BinanceConnectionType::PrepetualC(inner) => inner.level_depth(),
+            BinanceConnectionType::Spot(inner) => inner.level_depth(level_address),
+            BinanceConnectionType::PrepetualU(inner) => inner.level_depth(level_address),
+            BinanceConnectionType::PrepetualC(inner) => inner.level_depth(level_address),
         }
     }
 

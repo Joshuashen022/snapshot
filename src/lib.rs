@@ -1,5 +1,6 @@
-
 use std::borrow::Cow;
+use tokio::sync::mpsc::UnboundedReceiver;
+use anyhow::{Result, Error};
 
 pub mod connection;
 mod format;
@@ -8,25 +9,62 @@ mod match_up;
 pub use connection::{
     BinanceOrderBookType, BinanceConnectionType,
 };
-
 use match_up::{match_up, Config};
-
 use format::DepthRow;
+use crate::connection::BinanceSpotOrderBookSnapshot;
+use crate::match_up::SymbolType;
 
+pub fn subscribe_depth_snapshot(exchange: &str, symbol: &str, limit: i32)
+    -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
+{
+    let config = match_up(exchange, symbol, Some(limit))?;
+    let rest_address = config.rest.ok_or(Error::msg("rest address is empty"))?;
+    let depth_address = config.depth.ok_or(Error::msg("depth address is empty"))?;
+    let types = match config.symbol_type{
+        SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+        SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+        SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+    };
 
-pub fn subscribe_depth_snapshot(exchange: &str, symbol: &str, limit: i32){
-    let config = match_up(exchange, symbol, Some(limit));
+    let connection = BinanceConnectionType::new_with_type(types);
 
+    connection.depth(rest_address, depth_address)
 }
 
-pub fn get_depth_snapshot(exchange: &str, symbol: &str, limit: i32){
-    let config = match_up(exchange, symbol, Some(limit));
+pub fn get_depth_snapshot(exchange: &str, symbol: &str, limit: i32)
+    -> Option<BinanceSpotOrderBookSnapshot>
+{
+    let config = match_up(exchange, symbol, Some(limit)).ok()?;
+    let rest_address = config.rest?;
+    let depth_address = config.depth?;
+    let types = match config.symbol_type{
+        SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+        SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+        SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+    };
 
+    let connection = BinanceConnectionType::new_with_type(types);
+
+    let _ = connection.depth(rest_address, depth_address).ok()?;
+
+    Some(connection.get_snapshot())
 }
 
-pub fn subscribe_depth(exchange: &str, symbol: &str){
-    let config = match_up(exchange, symbol, None);
+pub fn subscribe_depth(exchange: &str, symbol: &str)
+    -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
+{
+    let config = match_up(exchange, symbol, None)?;
+    let level_address = config.level_depth.ok_or(Error::msg("level address is empty"))?;
 
+    let types = match config.symbol_type{
+        SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+        SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+        SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+    };
+
+    let connection = BinanceConnectionType::new_with_type(types);
+
+    connection.level_depth(level_address)
 }
 
 

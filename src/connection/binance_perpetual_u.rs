@@ -24,9 +24,9 @@ use futures_util::future::err;
 use tokio_tungstenite::tungstenite::Message;
 // use tokio::spawn;
 
-const DEPTH_URL: &str = "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
-const LEVEL_DEPTH_URL: &str = "wss://fstream.binance.com/stream?streams=btcusdt@depth20@100ms";
-const REST: &str = "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000";
+// const DEPTH_URL: &str = "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
+// const LEVEL_DEPTH_URL: &str = "wss://fstream.binance.com/stream?streams=btcusdt@depth20@100ms";
+// const REST: &str = "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000";
 // const MAX_BUFFER: usize = 30;
 const MAX_BUFFER_EVENTS: usize = 5;
 
@@ -45,7 +45,7 @@ impl BinanceSpotOrderBookPerpetualU {
     }
 
     /// acquire a order book with "depth method"
-    pub fn depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -60,20 +60,20 @@ impl BinanceSpotOrderBookPerpetualU {
                         (*guard) = false;
                     }
 
-                    let url = Url::parse(DEPTH_URL).expect("Bad URL");
+                    let url = Url::parse(&depth_address).expect("Bad URL");
 
                     let res = connect_async(url).await;
                     let mut stream = match res{
                         Ok((stream, _)) => stream,
                         Err(e) => {
                             default_exit += 1;
-                            error!("Error calling {}, {:?}",DEPTH_URL, e);
+                            error!("Error calling {}, {:?}", depth_address, e);
                             continue
                         },
                     };
 
-                    info!("Calling {} success",DEPTH_URL);
-                    println!("Calling {} success",DEPTH_URL);
+                    info!("Calling {} success",depth_address);
+                    println!("Calling {} success",depth_address);
                     let mut buffer_events = VecDeque::new();
                     while let Ok(message) = stream.next().await.unwrap(){ //
                         let event = deserialize_message(message);
@@ -90,8 +90,8 @@ impl BinanceSpotOrderBookPerpetualU {
                     };
 
                     // Wait for a while to collect event into buffer
-                    info!("Calling {} success", REST);
-                    let snapshot: BinanceSnapshotPerpetualU = reqwest::get(REST)
+                    info!("Calling {} success", rest_address);
+                    let snapshot: BinanceSnapshotPerpetualU = reqwest::get(&rest_address)
                         .await?
                         .json()
                         .await?;
@@ -240,7 +240,7 @@ impl BinanceSpotOrderBookPerpetualU {
         Ok(receiver)
     }
 
-    pub fn level_depth(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
         let shared = self.shared.clone();
 
         // This is not actually used
@@ -252,13 +252,13 @@ impl BinanceSpotOrderBookPerpetualU {
         let _ = tokio::spawn(async move {
             info!("Start Level Buffer maintain thread");
             loop{
-                let url = Url::parse(LEVEL_DEPTH_URL).expect("Bad URL");
+                let url = Url::parse(&level_address).expect("Bad URL");
 
                 let res = connect_async(url).await;
                 let mut stream = match res{
                     Ok((stream, _)) => stream,
                     Err(e) => {
-                        error!("Error {:?}, reconnecting {}", e, LEVEL_DEPTH_URL);
+                        error!("Error {:?}, reconnecting {}", e, level_address);
                         continue
                     },
                 };
