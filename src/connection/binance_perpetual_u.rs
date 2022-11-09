@@ -189,8 +189,10 @@ impl BinanceSpotOrderBookPerpetualU {
                     println!(" Overbook initialize success, now keep listening ");
                     // Overbook initialize success
                     while let Ok(message) = stream.next().await.unwrap() {
-                        let event = deserialize_message(message);
+                        let event = deserialize_message(message.clone());
                         if event.is_none(){
+                            error!("Message decode error {:?}", message);
+                            println!("Message decode error {:?}", message);
                             continue
                         }
                         let event = event.unwrap();
