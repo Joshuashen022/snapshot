@@ -3,10 +3,32 @@ use std::borrow::Cow;
 
 pub mod connection;
 mod format;
+mod match_up;
 
-pub use connection::*;
+pub use connection::{
+    BinanceOrderBookType, BinanceConnectionType,
+};
+
+use match_up::{match_up, Config};
 
 use format::DepthRow;
+
+
+pub fn subscribe_depth_snapshot(exchange: &str, symbol: &str, limit: i32){
+    let config = match_up(exchange, symbol, Some(limit));
+
+}
+
+pub fn get_depth_snapshot(exchange: &str, symbol: &str, limit: i32){
+    let config = match_up(exchange, symbol, Some(limit));
+
+}
+
+pub fn subscribe_depth(exchange: &str, symbol: &str){
+    let config = match_up(exchange, symbol, None);
+
+}
+
 
 /// 行情类型: 现货、永续合约
 pub enum OrderbookType {
@@ -64,6 +86,7 @@ mod tests {
     }
     #[test]
     fn contract_u_receiver_works() {
+        // Can't pass, but example works
         use tokio::runtime::Runtime;
         
         use crate::connection::BinanceOrderBookType;
