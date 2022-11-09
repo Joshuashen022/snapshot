@@ -197,10 +197,12 @@ impl BinanceSpotOrderBookPerpetualU {
 
                         let mut orderbook = shared.write().unwrap();
                         if event.last_message_last_update_id != orderbook.id() {
-                            error!("All event is not usable, need a new snap shot ");
+                            error!("All event is not usable, need a new snap shot");
                             println!("All event is not usable, need a new snap shot ");
-                            error!("order book {}, Event {}-{}",
-                                     orderbook.id(), event.first_update_id, event.last_update_id);
+                            error!("order book {}, Event {}-{}({})",
+                                    orderbook.id(), event.first_update_id, event.last_update_id, event.last_message_last_update_id);
+                            println!("order book {}, Event {}-{}({})",
+                                    orderbook.id(), event.first_update_id, event.last_update_id, event.last_message_last_update_id);
                             break;
 
                         } else {
