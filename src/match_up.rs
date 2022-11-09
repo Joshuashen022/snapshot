@@ -1,40 +1,45 @@
+/// exchange: "binance" / "crypto"
+/// symbol: "BTC_USDT" / "FTT_USDT"
+///
+///
+/// // DEPTH CHANNEL
+/// subscribe_depth_snapshot(exchange: str, symbol: str, limit: int) -> Channel
+///
+///
+/// // DEPTH SNAPSHOT
+/// get_depth_snapshot(exchange: str, symbol: str, limit: int) -> Option<Snapshot>
+///
+///
+/// // LEVEL (default 20)
+/// subscribe_depth(exchange: str, symbol: str) -> Channel
+///      LEVEL_DEPTH_URL_PC
+///      LEVEL_DEPTH_URL_PU
+///      LEVEL_DEPTH_URL_SPOT
+/// let url = format!("https://api.binance.com/api/v3/depth?symbol={}&limit={}", symbol, limit);
+/// btcusd_221230_swap: contract
+/// btcusdt_swap: contract
+/// bnbbtc: spot
+///
+/// const DEPTH_URL_PC: &str =      "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
+///
+/// const DEPTH_URL_PU: &str =      "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
+///
+/// const DEPTH_URL_SPOT: &str =    "wss://stream.binance.com:9443/ws/bnbbtc@depth@100ms";
+///
+///
+/// const LEVEL_DEPTH_URL_PC: &str =    "wss://dstream.binance.com/stream?streams=btcusd_221230@depth20@100ms";
+///
+/// const LEVEL_DEPTH_URL_PU: &str =    "wss://fstream.binance.com/stream?streams=btcusdt@depth20@100ms";
+///
+/// const LEVEL_DEPTH_URL_SPOT: &str =  "wss://stream.binance.com:9443/ws/bnbbtc@depth20@100ms";
+///
+///
+/// const REST_PC: &str =   "https://dapi.binance.com/dapi/v1/depth?symbol=BTCUSD_221230&limit=1000";
+/// const REST_PU: &str =   "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000";
+/// const REST_SPOT: &str = "https://api.binance.com/api/v3/depth?symbol=BNBBTC&limit=1000";
+
 use std::fmt::format;
 use anyhow::{Result, anyhow};
-
-// exchange: "binance" / "crypto"
-// symbol: "BTC_USDT" / "FTT_USDT"
-//
-// // DEPTH CHANNEL
-// subscribe_depth_snapshot(exchange: str, symbol: str, limit: int) -> Channel
-//
-// // DEPTH SNAPSHOT
-// get_depth_snapshot(exchange: str, symbol: str, limit: int) -> Option<Snapshot>
-//
-
-// // LEVEL (default 20)
-// subscribe_depth(exchange: str, symbol: str) -> Channel
-//      LEVEL_DEPTH_URL_PC
-//      LEVEL_DEPTH_URL_PU
-//      LEVEL_DEPTH_URL_SPOT
-
-//let url = format!("https://api.binance.com/api/v3/depth?symbol={}&limit={}", symbol, limit);
-
-// btcusd_221230_swap: contract
-// btcusdt_swap: contract
-// bnbbtc: spot
-//
-// const DEPTH_URL_PC: &str =      "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
-// const DEPTH_URL_PU: &str =      "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
-// const DEPTH_URL_SPOT: &str =    "wss://stream.binance.com:9443/ws/bnbbtc@depth@100ms";
-//
-//
-// const LEVEL_DEPTH_URL_PC: &str =    "wss://dstream.binance.com/stream?streams=btcusd_221230@depth20@100ms";
-// const LEVEL_DEPTH_URL_PU: &str =    "wss://fstream.binance.com/stream?streams=btcusdt@depth20@100ms";
-// const LEVEL_DEPTH_URL_SPOT: &str =  "wss://stream.binance.com:9443/ws/bnbbtc@depth20@100ms";
-//
-// const REST_PC: &str =   "https://dapi.binance.com/dapi/v1/depth?symbol=BTCUSD_221230&limit=1000";
-// const REST_PU: &str =   "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000";
-// const REST_SPOT: &str = "https://api.binance.com/api/v3/depth?symbol=BNBBTC&limit=1000";
 
 #[derive(Clone, Debug)]
 pub struct Config{
