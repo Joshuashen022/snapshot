@@ -270,7 +270,7 @@ impl BinanceSpotOrderBookPerpetualU {
                 };
 
                 if let Ok(mut guard) = status.lock(){
-                    (*guard) = false;
+                    (*guard) = true;
                 }
                 
                 info!("Start Level Buffer maintain thread success");

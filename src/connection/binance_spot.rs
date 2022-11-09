@@ -266,7 +266,7 @@ impl BinanceSpotOrderBookSpot {
 
                 if let Ok(mut guard) = status.lock(){
                     
-                    (*guard) = false;
+                    (*guard) = true;
                 }
 
                 use std::time::{UNIX_EPOCH, SystemTime};
