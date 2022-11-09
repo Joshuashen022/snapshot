@@ -308,7 +308,7 @@ impl BinanceSpotOrderBookSpot {
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock(){
-        
+            println!("Not ready");
             current_status = (*status_guard).clone();
 
         }
@@ -316,6 +316,7 @@ impl BinanceSpotOrderBookSpot {
         if current_status{
             Some(self.shared.write().unwrap().get_snapshot())
         } else{
+
             None
         }
 
