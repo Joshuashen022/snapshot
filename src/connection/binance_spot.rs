@@ -309,9 +309,9 @@ impl BinanceSpotOrderBookSpot {
 
         if let Ok(status_guard) = self.status.lock(){
             current_status = (*status_guard).clone();
-            println!("Ready {} ",current_statuss );
+            println!("Ready {} ",current_status );
         } else {
-            println!("Can not get the lock "s);
+            println!("Can not get the lock ");
         }
 
         if current_status{
