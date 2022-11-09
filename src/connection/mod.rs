@@ -16,6 +16,8 @@ use std::borrow::Cow;
 use tracing::{error, info, trace};
 use anyhow::Result;
 use tokio::sync::mpsc::UnboundedReceiver;
+use std::thread::sleep;
+use std::time::Duration;
 
 pub enum BinanceOrderBookType{
     Spot,
@@ -154,6 +156,7 @@ impl Orderbook for BinanceConnectionType{
                 },
                 None => {
                     error!("Orderbook lock is busy, try again later");
+                    sleep(Duration::from_millis(10));
                     continue
                 },
             }
