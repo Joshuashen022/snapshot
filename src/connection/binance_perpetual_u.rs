@@ -73,6 +73,7 @@ impl BinanceSpotOrderBookPerpetualU {
                     };
 
                     info!("Calling {} success",DEPTH_URL);
+                    println!("Calling {} success",DEPTH_URL);
                     let mut buffer_events = VecDeque::new();
                     while let Ok(message) = stream.next().await.unwrap(){ //
                         let event = deserialize_message(message);
@@ -96,7 +97,8 @@ impl BinanceSpotOrderBookPerpetualU {
                         .await?;
 
 
-                    trace!("Snap shot {}", snapshot.last_update_id); // 2861806778
+                    trace!("Snap shot {}", snapshot.last_update_id);
+                    println!("Snap shot {}", snapshot.last_update_id);
                     let mut overbook_setup = false;
                     while let Some(event) = buffer_events.pop_front() {
                         trace!(" Event {}-{}", event.first_update_id, event.last_update_id);
@@ -184,6 +186,7 @@ impl BinanceSpotOrderBookPerpetualU {
                     }
 
                     info!(" Overbook initialize success, now keep listening ");
+                    println!(" Overbook initialize success, now keep listening ");
                     // Overbook initialize success
                     while let Ok(message) = stream.next().await.unwrap() {
                         let event = deserialize_message(message);
