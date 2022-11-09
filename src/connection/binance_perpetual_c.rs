@@ -307,14 +307,15 @@ impl BinanceSpotOrderBookPerpetualC {
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock(){
-        
             current_status = (*status_guard).clone();
-
+        }else {
+            error!("BinanceSpotOrderBookPerpetualU lock is busy");
         }
 
         if current_status{
             Some(self.shared.write().unwrap().get_snapshot())
         } else{
+            error!("Data is not ready");
             None
         }
 

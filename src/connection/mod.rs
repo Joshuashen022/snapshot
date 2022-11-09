@@ -156,7 +156,7 @@ impl Orderbook for BinanceConnectionType{
                 },
                 None => {
                     error!("Orderbook lock is busy, try again later");
-                    sleep(Duration::from_millis(100));
+                    sleep(Duration::from_millis(10));
                     continue
                 },
             }

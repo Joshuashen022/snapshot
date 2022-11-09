@@ -312,7 +312,7 @@ impl BinanceSpotOrderBookSpot {
             current_status = (*status_guard).clone();
 
         } else {
-
+            error!("BinanceSpotOrderBookPerpetualU lock is busy");
         }
 
         if current_status{
