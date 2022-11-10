@@ -54,11 +54,20 @@ fn main(){
         });
 
         sleep(Duration::from_secs(3)).await;
-        let snapshot1 = manager1.latest_depth().unwrap();
-        println!("snapshot1 {}", snapshot1.id);
+        if let Some(snapshot1) = manager1.latest_depth(){
+            println!("snapshot1 {}", snapshot1.id);
+        } else{
+            let config = manager1.config;
+            println!("config1 {:?}",config);
+        };
 
-        let snapshot1 = manager2.latest_depth().unwrap();
-        println!("snapshot2 {}", snapshot1.id);
+
+        if let Some(snapshot2) = manager2.latest_depth(){
+            println!("snapshot2 {}", snapshot2.id);
+        } else{
+            let config = manager2.config;
+            println!("config1 {:?}",config);
+        };
 
         loop{
             println!();
