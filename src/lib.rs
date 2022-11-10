@@ -35,22 +35,20 @@ pub enum OrderBookSnapshot {
 
 impl QuotationManager{
 
-    /// each time is different
+    /// One-time snapshot
     pub fn new(exchange: &str, symbol: &str) -> Result<Self>{
         Self::new_from(exchange, symbol, None)
     }
 
-    /// updating
+    /// Keep-updating snapshot
     pub fn new_with_snapshot(exchange: &str, symbol: &str, limit: i32) -> Result<Self>{
         Self::new_from(exchange, symbol, Some(limit))
     }
 
-
-
     // snapshot stream
     pub fn subscribe_depth(&self) -> Result<UnboundedReceiver<Depth>> {
         let config = self.config.clone();
-        let res = if config.is_depth(){
+        if config.is_depth(){
             let rest_address = config.rest.
                 ok_or(Error::msg("rest address is empty"))?;
             let depth_address = config.depth
@@ -67,19 +65,16 @@ impl QuotationManager{
         } else{
             error!("Unsupported Config {:?}", config);
             Err(anyhow!("Unsupported Config"))
-        };
+        }
 
-        res
+
     }
 
     // One single snapshot
-    // pub fn latest_depth(&self) -> Option<Depth> {
-    //
-    //     let connection = self.connection.clone();
-    //
-    //     let snapshot = connection.get_snapshot()?;
-    //
-    // }
+    pub fn latest_depth(&self) -> Option<Depth> {
+        let connection = self.connection.clone();
+        connection.get_snapshot()
+    }
 
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Self>{
         let config = match_up(exchange, symbol, limit)?;

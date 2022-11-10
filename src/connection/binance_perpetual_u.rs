@@ -13,7 +13,7 @@ use tokio::{
     time::{sleep, Duration},
     sync::mpsc::{self, UnboundedReceiver},
 };
-use tracing::{error, info, trace, debug};
+use tracing::{error, info, trace, debug, warn};
 use futures_util::StreamExt;
 use anyhow::{Result, Error};
 use anyhow::{bail, anyhow};
@@ -73,8 +73,8 @@ impl BinanceSpotOrderBookPerpetualU {
                         },
                     };
 
-                    info!("Calling {} success",depth_address);
-                    println!("Calling {} success",depth_address);
+                    info!("Successfully connected to {}", depth_address);
+
                     let mut buffer_events = VecDeque::new();
                     while let Ok(message) = stream.next().await.unwrap(){ //
                         let event = deserialize_message(message);
@@ -91,25 +91,27 @@ impl BinanceSpotOrderBookPerpetualU {
                     };
 
                     // Wait for a while to collect event into buffer
-                    info!("Calling {} success", rest_address);
                     let snapshot: BinanceSnapshotPerpetualU = reqwest::get(&rest_address)
                         .await?
                         .json()
                         .await?;
 
+                    info!("Successfully connected to {}", rest_address);
 
-                    trace!("Snap shot {}", snapshot.last_update_id);
-                    println!("Snap shot {}", snapshot.last_update_id);
+                    debug!("Snap shot {}", snapshot.last_update_id);
+
                     let mut overbook_setup = false;
                     while let Some(event) = buffer_events.pop_front() {
-                        trace!(" Event {}-{}", event.first_update_id, event.last_update_id);
+                        debug!(" Event {}-{}", event.first_update_id, event.last_update_id);
 
                         if snapshot.last_update_id > event.last_update_id  {
                             continue
                         }
 
                         if event.match_snapshot(snapshot.last_update_id) {
-                            info!(" Found match snapshot 1");
+
+                            info!(" Found match snapshot at buffer");
+
                             let mut orderbook = shared.write().unwrap();
                             orderbook.load_snapshot(&snapshot);
                             orderbook.add_event(event);
@@ -128,13 +130,15 @@ impl BinanceSpotOrderBookPerpetualU {
                     }
 
                     if overbook_setup {
-
+                        debug!("Emptying events in buffer");
                         while let Some(event) = buffer_events.pop_front()  {
                             let mut orderbook = shared.write().unwrap();
                             orderbook.add_event(event);
                         }
 
                     } else {
+
+                        info!(" Try to wait new events for out snapshot");
 
                         while let Ok(message) = stream.next().await.unwrap() {
 
@@ -145,7 +149,7 @@ impl BinanceSpotOrderBookPerpetualU {
                             let event = event.unwrap();
 
 
-                            trace!(" Event {}-{}", event.first_update_id, event.last_update_id);
+                            debug!(" Event {}-{}", event.first_update_id, event.last_update_id);
 
                             // [E.U,..,E.u] S.u
                             if snapshot.last_update_id > event.last_update_id  {
@@ -155,8 +159,9 @@ impl BinanceSpotOrderBookPerpetualU {
                             let mut orderbook = shared.write().unwrap();
                             // [E.U,..,S.u,..,E.u]
                             if event.match_snapshot(snapshot.last_update_id) {
-                                info!(" Found match snapshot 2");
-                                println!(" Found match snapshot 2");
+
+                                info!(" Found match snapshot with new event");
+
                                 orderbook.load_snapshot(&snapshot);
                                 orderbook.add_event(event);
 
@@ -166,7 +171,7 @@ impl BinanceSpotOrderBookPerpetualU {
 
                             // S.u [E.U,..,E.u]
                             if event.first_update_id > snapshot.last_update_id {
-                                error!("Rest event is not usable, need a new snap shot ");
+                                warn!("Rest event is not usable, need a new snap shot ");
 
                                 break;
                             }
@@ -176,11 +181,9 @@ impl BinanceSpotOrderBookPerpetualU {
                     }
 
                     if overbook_setup {
-                        println!(" prepare to set lock");
+
                         if let Ok(mut guard) = status.lock(){
                             (*guard) = true;
-                        } else {
-                            println!(" set lock fail");
                         }
                     } else {
 
@@ -188,20 +191,26 @@ impl BinanceSpotOrderBookPerpetualU {
                     }
 
                     info!(" Overbook initialize success, now keep listening ");
+
                     // Overbook initialize success
                     while let Ok(message) = stream.next().await.unwrap() {
                         let event = deserialize_message(message.clone());
                         if event.is_none(){
-                            error!("Message decode error {:?}", message);
+                            warn!("Message decode error {:?}", message);
                             continue
                         }
                         let event = event.unwrap();
 
+                        debug!("receive event {}-{}({}) ts: {}",
+                            event.first_update_id, event.last_update_id, event.last_message_last_update_id,
+                            event.event_time,
+                        );
+
                         let mut orderbook = shared.write().unwrap();
                         if event.last_message_last_update_id != orderbook.id() {
-                            error!("All event is not usable, need a new snap shot");
+                            warn!("All event is not usable, need a new snap shot");
 
-                            error!("order book {}, Event {}-{}({})",
+                            debug!("order book {}, Event {}-{}({})",
                                     orderbook.id(), event.first_update_id, event.last_update_id, event.last_message_last_update_id);
                             break;
 
@@ -210,7 +219,7 @@ impl BinanceSpotOrderBookPerpetualU {
                             let l_id = event.last_update_id;
                             orderbook.add_event(event);
 
-                            trace!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
+                            debug!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
                             let snapshot = orderbook.get_snapshot().depth();
                             if let Err(e) = sender.send(snapshot){
                                 error!("depth send Snapshot error");
@@ -235,6 +244,7 @@ impl BinanceSpotOrderBookPerpetualU {
 
                 default_exit += 1;
             }
+            error!("OrderBook thread stopped");
             Ok::<(), Error>(())
         });
 
@@ -268,17 +278,17 @@ impl BinanceSpotOrderBookPerpetualU {
                     (*guard) = true;
                 }
                 
-                info!("Start Level Buffer maintain thread success");
+
                 while let Ok(msg) = stream.next().await.unwrap(){ //
                     if !msg.is_text() {
-                        error!("msg.is_text() is empty");
+                        warn!("msg is empty");
                         continue
                     }
 
-                    let text = match msg.into_text(){
+                    let text = match msg.clone().into_text(){
                         Ok(e) => e,
                         Err(e) => {
-                            error!("msg.into_text {:?}", e);
+                            warn!("msg.into_text {:?}", e);
                             continue
                         },
                     };
@@ -286,11 +296,17 @@ impl BinanceSpotOrderBookPerpetualU {
                     let level_event: StreamLevelEventPerpetualU = match serde_json::from_str(&text){
                         Ok(e) => e,
                         Err(e) => {
-                            error!("Error {},{}",e, text);
+                            warn!("Error {},{:?}", e, msg);
                             continue
                         },
                     };
                     let level_event = level_event.data;
+
+                    debug!("receive level_event {}-{}({}) ts: {}",
+                        level_event.first_update_id, level_event.last_update_id, level_event.last_message_last_update_id,
+                        level_event.event_time,
+                    );
+
                     if let Ok(mut guard) = shared.write(){
                         (*guard).set_level_event(level_event);
 
@@ -299,6 +315,8 @@ impl BinanceSpotOrderBookPerpetualU {
                             error!("level_depth send Snapshot error");
                         };
 
+                    }else{
+                        error!("SharedSpot is busy");
                     }
                 };
             }

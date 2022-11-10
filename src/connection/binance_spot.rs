@@ -22,7 +22,7 @@ use anyhow::{bail, anyhow};
 use std::sync::{Arc, RwLock, Mutex};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use futures_util::future::err;
-use tracing::{error, info, trace};
+use tracing::{error, info, debug, warn};
 
 // const DEPTH_URL: &str = "wss://stream.binance.com:9443/ws/bnbbtc@depth@100ms";
 // const LEVEL_DEPTH_URL: &str = "wss://stream.binance.com:9443/ws/bnbbtc@depth20@100ms";
@@ -57,13 +57,13 @@ impl BinanceOrderBookSpot {
             loop {
                 let res : Result<()> = {
                     if let Ok(mut guard) = status.lock(){
-                    
                         (*guard) = false;
                     }
 
                     let url = Url::parse(&depth_address).expect("Bad URL");
 
                     let res = connect_async(url).await;
+
                     let mut stream = match res{
                         Ok((stream, _)) => stream,
                         Err(e) => {
@@ -73,8 +73,12 @@ impl BinanceOrderBookSpot {
                         },
                     };
 
+                    info!("Successfully connected to {}", depth_address);
+
+
                     let mut buffer_events = VecDeque::new();
-                    while let Ok(message) = stream.next().await.unwrap(){ //
+
+                    while let Ok(message) = stream.next().await.unwrap(){
                         let event = deserialize_message(message);
                         if event.is_none(){
                             continue
@@ -89,28 +93,31 @@ impl BinanceOrderBookSpot {
                     };
 
                     // Wait for a while to collect event into buffer
-                    trace!("Calling Https://");
                     let snapshot: BinanceSnapshotSpot = reqwest::get(&rest_address)
                         .await?
                         .json()
                         .await?;
-                    trace!("Done Calling Https://");
 
-                    trace!("Snap shot {}", snapshot.last_update_id); // 2861806778
+                    info!("Successfully connected to {}", rest_address);
+
+                    debug!("Snap shot {}", snapshot.last_update_id);
+
                     let mut overbook_setup = false;
                     while let Some(event) = buffer_events.pop_front() {
-                        trace!(" Event {}-{}", event.first_update_id, event.last_update_id);
+
+                        debug!(" Event {}-{}", event.first_update_id, event.last_update_id);
 
                         if snapshot.last_update_id >= event.last_update_id  {
                             continue
                         }
 
                         if event.match_snapshot(snapshot.last_update_id) {
-                            info!(" Found match snapshot 1");
+
+                            info!(" Found match snapshot at buffer");
+
                             let mut orderbook = shared.write().unwrap();
                             orderbook.load_snapshot(&snapshot);
                             orderbook.add_event(event);
-
                             overbook_setup = true;
 
                             break;
@@ -126,6 +133,8 @@ impl BinanceOrderBookSpot {
 
                     if overbook_setup {
 
+                        debug!("Emptying events in buffer");
+
                         while let Some(event) = buffer_events.pop_front()  {
                             let mut orderbook = shared.write().unwrap();
                             orderbook.add_event(event);
@@ -133,16 +142,20 @@ impl BinanceOrderBookSpot {
 
                     } else {
 
+                        info!(" Try to wait new events for out snapshot");
+
                         while let Ok(message) = stream.next().await.unwrap() {
 
                             let event = deserialize_message(message);
+
                             if event.is_none(){
                                 continue
                             }
+
                             let event = event.unwrap();
 
 
-                            trace!(" Event {}-{}", event.first_update_id, event.last_update_id);
+                            debug!(" Event {}-{}", event.first_update_id, event.last_update_id);
 
                             // [E.U,..,E.u] S.u
                             if snapshot.last_update_id >= event.last_update_id  {
@@ -152,25 +165,25 @@ impl BinanceOrderBookSpot {
                             let mut orderbook = shared.write().unwrap();
                             // [E.U,..,S.u,..,E.u]
                             if event.match_snapshot(snapshot.last_update_id) {
-                                info!(" Found match snapshot 2");
+
+                                info!(" Found match snapshot with new event");
 
                                 orderbook.load_snapshot(&snapshot);
                                 orderbook.add_event(event);
-
                                 overbook_setup = true;
+
                                 break;
                             }
 
                             // S.u [E.U,..,E.u]
                             if event.first_update_id > snapshot.last_update_id + 1 {
-                                error!("Rest event is not usable, need a new snap shot ");
-
+                                warn!("Rest event is not usable, need a new snap shot ");
                                 break;
                             }
 
                             if event.first_update_id > orderbook.id() + 1 {
-                                error!("All event is not usable, need a new snap shot ");
-                                error!("order book {}, Event {}-{}",
+                                warn!("All event is not usable, need a new snap shot ");
+                                warn!("order book {}, Event {}-{}",
                                          orderbook.id(), event.first_update_id, event.last_update_id);
 
                                 break;
@@ -191,19 +204,19 @@ impl BinanceOrderBookSpot {
                     }
 
                     info!(" Overbook initialize success, now keep listening ");
-                    // Overbook initialize success
+
                     while let Ok(message) = stream.next().await.unwrap() {
                         let event = deserialize_message(message.clone());
                         if event.is_none(){
-                            error!("Message decode error {:?}", message);
+                            warn!("Message decode error {:?}", message);
                             continue
                         }
                         let event = event.unwrap();
 
                         let mut orderbook = shared.write().unwrap();
                         if event.first_update_id > orderbook.id() + 1 {
-                            error!("All event is not usable, need a new snap shot ");
-                            error!("order book {}, Event {}-{}",
+                            warn!("All event is not usable, need a new snap shot ");
+                            debug!("order book {}, Event {}-{}",
                                      orderbook.id(), event.first_update_id, event.last_update_id);
                             break;
 
@@ -212,7 +225,7 @@ impl BinanceOrderBookSpot {
                             let l_id = event.last_update_id;
                             orderbook.add_event(event);
 
-                            trace!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
+                            debug!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
 
                             let snapshot = orderbook.get_snapshot();
                             if let Err(_) = sender.send(snapshot.depth()){
@@ -238,6 +251,7 @@ impl BinanceOrderBookSpot {
 
                 default_exit += 1;
             }
+            error!("OrderBook thread stopped");
             Ok::<(), Error>(())
         });
 
@@ -267,25 +281,29 @@ impl BinanceOrderBookSpot {
                 };
 
                 if let Ok(mut guard) = status.lock(){
-                    
                     (*guard) = true;
                 }
 
-                use std::time::{UNIX_EPOCH, SystemTime};
-
                 while let Ok(msg) = stream.next().await.unwrap(){ //
                     if !msg.is_text() {
+                        warn!("msg is empty");
                         continue
                     }
 
-                    let text = match msg.into_text(){
+                    let text = match msg.clone().into_text(){
                         Ok(e) => e,
-                        Err(_) => continue,
+                        Err(e) => {
+                            warn!("msg.into_text {:?}", e);
+                            continue
+                        },
                     };
 
                     let level_event: LevelEventSpot = match serde_json::from_str(&text){
                         Ok(e) => e,
-                        Err(_) => continue,
+                        Err(e) => {
+                            warn!("Error {}, {:?}",e, msg);
+                            continue
+                        },
                     };
 
                     let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();

@@ -2,6 +2,7 @@ use crate::format::Quote;
 use crate::connection::BinanceOrderBookSnapshot;
 
 use std::collections::btree_map::BTreeMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
 use serde::Deserialize;
 use ordered_float::OrderedFloat;
@@ -106,6 +107,8 @@ impl SharedSpot {
 
     /// Only used for "Event"
     pub fn add_event(&mut self, event: EventSpot) {
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
         for ask in event.asks {
             if ask.amount == 0.0 {
                 self.asks.remove(&OrderedFloat(ask.price));
@@ -124,6 +127,7 @@ impl SharedSpot {
 
         self.last_update_id = event.last_update_id;
         self.send_time = event.ts;
+        self.receive_time = time.as_millis() as i64;
     }
 
     /// Only used for "LevelEvent"

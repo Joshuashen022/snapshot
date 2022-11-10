@@ -2,6 +2,7 @@ use crate::format::Quote;
 use crate::connection::BinanceOrderBookSnapshot;
 
 use std::collections::BTreeMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
 use serde::Deserialize;
 use ordered_float::OrderedFloat;
@@ -189,6 +190,7 @@ impl SharedPerpetualU {
 
     /// Only used for "Event"
     pub fn add_event(&mut self, event: EventPerpetualU) {
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         for ask in event.asks {
             if ask.amount == 0.0 {
                 self.asks.remove(&OrderedFloat(ask.price));
@@ -208,6 +210,7 @@ impl SharedPerpetualU {
         self.last_update_id = event.last_update_id;
         self.create_time = event.create_time;
         self.send_time = event.event_time;
+        self.receive_time = time.as_millis() as i64;
     }
 
     /// Only used for "LevelEvent"
