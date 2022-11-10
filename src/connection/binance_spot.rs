@@ -287,6 +287,7 @@ impl BinanceOrderBookSpot {
 
                 info!("Level Overbook initialize success, now keep listening ");
                 while let Ok(msg) = stream.next().await.unwrap(){ //
+                    info!("stream.next()");
                     if !msg.is_text() {
                         warn!("msg is empty");
                         continue
