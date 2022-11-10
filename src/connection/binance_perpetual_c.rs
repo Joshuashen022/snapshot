@@ -188,7 +188,7 @@ impl BinanceSpotOrderBookPerpetualC {
                             continue
                         }
                         let event = event.unwrap();
-                        debug!("receive level_event {}-{}({}) tt: {}",
+                        debug!("receive event {}-{}({}) ts: {}",
                             event.first_update_id, event.last_update_id, event.last_message_last_update_id,
                             event.event_time,
                         );
@@ -264,7 +264,7 @@ impl BinanceSpotOrderBookPerpetualC {
                     (*guard) = true;
                 }
 
-                info!("Start Level Buffer maintain thread success");
+                info!(" Overbook_level initialize success, now keep listening ");
                 while let Ok(msg) = stream.next().await.unwrap(){ //
                     if !msg.is_text() {
                         error!("msg.is_text() is empty");
@@ -287,7 +287,7 @@ impl BinanceSpotOrderBookPerpetualC {
                         },
                     };
                     let level_event = level_event.data;
-                    debug!("receive level_event {}-{}({}) tt: {}",
+                    debug!("receive level_event {}-{}({}) ts: {}",
                         level_event.first_update_id, level_event.last_update_id, level_event.last_message_last_update_id,
                         level_event.event_time,
                     );
