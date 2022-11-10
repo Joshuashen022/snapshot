@@ -1,7 +1,7 @@
 use tokio::runtime::Runtime;
 use tokio::time::{sleep, Duration};
 
-use snapshot::get_depth_snapshot;
+use snapshot::{get_depth_snapshot, QuotationManager};
 use snapshot::subscribe_depth;
 use snapshot::subscribe_depth_snapshot;
 
@@ -33,28 +33,36 @@ fn main(){
         let spot_symbol = "bnbbtc";
         let _ = vec![pc_symbol,pu_symbol,spot_symbol];
 
-        let limit = 1000;
         let symbol = pc_symbol;
         println!("using symbol {}", symbol);
+        let manager1 = QuotationManager::new_with_snapshot(exchange, symbol, 1000).unwrap();
         tokio::spawn(async move {
-            let mut receiver = subscribe_depth_snapshot(exchange, symbol, limit).unwrap();
-            while let Some(message) = receiver.recv().await
-            {
-                println!("receive1 {}", message.last_update_id);
+            let mut receiver = manager1.subscribe_depth().unwrap();
+            sleep(Duration::from_secs(2)).await;
+            while let Some(message) = receiver.recv().await {
+                println!("receive1 {}", message.id);
             }
         });
 
+        let manager = QuotationManager::new(exchange, symbol).unwrap();
         tokio::spawn(async move {
-            let mut receiver =  subscribe_depth(exchange, symbol).unwrap();
-            while let Some(message) = receiver.recv().await
-            {
-                println!("receive2 {}", message.last_update_id);
+            let mut receiver = manager.subscribe_depth().unwrap();
+            sleep(Duration::from_secs(2)).await;
+            while let Some(message) = receiver.recv().await {
+                println!("receive2 {}", message.id);
             }
         });
 
-        let snapshot = get_depth_snapshot(exchange, symbol, limit).unwrap();
-        println!("snapshot {}", snapshot.last_update_id);
+        sleep(Duration::from_secs(3)).await;
+        let snapshot1 = manager1.latest_depth().unwrap();
+        println!("snapshot1 {}", snapshot1.id);
+
+        let snapshot1 = manager.latest_depth().unwrap();
+        println!("snapshot2 {}", snapshot1.id);
+
         loop{
+            println!();
+            println!();
             sleep(Duration::from_secs(1)).await;
         }
     });

@@ -3,7 +3,7 @@ use tokio::time::{sleep, Duration};
 
 use snapshot::connection::BinanceOrderBookType;
 use snapshot::connection::BinanceConnectionType;
-use snapshot::Orderbook;
+use snapshot::OrderbookT;
 
 fn main(){
     println!("Hello");
