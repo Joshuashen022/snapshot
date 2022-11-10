@@ -30,6 +30,7 @@ use tracing::{error, info, trace};
 // const MAX_CHANNEL_SIZE: usize = 30;
 const MAX_BUFFER_EVENTS: usize = 5;
 
+#[derive(Clone)]
 pub struct BinanceSpotOrderBookSpot {
     status: Arc<Mutex<bool>>,
     shared: Arc<RwLock<SharedSpot>>,

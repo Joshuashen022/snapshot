@@ -41,6 +41,8 @@
 use std::fmt::format;
 use anyhow::{Result, anyhow};
 
+use crate::ExchangeType;
+
 #[derive(Clone, Debug)]
 pub struct Config{
     pub rest: Option<String>,
@@ -55,12 +57,6 @@ pub enum SymbolType{
     Spot(String),
     ContractU(String),
     ContractC(String),
-}
-
-#[derive(Clone, Debug, Copy)]
-pub enum ExchangeType{
-    Binance,
-    Crypto,
 }
 
 pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Config>{

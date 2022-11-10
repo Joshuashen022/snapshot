@@ -18,59 +18,94 @@ use crate::match_up::SymbolType;
 
 // pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
 //                                               -> Result<UnboundedReceiver<T>>
-
-pub fn subscribe_depth_snapshot(exchange: &str, symbol: &str, limit: i32)
-    -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
-{
-    let config = match_up(exchange, symbol, Some(limit))?;
-    let rest_address = config.rest.ok_or(Error::msg("rest address is empty"))?;
-    let depth_address = config.depth.ok_or(Error::msg("depth address is empty"))?;
-    let types = match config.symbol_type{
-        SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
-        SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
-        SymbolType::Spot(_) => BinanceOrderBookType::Spot,
-    };
-
-    let connection = BinanceConnectionType::new_with_type(types);
-
-    connection.depth(rest_address, depth_address)
+enum Connection{
+    Binance(BinanceConnectionType),
+    Crypto,
 }
 
-pub fn get_depth_snapshot(exchange: &str, symbol: &str, limit: i32)
-    -> Option<BinanceSpotOrderBookSnapshot>
-{
-    let config = match_up(exchange, symbol, Some(limit)).ok()?;
-    let rest_address = config.rest?;
-    let depth_address = config.depth?;
-    let types = match config.symbol_type{
-        SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
-        SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
-        SymbolType::Spot(_) => BinanceOrderBookType::Spot,
-    };
-
-    let connection = BinanceConnectionType::new_with_type(types);
-
-    let _ = connection.depth(rest_address, depth_address).ok()?;
-
-    Some(connection.get_snapshot())
+pub struct QuotationManager{
+    pub config: Config,
+    connection: Connection,
 }
 
-pub fn subscribe_depth(exchange: &str, symbol: &str)
-    -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
-{
-    let config = match_up(exchange, symbol, None)?;
-    let level_address = config.level_depth.ok_or(Error::msg("level address is empty"))?;
+impl QuotationManager{
 
-    let types = match config.symbol_type{
-        SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
-        SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
-        SymbolType::Spot(_) => BinanceOrderBookType::Spot,
-    };
+    pub fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Self>{
+        let config = match_up(exchange, symbol, limit)?;
 
-    let connection = BinanceConnectionType::new_with_type(types);
+        let types = match config.symbol_type{
+            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+        };
 
-    connection.level_depth(level_address)
+        let connection_inner = BinanceConnectionType::new_with_type(types);
+
+        let connection = match config.exchange_type{
+            ExchangeType::Binance => Connection::Binance(connection_inner),
+            ExchangeType::Crypto => Connection::Crypto,
+        };
+
+        Ok(Self{ config, connection})
+    }
+
+    pub fn subscribe_depth_snapshot(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
+    {
+        let config = self.config.clone();
+
+        let rest_address = config.rest.ok_or(Error::msg("rest address is empty"))?;
+        let depth_address = config.depth.ok_or(Error::msg("depth address is empty"))?;
+        let types = match config.symbol_type{
+            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+        };
+
+        let connection = BinanceConnectionType::new_with_type(types);
+
+        connection.depth(rest_address, depth_address)
+    }
+
+    pub fn get_depth_snapshot(&self)
+        -> Option<BinanceSpotOrderBookSnapshot>
+    {
+        let config = self.config.clone();
+
+        let rest_address = config.rest?;
+        let depth_address = config.depth?;
+        let types = match config.symbol_type{
+            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+        };
+
+        let connection = BinanceConnectionType::new_with_type(types);
+
+        let _ = connection.depth(rest_address, depth_address).ok()?;
+
+        Some(connection.get_snapshot())
+    }
+
+    pub fn subscribe_depth(&self)
+        -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
+    {
+        let config = self.config.clone();
+
+        let level_address = config.level_depth.ok_or(Error::msg("level address is empty"))?;
+
+        let types = match config.symbol_type{
+            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+        };
+
+        let connection = BinanceConnectionType::new_with_type(types);
+
+        connection.level_depth(level_address)
+    }
 }
+
+
 
 
 /// 行情类型: 现货、永续合约
@@ -80,8 +115,10 @@ pub enum OrderbookType {
 }
 
 /// 交易所类型
+#[derive(Clone, Debug, Copy)]
 pub enum ExchangeType {
-    Binance
+    Binance,
+    Crypto,
 }
 
 /// 对应某个交易所里一个币对的行情订阅，对外提供接口支持获取最新截面数据
