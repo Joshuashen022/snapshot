@@ -44,13 +44,13 @@ fn main(){
             }
         });
 
-        tokio::spawn(async move {
-            while let Some(message) = subscribe_depth(exchange, symbol)
-                .unwrap().recv().await
-            {
-                println!("receive2 {}", message.last_update_id);
-            }
-        });
+        // tokio::spawn(async move {
+        //     while let Some(message) = subscribe_depth(exchange, symbol)
+        //         .unwrap().recv().await
+        //     {
+        //         println!("receive2 {}", message.last_update_id);
+        //     }
+        // });
 
         // let snapshot = get_depth_snapshot(exchange, symbol, limit).unwrap();
         // println!("snapshot {}", snapshot.last_update_id);
