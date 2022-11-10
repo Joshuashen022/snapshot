@@ -188,7 +188,10 @@ impl BinanceSpotOrderBookPerpetualC {
                             continue
                         }
                         let event = event.unwrap();
-
+                        debug!("receive level_event {}-{}({}) tt: {}",
+                            event.first_update_id, event.last_update_id, event.last_message_last_update_id,
+                            event.event_time,
+                        );
                         let mut orderbook = shared.write().unwrap();
                         if event.last_message_last_update_id != orderbook.id() {
                             error!("All event is not usable, need a new snap shot ");
@@ -201,7 +204,7 @@ impl BinanceSpotOrderBookPerpetualC {
                             let l_id = event.last_update_id;
                             orderbook.add_event(event);
 
-                            trace!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
+                            debug!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
 
                             let snapshot = orderbook.get_snapshot();
                             if let Err(e) = sender.send(snapshot){
@@ -243,7 +246,7 @@ impl BinanceSpotOrderBookPerpetualC {
 
 
         let _ = tokio::spawn(async move {
-            info!("Start Level Buffer maintain thread");
+            info!("Start Level OrderBook thread");
             loop{
                 let url = Url::parse(&level_address).expect("Bad URL");
 
@@ -284,6 +287,10 @@ impl BinanceSpotOrderBookPerpetualC {
                         },
                     };
                     let level_event = level_event.data;
+                    debug!("receive level_event {}-{}({}) tt: {}",
+                        level_event.first_update_id, level_event.last_update_id, level_event.last_message_last_update_id,
+                        level_event.event_time,
+                    );
                     if let Ok(mut guard) = shared.write(){
                         (*guard).set_level_event(level_event);
 
