@@ -2,10 +2,10 @@ pub mod binance_spot;
 pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
 
-use crate::format::DepthRow;
+use crate::format::Quote;
 use crate::{
-    OrderbookSnapshot, Orderbook,
-    OrderbookType, ExchangeType
+    OrderbookType, ExchangeType,
+    OrderBookSnapshot
 };
 use crate::connection::binance_spot::BinanceOrderBookSpot;
 use crate::connection::binance_perpetual_u::BinanceSpotOrderBookPerpetualU;
@@ -25,42 +25,49 @@ pub enum Connection{
     Crypto,
 }
 
-pub enum OrderBookType {
+pub enum OrderBookReceiver {
     Binance(UnboundedReceiver<BinanceOrderBookSnapshot>),
     Crypto,
 }
 
-pub enum OrderBookSnapshotType {
-    Binance(BinanceOrderBookSnapshot),
-    Crypto,
+impl OrderBookReceiver{
+     pub async fn recv(&mut self) -> Option<OrderBookSnapshot> {
+         match self {
+            OrderBookReceiver::Binance(rx) =>
+                Some(OrderBookSnapshot::Binance(rx.recv().await?)),
+            _ => None
+        }
+    }
 }
 
+
+
+
 impl Connection {
-    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> Result<OrderBookType>{
+    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> Result<OrderBookReceiver>{
         match self{
             Connection::Binance(connection) => {
                 let receiver = connection.depth(rest_address, depth_address)?;
-                Ok(OrderBookType::Binance(receiver))
+                Ok(OrderBookReceiver::Binance(receiver))
             }
             Connection::Crypto => Err(anyhow!("Unsupported exchange"))
         }
     }
 
-    pub fn connect_depth_level(&self, level_address: String) -> Result<OrderBookType>{
+    pub fn connect_depth_level(&self, level_address: String) -> Result<OrderBookReceiver>{
         match self{
             Connection::Binance(connection) => {
                 let receiver = connection.level_depth(level_address)?;
-                Ok(OrderBookType::Binance(receiver))
+                Ok(OrderBookReceiver::Binance(receiver))
             }
             Connection::Crypto => Err(anyhow!("Unsupported exchange"))
         }
     }
 
-    pub fn get_snapshot(&self)-> Option<OrderBookSnapshotType>{
+    pub fn get_snapshot(&self)-> Option<OrderBookSnapshot>{
         match self{
             Connection::Binance(connection) => {
-                let receiver = connection.get_snapshot();
-                Some(OrderBookSnapshotType::Binance(receiver))
+                Some(OrderBookSnapshot::Binance(connection.snapshot()?))
             }
             Connection::Crypto => None
         }
@@ -74,13 +81,14 @@ pub enum BinanceOrderBookType{
     PrepetualC,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderBookSnapshot {
+    pub symbol: String,
     pub last_update_id: i64,
     pub create_time: i64,
     pub event_time: i64,
-    pub bids: Vec<DepthRow>,
-    pub asks: Vec<DepthRow>,
+    pub bids: Vec<Quote>,
+    pub asks: Vec<Quote>,
 }
 
 impl BinanceOrderBookSnapshot {
@@ -107,7 +115,7 @@ impl BinanceOrderBookSnapshot {
 
     /// Find different `bids` and `asks`,
     /// and return as `(bids, asks)`
-    pub fn find_different(&self, other: &BinanceOrderBookSnapshot) -> (Vec<DepthRow>, Vec<DepthRow>) {
+    pub fn find_different(&self, other: &BinanceOrderBookSnapshot) -> (Vec<Quote>, Vec<Quote>) {
         let mut bid_different = Vec::new();
         let mut ask_different = Vec::new();
 
@@ -127,68 +135,6 @@ impl BinanceOrderBookSnapshot {
     }
 }
 
-impl OrderbookSnapshot for BinanceOrderBookSnapshot {
-    
-    fn get_bids(&self) -> &Vec<DepthRow> {
-        return &self.bids
-    }
-
-    fn get_asks(&self) -> &Vec<DepthRow> {
-        return &self.asks
-    }
-
-    fn get_ts(&self) -> i64 {
-        self.event_time
-    }
-
-    fn get_symbol(&self) -> Cow<str> {
-        todo!()
-    }
-
-    fn get_id(&self) -> Cow<str> {
-        todo!()
-    }
-}
-
-impl Orderbook for BinanceConnectionType{
-    type SnapShotType = BinanceOrderBookSnapshot;
-
-    fn get_snapshot(&self) -> Self::SnapShotType {
-        let mut output:Option<BinanceOrderBookSnapshot> = None;
-        loop {
-            let result = match self{
-                BinanceConnectionType::Spot(inner) => inner.snapshot(),
-                BinanceConnectionType::PrepetualU(inner) => inner.snapshot(),
-                BinanceConnectionType::PrepetualC(inner) =>  inner.snapshot(),
-            };
-
-            match result {
-                Some(e) => {
-                    output = Some(e);
-                    break
-                },
-                None => {
-                    debug!("Orderbook lock is busy, try again later");
-                    sleep(Duration::from_millis(10));
-                    continue
-                },
-            }
-
-        }
-
-        output.unwrap()
-    }
-    
-    //TODO:: decide a valid type
-    fn get_type(&self) -> OrderbookType {
-        return OrderbookType::Perpetual
-    }
-
-    //TODO:: decide a valid type
-    fn get_exchange(&self) -> ExchangeType {
-        return ExchangeType::Binance
-    }
-}
 
 #[derive(Clone)]
 pub enum BinanceConnectionType{

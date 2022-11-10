@@ -244,6 +244,7 @@ impl BinanceOrderBookSpot {
         Ok(receiver)
     }
 
+    // TODO:: deal with error at outer_space
     pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>>{
         let shared = self.shared.clone();
 
@@ -296,6 +297,8 @@ impl BinanceOrderBookSpot {
                         if let Err(_) = sender.send(snapshot){
                             error!("level_depth send Snapshot error");
                         };
+                    } else{
+                        error!("SharedSpot is busy");
                     }
                 };
             }
@@ -324,6 +327,19 @@ impl BinanceOrderBookSpot {
             None
         }
 
+    }
+
+    pub(crate) fn set_symbol(&mut self, symbol: String) -> Result<()>{
+
+        {
+            match self.shared.clone().write(){
+                Ok(mut shared) => {
+                    (*shared).symbol = symbol;
+                    Ok(())
+                },
+                Err(e) => Err(anyhow!("{:?}", e)),
+            }
+        }
     }
 }
 

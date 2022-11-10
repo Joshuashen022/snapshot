@@ -1,4 +1,4 @@
-use crate::format::DepthRow;
+use crate::format::Quote;
 use crate::connection::BinanceOrderBookSnapshot;
 
 use std::collections::btree_map::BTreeMap;
@@ -21,9 +21,9 @@ pub struct EventSpot {
     #[serde(rename = "u")]
     pub last_update_id: i64,
     #[serde(rename = "b")]
-    pub bids: Vec<DepthRow>,
+    pub bids: Vec<Quote>,
     #[serde(rename = "a")]
-    pub asks: Vec<DepthRow>,
+    pub asks: Vec<Quote>,
 }
 
 impl EventSpot {
@@ -46,11 +46,11 @@ pub struct LevelEventSpot {
 
     /// Difference in bids
     #[serde(rename = "bids")]
-    pub bids: Vec<DepthRow>,
+    pub bids: Vec<Quote>,
 
     /// Difference in asks
     #[serde(rename = "asks")]
-    pub asks: Vec<DepthRow>,
+    pub asks: Vec<Quote>,
 }
 
 
@@ -58,11 +58,12 @@ pub struct LevelEventSpot {
 #[serde(rename_all = "camelCase")]
 pub struct BinanceSnapshotSpot {
     pub last_update_id: i64,
-    pub bids: Vec<DepthRow>,
-    pub asks: Vec<DepthRow>,
+    pub bids: Vec<Quote>,
+    pub asks: Vec<Quote>,
 }
 
 pub struct SharedSpot {
+    pub symbol: String,
     last_update_id: i64,
     time_stamp: i64,
     asks: BTreeMap<OrderedFloat<f64>, f64>,
@@ -72,6 +73,7 @@ pub struct SharedSpot {
 impl SharedSpot {
     pub fn new() -> Self {
         SharedSpot {
+            symbol: String::new(),
             last_update_id: 0,
             time_stamp: 0,
             asks: BTreeMap::new(),
@@ -145,16 +147,17 @@ impl SharedSpot {
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
         let asks = self.asks
             .iter()
-            .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
             .collect();
 
         let bids = self.bids
             .iter()
             .rev()
-            .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
             .collect();
         let time_stamp = self.time_stamp;
         BinanceOrderBookSnapshot {
+            symbol: self.symbol.clone(),
             last_update_id: self.last_update_id,
             create_time: time_stamp,
             event_time: time_stamp,
@@ -182,7 +185,7 @@ impl SharedSpot {
 
 #[test]
 fn depth_row(){
-    let a = DepthRow{amount:1.0, price: 2.0};
-    let b = DepthRow{amount:1.0, price: 2.0};
+    let a = Quote {amount:1.0, price: 2.0};
+    let b = Quote {amount:1.0, price: 2.0};
     assert_eq!(a, b);
 }

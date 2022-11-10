@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use tokio::sync::mpsc::UnboundedReceiver;
-use anyhow::{Result, Error};
+use anyhow::{Result, Error, anyhow};
+use serde::Deserialize;
 use tracing::{error, info, trace};
 
 
@@ -10,26 +11,76 @@ mod match_up;
 
 pub use connection::{
     BinanceOrderBookType, BinanceConnectionType, Connection,
-    OrderBookType
+    OrderBookReceiver
 };
 
 use match_up::{match_up, Config};
-use format::DepthRow;
-use crate::connection::{BinanceOrderBookSnapshot, OrderBookSnapshotType};
+use format::Quote;
+use crate::connection::BinanceOrderBookSnapshot;
 use crate::match_up::SymbolType;
 
 // pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
 //                                               -> Result<UnboundedReceiver<T>>
 
-
+#[derive(Clone)]
 pub struct QuotationManager{
     pub config: Config,
     connection: Connection,
 }
 
+pub enum OrderBookSnapshot {
+    Binance(BinanceOrderBookSnapshot),
+    Crypto,
+}
+
 impl QuotationManager{
 
-    pub fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Self>{
+    /// each time is different
+    pub fn new(exchange: &str, symbol: &str) -> Result<Self>{
+        Self::new_from(exchange, symbol, None)
+    }
+
+    /// updating
+    pub fn new_with_snapshot(exchange: &str, symbol: &str, limit: i32) -> Result<Self>{
+        Self::new_from(exchange, symbol, Some(limit))
+    }
+
+
+
+    // snapshot stream
+    pub fn subscribe_depth(&self) -> Result<OrderBookReceiver> {
+        let config = self.config.clone();
+        if config.is_depth(){
+            let rest_address = config.rest.
+                ok_or(Error::msg("rest address is empty"))?;
+            let depth_address = config.depth
+                .ok_or(Error::msg("depth address is empty"))?;
+            let connection = self.connection.clone();
+            connection.connect_depth(rest_address, depth_address)
+
+        } else if config.is_normal() {
+            let level_address = config.level_depth
+                .ok_or(Error::msg("level address is empty"))?;
+            let connection = self.connection.clone();
+            connection.connect_depth_level(level_address)
+
+        } else{
+            error!("Unsupported Config {:?}", config);
+            Err(anyhow!("Unsupported Config"))
+        }
+
+    }
+
+    // One single snapshot
+    // pub fn latest_depth(&self) -> Option<Depth> {
+    //
+    //     let connection = self.connection.clone();
+    //
+    //     let snapshot = connection.get_snapshot()?;
+    //
+    // }
+
+    fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Self>{
         let config = match_up(exchange, symbol, limit)?;
 
         let types = match config.symbol_type{
@@ -48,60 +99,31 @@ impl QuotationManager{
         Ok(Self{ config, connection})
     }
 
-    pub fn subscribe_depth_snapshot(&self) -> Result<OrderBookType>
-    {
-        let config = self.config.clone();
-
-        let rest_address = config.rest.ok_or(Error::msg("rest address is empty"))?;
-        let depth_address = config.depth.ok_or(Error::msg("depth address is empty"))?;
-        let types = match config.symbol_type{
-            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
-            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
-            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
-        };
-
-        let connection = self.connection.clone();
-
-        connection.connect_depth(rest_address, depth_address)
-    }
-
-    pub fn get_depth_snapshot(&self) -> Option<OrderBookSnapshotType>
-    {
-        let config = self.config.clone();
-
-        let rest_address = config.rest?;
-        let depth_address = config.depth?;
-        let types = match config.symbol_type{
-            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
-            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
-            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
-        };
-
-        let connection = self.connection.clone();
-
-        connection.get_snapshot()
-    }
-
-    pub fn subscribe_depth(&self) -> Result<OrderBookType>
-    {
-        let config = self.config.clone();
-
-        let level_address = config.level_depth.ok_or(Error::msg("level address is empty"))?;
-
-        let types = match config.symbol_type{
-            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
-            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
-            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
-        };
-
-        let connection = self.connection.clone();
-
-        connection.connect_depth_level(level_address)
-    }
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct Depth{
+    /// Send time from Exchange,
+    /// if not have, use receive time
+    pub ts: i64,
+    /// Receive time
+    pub lts: i64,
+    /// last_update_id
+    pub id: i64,
+    asks: Vec<Quote>,
+    bids: Vec<Quote>,
 
+}
 
+impl Depth{
+    fn from_snapshot(orderbook: OrderBookSnapshot) -> Option<Self>{
+        match orderbook{
+            OrderBookSnapshot::Binance(inner) => {},
+            OrderBookSnapshot::Crypto => (),
+        }
+        None
+    }
+}
 
 /// 行情类型: 现货、永续合约
 pub enum OrderbookType {
@@ -114,26 +136,6 @@ pub enum OrderbookType {
 pub enum ExchangeType {
     Binance,
     Crypto,
-}
-
-/// 对应某个交易所里一个币对的行情订阅，对外提供接口支持获取最新截面数据
-pub trait Orderbook {
-    type SnapShotType: OrderbookSnapshot;
-    fn get_snapshot(&self) -> Self::SnapShotType;
-    fn get_type(&self) -> OrderbookType;
-    fn get_exchange(&self) -> ExchangeType;
-}
-
-/// 被返回的截面数据需要支持的一些方法
-pub trait OrderbookSnapshot {
-    fn get_bids(&self) -> &Vec<DepthRow>;
-    fn get_asks(&self) -> &Vec<DepthRow>;
-    fn get_id(&self) -> Cow<str>;
-    /// Time recorded in data or receive time
-    /// (Linux time in `ms`)
-    fn get_ts(&self) -> i64;
-    /// BTC_USD_SWAP
-    fn get_symbol(&self) -> Cow<str>;
 }
 
 

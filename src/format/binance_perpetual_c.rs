@@ -1,4 +1,4 @@
-use crate::format::DepthRow;
+use crate::format::Quote;
 use crate::connection::BinanceOrderBookSnapshot;
 
 use std::collections::BTreeMap;
@@ -59,11 +59,11 @@ pub struct EventPerpetualC {
 
     /// Difference in bids
     #[serde(rename = "b")]
-    pub bids: Vec<DepthRow>,
+    pub bids: Vec<Quote>,
 
     /// Difference in asks
     #[serde(rename = "a")]
-    pub asks: Vec<DepthRow>,
+    pub asks: Vec<Quote>,
 }
 
 impl EventPerpetualC {
@@ -121,11 +121,11 @@ pub struct LevelEventPerpetualC {
 
     /// Difference in bids
     #[serde(rename = "b")]
-    pub bids: Vec<DepthRow>,
+    pub bids: Vec<Quote>,
 
     /// Difference in asks
     #[serde(rename = "a")]
-    pub asks: Vec<DepthRow>,
+    pub asks: Vec<Quote>,
 }
 
 #[derive(Deserialize)]
@@ -146,12 +146,13 @@ pub struct BinanceSnapshotPerpetualC {
 
     pub pair: String,
 
-    pub bids: Vec<DepthRow>,
+    pub bids: Vec<Quote>,
 
-    pub asks: Vec<DepthRow>,
+    pub asks: Vec<Quote>,
 }
 
 pub struct SharedPerpetualC {
+    pub symbol: String,
     last_update_id: i64,
     create_time: i64,
     event_time: i64,
@@ -162,6 +163,7 @@ pub struct SharedPerpetualC {
 impl SharedPerpetualC {
     pub fn new() -> Self {
         SharedPerpetualC {
+            symbol: String::new(),
             last_update_id: 0,
             create_time: 0,
             event_time: 0,
@@ -241,16 +243,17 @@ impl SharedPerpetualC {
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
         let asks = self.asks
             .iter()
-            .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
             .collect();
 
         let bids = self.bids
             .iter()
             .rev()
-            .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
             .collect();
 
         BinanceOrderBookSnapshot {
+            symbol: self.symbol.clone(),
             last_update_id: self.last_update_id,
             create_time: self.create_time,
             event_time: self.event_time,
@@ -278,7 +281,7 @@ impl SharedPerpetualC {
 
 #[test]
 fn depth_row(){
-    let a = DepthRow{amount:1.0, price: 2.0};
-    let b = DepthRow{amount:1.0, price: 2.0};
+    let a = Quote {amount:1.0, price: 2.0};
+    let b = Quote {amount:1.0, price: 2.0};
     assert_eq!(a, b);
 }

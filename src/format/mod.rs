@@ -7,24 +7,24 @@ use serde::{de::Visitor, Deserialize, Deserializer, de::SeqAccess};
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct DepthRow {
+pub struct Quote {
     pub price: f64,
     pub amount: f64,
 }
 
-impl<'de> Deserialize<'de> for DepthRow {
+impl<'de> Deserialize<'de> for Quote {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: Deserializer<'de>
     {
-        deserializer.deserialize_tuple(2, DepthRowVisitor)
+        deserializer.deserialize_tuple(2, QuoteVisitor)
     }
 }
 
-struct DepthRowVisitor;
+struct QuoteVisitor;
 
-impl<'de> Visitor<'de> for DepthRowVisitor {
-    type Value = DepthRow;
+impl<'de> Visitor<'de> for QuoteVisitor {
+    type Value = Quote;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter, "a map with keys 'first' and 'second'")
@@ -56,7 +56,7 @@ impl<'de> Visitor<'de> for DepthRowVisitor {
             return Err(serde::de::Error::custom("Missing amount field"))
         }
 
-        Ok(DepthRow{price: price.unwrap(), amount: amount.unwrap()})
+        Ok(Quote {price: price.unwrap(), amount: amount.unwrap()})
     }
 
 }

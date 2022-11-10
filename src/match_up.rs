@@ -41,7 +41,7 @@
 use std::fmt::format;
 use anyhow::{Result, anyhow};
 
-use crate::ExchangeType;
+use crate::{Connection, ExchangeType};
 
 #[derive(Clone, Debug)]
 pub struct Config{
@@ -51,6 +51,32 @@ pub struct Config{
     pub symbol_type: SymbolType,
     pub exchange_type: ExchangeType,
 }
+
+impl Config{
+
+    pub fn is_depth(&self) -> bool{
+        self.level_depth.is_some() &&  self.depth.is_none() && self.rest.is_none()
+    }
+
+    pub fn is_normal(&self) -> bool {
+        self.depth.is_some() && self.rest.is_some() && self.level_depth.is_none()
+    }
+
+    pub fn is_binance(&self) -> bool{
+        match self.exchange_type {
+            ExchangeType::Binance => true,
+            _ => false
+        }
+    }
+
+    pub fn is_crypto(&self) -> bool{
+        match self.exchange_type {
+            ExchangeType::Crypto => true,
+            _ => false
+        }
+    }
+}
+
 
 #[derive(Clone, Debug)]
 pub enum SymbolType{

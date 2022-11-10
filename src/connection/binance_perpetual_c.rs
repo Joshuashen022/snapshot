@@ -328,6 +328,18 @@ impl BinanceSpotOrderBookPerpetualC {
         }
 
     }
+
+    pub(crate) fn set_symbol(&mut self, symbol: String) -> Result<()>{
+        {
+            match self.shared.clone().write(){
+                Ok(mut shared) => {
+                    (*shared).symbol = symbol;
+                    Ok(())
+                },
+                Err(e) => Err(anyhow!("{:?}", e)),
+            }
+        }
+    }
 }
 
 
