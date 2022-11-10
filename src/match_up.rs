@@ -54,12 +54,12 @@ pub struct Config{
 
 impl Config{
 
-    pub fn is_depth(&self) -> bool{
-        self.level_depth.is_some() &&  self.depth.is_none() && self.rest.is_none()
+    pub fn is_depth(&self) -> bool {
+        self.depth.is_some() && self.rest.is_some() && self.level_depth.is_none()
     }
 
-    pub fn is_normal(&self) -> bool {
-        self.depth.is_some() && self.rest.is_some() && self.level_depth.is_none()
+    pub fn is_normal(&self) -> bool{
+        self.level_depth.is_some() &&  self.depth.is_none() && self.rest.is_none()
     }
 
     pub fn is_binance(&self) -> bool{
