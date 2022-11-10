@@ -48,9 +48,9 @@ impl QuotationManager{
 
 
     // snapshot stream
-    pub fn subscribe_depth(&self) -> Result<OrderBookReceiver> {
+    pub fn subscribe_depth(&self) -> Result<UnboundedReceiver<Depth>> {
         let config = self.config.clone();
-        if config.is_depth(){
+        let res = if config.is_depth(){
             let rest_address = config.rest.
                 ok_or(Error::msg("rest address is empty"))?;
             let depth_address = config.depth
@@ -67,8 +67,9 @@ impl QuotationManager{
         } else{
             error!("Unsupported Config {:?}", config);
             Err(anyhow!("Unsupported Config"))
-        }
+        };
 
+        res
     }
 
     // One single snapshot

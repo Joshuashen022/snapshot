@@ -45,30 +45,30 @@ impl OrderBookReceiver{
 
 
 impl Connection {
-    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> Result<OrderBookReceiver>{
+    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<Depth>>{
         match self{
             Connection::Binance(connection) => {
                 let receiver = connection.depth(rest_address, depth_address)?;
-                Ok(OrderBookReceiver::Binance(receiver))
+                Ok(receiver)
             }
             Connection::Crypto => Err(anyhow!("Unsupported exchange"))
         }
     }
 
-    pub fn connect_depth_level(&self, level_address: String) -> Result<OrderBookReceiver>{
+    pub fn connect_depth_level(&self, level_address: String) -> Result<UnboundedReceiver<Depth>>{
         match self{
             Connection::Binance(connection) => {
                 let receiver = connection.level_depth(level_address)?;
-                Ok(OrderBookReceiver::Binance(receiver))
+                Ok(receiver)
             }
             Connection::Crypto => Err(anyhow!("Unsupported exchange"))
         }
     }
 
-    pub fn get_snapshot(&self)-> Option<OrderBookSnapshot>{
+    pub fn get_snapshot(&self)-> Option<Depth>{
         match self{
             Connection::Binance(connection) => {
-                Some(OrderBookSnapshot::Binance(connection.snapshot()?))
+                Some(connection.snapshot()?)
             }
             Connection::Crypto => None
         }
@@ -164,7 +164,7 @@ impl BinanceConnectionType{
         }
     }
 
-    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>>{
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<Depth>>{
         match self {
             BinanceConnectionType::Spot(inner) =>
                 inner.depth(rest_address, depth_address),
@@ -175,7 +175,7 @@ impl BinanceConnectionType{
         }
     }
 
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>>{
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>>{
         match self {
             BinanceConnectionType::Spot(inner) => inner.level_depth(level_address),
             BinanceConnectionType::PrepetualU(inner) => inner.level_depth(level_address),
@@ -183,7 +183,7 @@ impl BinanceConnectionType{
         }
     }
 
-    pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
+    pub fn snapshot(&self) -> Option<Depth>{
         match self {
             BinanceConnectionType::Spot(inner) => inner.snapshot(),
             BinanceConnectionType::PrepetualU(inner) => inner.snapshot(),

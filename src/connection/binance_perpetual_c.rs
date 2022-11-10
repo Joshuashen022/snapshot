@@ -4,7 +4,7 @@ use crate::format::binance_perpetual_c::{
     StreamLevelEventPerpetualC, StreamEventPerpetualC,
     SharedPerpetualC, BinanceSnapshotPerpetualC
 };
-
+use crate::Depth;
 use crate::connection::BinanceOrderBookSnapshot;
 
 use tokio_tungstenite::connect_async;
@@ -42,7 +42,7 @@ impl BinanceSpotOrderBookPerpetualC {
     }
 
     /// acquire a order book with "depth method"
-    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>> {
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -208,7 +208,7 @@ impl BinanceSpotOrderBookPerpetualC {
                             debug!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
 
                             let snapshot = orderbook.get_snapshot();
-                            if let Err(e) = sender.send(snapshot){
+                            if let Err(e) = sender.send(snapshot.depth()){
                                 error!("depth Send Snapshot error");
                             };
 
@@ -237,7 +237,7 @@ impl BinanceSpotOrderBookPerpetualC {
         Ok(receiver)
     }
 
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>> {
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
 
         // This is not actually used
@@ -295,7 +295,7 @@ impl BinanceSpotOrderBookPerpetualC {
                     if let Ok(mut guard) = shared.write(){
                         (*guard).set_level_event(level_event);
 
-                        let snapshot = (*guard).get_snapshot();
+                        let snapshot = (*guard).get_snapshot().depth();
                         if let Err(e) = sender.send(snapshot){
                             error!("level_depth Send Snapshot error");
                         };
@@ -311,7 +311,7 @@ impl BinanceSpotOrderBookPerpetualC {
 
     #[allow(unused_assignments)]
     /// Get the snapshot of the current Order Book
-    pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
+    pub fn snapshot(&self) -> Option<Depth>{
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock(){
@@ -321,7 +321,7 @@ impl BinanceSpotOrderBookPerpetualC {
         }
 
         if current_status{
-            Some(self.shared.write().unwrap().get_snapshot())
+            Some(self.shared.write().unwrap().get_snapshot().depth())
         } else{
             debug!("Data is not ready");
             None

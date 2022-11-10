@@ -4,8 +4,8 @@ use crate::format::binance_spot::{
     SharedSpot,
     BinanceSnapshotSpot
 };
-
 use crate::connection::BinanceOrderBookSnapshot;
+use crate::Depth;
 
 use tokio_tungstenite::{connect_async, tungstenite};
 use tungstenite::Message;
@@ -46,7 +46,7 @@ impl BinanceOrderBookSpot {
     }
 
     /// acquire a order book with "depth method"
-    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>> {
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -215,7 +215,7 @@ impl BinanceOrderBookSpot {
                             trace!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
 
                             let snapshot = orderbook.get_snapshot();
-                            if let Err(e) = sender.send(snapshot){
+                            if let Err(_) = sender.send(snapshot.depth()){
                                 error!("depth send Snapshot error");
                             };
 
@@ -245,7 +245,7 @@ impl BinanceOrderBookSpot {
     }
 
     // TODO:: deal with error at outer_space
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>>{
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>>{
         let shared = self.shared.clone();
 
         // This is not actually used
@@ -292,7 +292,7 @@ impl BinanceOrderBookSpot {
                     if let Ok(mut guard) = shared.write(){
                         (*guard).set_level_event(level_event, time.as_millis() as i64);
 
-                        let snapshot = (*guard).get_snapshot();
+                        let snapshot = (*guard).get_snapshot().depth();
 
                         if let Err(_) = sender.send(snapshot){
                             error!("level_depth send Snapshot error");
@@ -309,7 +309,7 @@ impl BinanceOrderBookSpot {
     }
 
     /// Get the snapshot of the current Order Book
-    pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
+    pub fn snapshot(&self) -> Option<Depth>{
 
         let mut current_status = false;
 
@@ -321,7 +321,7 @@ impl BinanceOrderBookSpot {
         }
 
         if current_status{
-            Some(self.shared.write().unwrap().get_snapshot())
+            Some(self.shared.write().unwrap().get_snapshot().depth())
         } else{
 
             None
