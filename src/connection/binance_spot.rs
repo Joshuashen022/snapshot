@@ -23,7 +23,7 @@ use std::sync::{Arc, RwLock, Mutex};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use futures_util::future::err;
 use tracing::{error, info, debug, warn};
-
+//                          wss://stream.binance.com:9443/ws/bnbbtc4@depth20@100ms
 // const DEPTH_URL: &str = "wss://stream.binance.com:9443/ws/bnbbtc@depth@100ms";
 // const LEVEL_DEPTH_URL: &str = "wss://stream.binance.com:9443/ws/bnbbtc@depth20@100ms";
 // const REST: &str = "https://api.binance.com/api/v3/depth?symbol=BNBBTC&limit=1000";

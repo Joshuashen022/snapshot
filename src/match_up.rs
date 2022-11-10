@@ -133,7 +133,7 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Conf
 
         level_depth_address = match (&symbol_type, exchange_type) {
             (SymbolType::Spot(inner),ExchangeType::Binance)  => {
-                Some(format!("wss://stream.binance.com:9443/ws/{}4@depth20@100ms", inner))
+                Some(format!("wss://stream.binance.com:9443/ws/{}@depth20@100ms", inner))
             },
             (SymbolType::ContractU(inner), ExchangeType::Binance) => {
                 Some(format!("wss://fstream.binance.com/stream?streams={}@depth20@100ms", inner))
