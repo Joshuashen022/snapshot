@@ -13,7 +13,7 @@ use crate::connection::binance_perpetual_c::BinanceSpotOrderBookPerpetualC;
 
 use serde::Deserialize;
 use std::borrow::Cow;
-use tracing::{error, info, trace};
+use tracing::{debug, error, info, trace};
 use anyhow::Result;
 use tokio::sync::mpsc::UnboundedReceiver;
 use std::thread::sleep;
@@ -158,7 +158,7 @@ impl Orderbook for BinanceConnectionType{
                     break
                 },
                 None => {
-                    error!("Orderbook lock is busy, try again later");
+                    debug!("Orderbook lock is busy, try again later");
                     sleep(Duration::from_millis(10));
                     continue
                 },

@@ -13,7 +13,7 @@ use tokio::{
     time::{sleep, Duration},
     sync::mpsc::{self, UnboundedReceiver},
 };
-use tracing::{error, info, trace};
+use tracing::{error, info, trace, debug};
 use futures_util::StreamExt;
 use anyhow::{Result, Error};
 use anyhow::{bail, anyhow};
@@ -322,7 +322,7 @@ impl BinanceSpotOrderBookPerpetualU {
         if current_status{
             Some(self.shared.write().unwrap().get_snapshot())
         } else{
-            error!("data is not ready");
+            debug!("data is not ready");
             None
         }
 

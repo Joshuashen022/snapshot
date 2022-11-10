@@ -16,6 +16,9 @@ use format::DepthRow;
 use crate::connection::BinanceSpotOrderBookSnapshot;
 use crate::match_up::SymbolType;
 
+// pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
+//                                               -> Result<UnboundedReceiver<T>>
+
 pub fn subscribe_depth_snapshot(exchange: &str, symbol: &str, limit: i32)
     -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
 {
