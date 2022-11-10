@@ -212,7 +212,7 @@ impl BinanceSpotOrderBookPerpetualU {
                             trace!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
                             let snapshot = orderbook.get_snapshot();
                             if let Err(e) = sender.send(snapshot){
-                                error!("Send Snapshot error");
+                                error!("depth send Snapshot error");
                             };
 
                         }
@@ -295,7 +295,7 @@ impl BinanceSpotOrderBookPerpetualU {
 
                         let snapshot = (*guard).get_snapshot();
                         if let Err(e) = sender.send(snapshot){
-                            error!("Send Snapshot error");
+                            error!("level_depth send Snapshot error");
                         };
 
                     }
