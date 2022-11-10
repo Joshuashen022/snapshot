@@ -1,9 +1,7 @@
 use tokio::runtime::Runtime;
 use tokio::time::{sleep, Duration};
 
-use snapshot::{get_depth_snapshot, QuotationManager};
-use snapshot::subscribe_depth;
-use snapshot::subscribe_depth_snapshot;
+use snapshot::QuotationManager;
 
 /// const DEPTH_URL_PC: &str =      "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
 /// const DEPTH_URL_PU: &str =      "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
@@ -36,17 +34,19 @@ fn main(){
         let symbol = spot_symbol;
         println!("using symbol {}", symbol);
         let manager1 = QuotationManager::new_with_snapshot(exchange, symbol, 1000).unwrap();
+        let manager1_clone = manager1.clone();
         tokio::spawn(async move {
-            let mut receiver = manager1.subscribe_depth().unwrap();
+            let mut receiver = manager1_clone.subscribe_depth().unwrap();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
                 println!("receive1 {}", message.id);
             }
         });
 
-        let manager = QuotationManager::new(exchange, symbol).unwrap();
+        let manager2 = QuotationManager::new(exchange, symbol).unwrap();
+        let manager2_clone = manager2.clone();
         tokio::spawn(async move {
-            let mut receiver = manager.subscribe_depth().unwrap();
+            let mut receiver = manager2_clone.subscribe_depth().unwrap();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
                 println!("receive2 {}", message.id);
@@ -57,7 +57,7 @@ fn main(){
         let snapshot1 = manager1.latest_depth().unwrap();
         println!("snapshot1 {}", snapshot1.id);
 
-        let snapshot1 = manager.latest_depth().unwrap();
+        let snapshot1 = manager2.latest_depth().unwrap();
         println!("snapshot2 {}", snapshot1.id);
 
         loop{
