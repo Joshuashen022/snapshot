@@ -280,10 +280,12 @@ impl BinanceOrderBookSpot {
                     },
                 };
 
+                info!("Successfully connected to {}", level_address);
                 if let Ok(mut guard) = status.lock(){
                     (*guard) = true;
                 }
 
+                info!("Level Overbook initialize success, now keep listening ");
                 while let Ok(msg) = stream.next().await.unwrap(){ //
                     if !msg.is_text() {
                         warn!("msg is empty");
@@ -305,6 +307,8 @@ impl BinanceOrderBookSpot {
                             continue
                         },
                     };
+
+                    debug!("Level Event {}", level_event.last_update_id);
 
                     let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
                     if let Ok(mut guard) = shared.write(){

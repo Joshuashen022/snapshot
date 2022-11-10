@@ -267,11 +267,13 @@ impl BinanceSpotOrderBookPerpetualC {
                     },
                 };
 
+                info!("Successfully connected to {}", level_address);
+
                 if let Ok(mut guard) = status.lock(){
-                    
                     (*guard) = true;
                 }
 
+                info!("Level Overbook initialize success, now keep listening ");
 
                 while let Ok(msg) = stream.next().await.unwrap(){ //
                     if !msg.is_text() {
