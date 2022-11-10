@@ -52,8 +52,8 @@ fn main(){
             }
         });
 
-        let snapshot = get_depth_snapshot(exchange, symbol, limit).unwrap();
-        println!("snapshot {}", snapshot.last_update_id);
+        // let snapshot = get_depth_snapshot(exchange, symbol, limit).unwrap();
+        // println!("snapshot {}", snapshot.last_update_id);
         loop{
             sleep(Duration::from_secs(1)).await;
         }
