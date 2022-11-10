@@ -1,5 +1,5 @@
 use crate::format::DepthRow;
-use crate::connection::BinanceSpotOrderBookSnapshot;
+use crate::connection::BinanceOrderBookSnapshot;
 
 use std::collections::BTreeMap;
 // use std::sync::{Arc, RwLock};
@@ -238,7 +238,7 @@ impl SharedPerpetualC {
         self.event_time = level_event.event_time;
     }
 
-    pub fn get_snapshot(&self) -> BinanceSpotOrderBookSnapshot {
+    pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
         let asks = self.asks
             .iter()
             .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
@@ -250,7 +250,7 @@ impl SharedPerpetualC {
             .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
             .collect();
 
-        BinanceSpotOrderBookSnapshot {
+        BinanceOrderBookSnapshot {
             last_update_id: self.last_update_id,
             create_time: self.create_time,
             event_time: self.event_time,

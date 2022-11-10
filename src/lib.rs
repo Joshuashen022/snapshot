@@ -9,19 +9,18 @@ mod format;
 mod match_up;
 
 pub use connection::{
-    BinanceOrderBookType, BinanceConnectionType,
+    BinanceOrderBookType, BinanceConnectionType, Connection,
+    OrderBookType
 };
+
 use match_up::{match_up, Config};
 use format::DepthRow;
-use crate::connection::BinanceSpotOrderBookSnapshot;
+use crate::connection::{BinanceOrderBookSnapshot, OrderBookSnapshotType};
 use crate::match_up::SymbolType;
 
 // pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
 //                                               -> Result<UnboundedReceiver<T>>
-enum Connection{
-    Binance(BinanceConnectionType),
-    Crypto,
-}
+
 
 pub struct QuotationManager{
     pub config: Config,
@@ -49,7 +48,7 @@ impl QuotationManager{
         Ok(Self{ config, connection})
     }
 
-    pub fn subscribe_depth_snapshot(&self) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
+    pub fn subscribe_depth_snapshot(&self) -> Result<OrderBookType>
     {
         let config = self.config.clone();
 
@@ -61,13 +60,12 @@ impl QuotationManager{
             SymbolType::Spot(_) => BinanceOrderBookType::Spot,
         };
 
-        let connection = BinanceConnectionType::new_with_type(types);
+        let connection = self.connection.clone();
 
-        connection.depth(rest_address, depth_address)
+        connection.connect_depth(rest_address, depth_address)
     }
 
-    pub fn get_depth_snapshot(&self)
-        -> Option<BinanceSpotOrderBookSnapshot>
+    pub fn get_depth_snapshot(&self) -> Option<OrderBookSnapshotType>
     {
         let config = self.config.clone();
 
@@ -79,15 +77,12 @@ impl QuotationManager{
             SymbolType::Spot(_) => BinanceOrderBookType::Spot,
         };
 
-        let connection = BinanceConnectionType::new_with_type(types);
+        let connection = self.connection.clone();
 
-        let _ = connection.depth(rest_address, depth_address).ok()?;
-
-        Some(connection.get_snapshot())
+        connection.get_snapshot()
     }
 
-    pub fn subscribe_depth(&self)
-        -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>
+    pub fn subscribe_depth(&self) -> Result<OrderBookType>
     {
         let config = self.config.clone();
 
@@ -99,9 +94,9 @@ impl QuotationManager{
             SymbolType::Spot(_) => BinanceOrderBookType::Spot,
         };
 
-        let connection = BinanceConnectionType::new_with_type(types);
+        let connection = self.connection.clone();
 
-        connection.level_depth(level_address)
+        connection.connect_depth_level(level_address)
     }
 }
 

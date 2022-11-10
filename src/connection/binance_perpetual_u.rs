@@ -4,7 +4,7 @@ use crate::format::binance_perpetual_u::{
     SharedPerpetualU, BinanceSnapshotPerpetualU
 };
 
-use crate::connection::BinanceSpotOrderBookSnapshot;
+use crate::connection::BinanceOrderBookSnapshot;
 
 use std::collections::vec_deque::VecDeque;
 use tokio_tungstenite::connect_async;
@@ -30,6 +30,7 @@ use tokio_tungstenite::tungstenite::Message;
 // const MAX_BUFFER: usize = 30;
 const MAX_BUFFER_EVENTS: usize = 5;
 
+#[derive(Clone)]
 pub struct BinanceSpotOrderBookPerpetualU {
     status: Arc<Mutex<bool>>,
     pub(crate) shared: Arc<RwLock<SharedPerpetualU>>,
@@ -45,7 +46,7 @@ impl BinanceSpotOrderBookPerpetualU {
     }
 
     /// acquire a order book with "depth method"
-    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -240,7 +241,7 @@ impl BinanceSpotOrderBookPerpetualU {
         Ok(receiver)
     }
 
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>> {
         let shared = self.shared.clone();
 
         // This is not actually used
@@ -308,7 +309,7 @@ impl BinanceSpotOrderBookPerpetualU {
     }
 
     /// Get the snapshot of the current Order Book
-    pub fn snapshot(&self) -> Option<BinanceSpotOrderBookSnapshot>{
+    pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
 
         let mut current_status = false;
 

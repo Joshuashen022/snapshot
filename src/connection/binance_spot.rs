@@ -5,7 +5,7 @@ use crate::format::binance_spot::{
     BinanceSnapshotSpot
 };
 
-use crate::connection::BinanceSpotOrderBookSnapshot;
+use crate::connection::BinanceOrderBookSnapshot;
 
 use tokio_tungstenite::{connect_async, tungstenite};
 use tungstenite::Message;
@@ -31,22 +31,22 @@ use tracing::{error, info, trace};
 const MAX_BUFFER_EVENTS: usize = 5;
 
 #[derive(Clone)]
-pub struct BinanceSpotOrderBookSpot {
+pub struct BinanceOrderBookSpot {
     status: Arc<Mutex<bool>>,
     shared: Arc<RwLock<SharedSpot>>,
 }
 
-impl BinanceSpotOrderBookSpot {
+impl BinanceOrderBookSpot {
 
     pub fn new() -> Self {
-        BinanceSpotOrderBookSpot {
+        BinanceOrderBookSpot {
             status: Arc::new(Mutex::new(false)),
             shared: Arc::new(RwLock::new(SharedSpot::new()))
         }
     }
 
     /// acquire a order book with "depth method"
-    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>> {
+    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -244,7 +244,7 @@ impl BinanceSpotOrderBookSpot {
         Ok(receiver)
     }
 
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceSpotOrderBookSnapshot>>{
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<BinanceOrderBookSnapshot>>{
         let shared = self.shared.clone();
 
         // This is not actually used
@@ -306,7 +306,7 @@ impl BinanceSpotOrderBookSpot {
     }
 
     /// Get the snapshot of the current Order Book
-    pub fn snapshot(&self) -> Option<BinanceSpotOrderBookSnapshot>{
+    pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
 
         let mut current_status = false;
 

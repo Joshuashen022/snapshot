@@ -1,5 +1,5 @@
 use crate::format::DepthRow;
-use crate::connection::BinanceSpotOrderBookSnapshot;
+use crate::connection::BinanceOrderBookSnapshot;
 
 use std::collections::btree_map::BTreeMap;
 // use std::sync::{Arc, RwLock};
@@ -142,7 +142,7 @@ impl SharedSpot {
         self.time_stamp = time_stamp;
     }
 
-    pub fn get_snapshot(&self) -> BinanceSpotOrderBookSnapshot {
+    pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
         let asks = self.asks
             .iter()
             .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
@@ -154,7 +154,7 @@ impl SharedSpot {
             .map(|(price, amount)| DepthRow {price: price.into_inner(), amount: *amount})
             .collect();
         let time_stamp = self.time_stamp;
-        BinanceSpotOrderBookSnapshot {
+        BinanceOrderBookSnapshot {
             last_update_id: self.last_update_id,
             create_time: time_stamp,
             event_time: time_stamp,
