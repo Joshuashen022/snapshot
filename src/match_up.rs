@@ -104,13 +104,13 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Conf
         let limit = limit.unwrap();
         rest_address = match (&symbol_type, exchange_type) {
             (SymbolType::Spot(inner),ExchangeType::Binance)  => {
-                Some(format!("https://api.binance.com/api/v3/depth?symbol={}&limit={}", inner, limit))
+                Some(format!("https://api.binance.com/api/v3/depth?symbol={}&limit={}", inner.to_uppercase(), limit))
             },
             (SymbolType::ContractU(inner), ExchangeType::Binance) => {
-                Some(format!("https://fapi.binance.com/fapi/v1/depth?symbol={}&limit={}", inner, limit))
+                Some(format!("https://fapi.binance.com/fapi/v1/depth?symbol={}&limit={}", inner.to_uppercase(), limit))
             },
             (SymbolType::ContractC(inner), ExchangeType::Binance) => {
-                Some(format!("https://dapi.binance.com/dapi/v1/depth?symbol={}&limit={}", inner, limit))
+                Some(format!("https://dapi.binance.com/dapi/v1/depth?symbol={}&limit={}", inner.to_uppercase(), limit))
             },
             _ => return Err(anyhow!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type))
         };
