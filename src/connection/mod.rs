@@ -3,6 +3,7 @@ pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
 
 use crate::format::Quote;
+use crate::Depth;
 use crate::{
     OrderbookType, ExchangeType,
     OrderBookSnapshot
@@ -86,7 +87,8 @@ pub struct BinanceOrderBookSnapshot {
     pub symbol: String,
     pub last_update_id: i64,
     pub create_time: i64,
-    pub event_time: i64,
+    pub send_time: i64,
+    pub receive_time: i64,
     pub bids: Vec<Quote>,
     pub asks: Vec<Quote>,
 }
@@ -132,6 +134,16 @@ impl BinanceOrderBookSnapshot {
         }
 
         (bid_different, ask_different)
+    }
+
+    pub fn depth(&self) -> Depth{
+        Depth{
+            lts: self.receive_time,
+            ts: self.send_time,
+            id: self.last_update_id,
+            bids: self.bids.clone(),
+            asks: self.asks.clone(),
+        }
     }
 }
 

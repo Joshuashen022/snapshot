@@ -65,7 +65,9 @@ pub struct BinanceSnapshotSpot {
 pub struct SharedSpot {
     pub symbol: String,
     last_update_id: i64,
-    time_stamp: i64,
+    create_time: i64,
+    send_time: i64,
+    receive_time: i64,
     asks: BTreeMap<OrderedFloat<f64>, f64>,
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
@@ -75,7 +77,9 @@ impl SharedSpot {
         SharedSpot {
             symbol: String::new(),
             last_update_id: 0,
-            time_stamp: 0,
+            create_time: 0,
+            send_time: 0,
+            receive_time: 0,
             asks: BTreeMap::new(),
             bids: BTreeMap::new(),
         }
@@ -119,7 +123,7 @@ impl SharedSpot {
         }
 
         self.last_update_id = event.last_update_id;
-        self.time_stamp = event.ts;
+        self.send_time = event.ts;
     }
 
     /// Only used for "LevelEvent"
@@ -141,7 +145,7 @@ impl SharedSpot {
         }
 
         self.last_update_id = level_event.last_update_id;
-        self.time_stamp = time_stamp;
+        self.send_time = time_stamp;
     }
 
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
@@ -155,12 +159,13 @@ impl SharedSpot {
             .rev()
             .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
             .collect();
-        let time_stamp = self.time_stamp;
+
         BinanceOrderBookSnapshot {
             symbol: self.symbol.clone(),
             last_update_id: self.last_update_id,
-            create_time: time_stamp,
-            event_time: time_stamp,
+            create_time: self.create_time,
+            send_time: self.send_time,
+            receive_time: self.receive_time,
             asks,
             bids,
         }

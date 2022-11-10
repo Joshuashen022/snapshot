@@ -155,7 +155,8 @@ pub struct SharedPerpetualC {
     pub symbol: String,
     last_update_id: i64,
     create_time: i64,
-    event_time: i64,
+    send_time: i64,
+    receive_time: i64,
     asks: BTreeMap<OrderedFloat<f64>, f64>,
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
@@ -166,7 +167,8 @@ impl SharedPerpetualC {
             symbol: String::new(),
             last_update_id: 0,
             create_time: 0,
-            event_time: 0,
+            send_time: 0,
+            receive_time: 0,
             asks: BTreeMap::new(),
             bids: BTreeMap::new(),
         }
@@ -190,7 +192,7 @@ impl SharedPerpetualC {
         }
 
         self.last_update_id = snapshot.last_update_id;
-        self.event_time = snapshot.event_time;
+        self.send_time = snapshot.event_time;
         self.create_time = snapshot.create_time;
     }
 
@@ -214,7 +216,7 @@ impl SharedPerpetualC {
 
         self.last_update_id = event.last_update_id;
         self.create_time = event.create_time;
-        self.event_time = event.event_time;
+        self.send_time = event.event_time;
     }
 
     /// Only used for "LevelEvent"
@@ -237,7 +239,7 @@ impl SharedPerpetualC {
 
         self.last_update_id = level_event.last_update_id;
         self.create_time = level_event.create_time;
-        self.event_time = level_event.event_time;
+        self.send_time = level_event.event_time;
     }
 
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
@@ -256,7 +258,8 @@ impl SharedPerpetualC {
             symbol: self.symbol.clone(),
             last_update_id: self.last_update_id,
             create_time: self.create_time,
-            event_time: self.event_time,
+            send_time: self.send_time,
+            receive_time: self.receive_time,
             asks,
             bids,
         }
