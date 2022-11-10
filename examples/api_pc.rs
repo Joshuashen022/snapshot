@@ -37,23 +37,23 @@ fn main(){
         let symbol = pc_symbol;
         println!("using symbol {}", symbol);
         tokio::spawn(async move {
-            while let Some(message) = subscribe_depth_snapshot(exchange, symbol, limit)
-                .unwrap().recv().await
+            let mut receiver = subscribe_depth_snapshot(exchange, symbol, limit).unwrap();
+            while let Some(message) = receiver.recv().await
             {
                 println!("receive1 {}", message.last_update_id);
             }
         });
 
-        // tokio::spawn(async move {
-        //     while let Some(message) = subscribe_depth(exchange, symbol)
-        //         .unwrap().recv().await
-        //     {
-        //         println!("receive2 {}", message.last_update_id);
-        //     }
-        // });
+        tokio::spawn(async move {
+            let mut receiver =  subscribe_depth(exchange, symbol).unwrap();
+            while let Some(message) = receiver.recv().await
+            {
+                println!("receive2 {}", message.last_update_id);
+            }
+        });
 
-        // let snapshot = get_depth_snapshot(exchange, symbol, limit).unwrap();
-        // println!("snapshot {}", snapshot.last_update_id);
+        let snapshot = get_depth_snapshot(exchange, symbol, limit).unwrap();
+        println!("snapshot {}", snapshot.last_update_id);
         loop{
             sleep(Duration::from_secs(1)).await;
         }

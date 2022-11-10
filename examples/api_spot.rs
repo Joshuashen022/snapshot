@@ -37,8 +37,8 @@ fn main(){
         let symbol = spot_symbol;
         println!("using symbol {}", symbol);
         tokio::spawn(async move {
-            while let Some(message) = subscribe_depth_snapshot(exchange, symbol, limit)
-                .unwrap().recv().await
+            let mut receiver = subscribe_depth_snapshot(exchange, symbol, limit).unwrap();
+            while let Some(message) = receiver.recv().await
             {
                 println!("receive1 {}", message.last_update_id);
             }
