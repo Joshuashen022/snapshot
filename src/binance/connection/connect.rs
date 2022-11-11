@@ -19,28 +19,33 @@ pub async fn socket_stream(address: &str) -> Result<BinanceWebSocket, String>{
 
 }
 
-pub fn add_event_to_orderbook<
-    Event: DeserializeOwned + EventT,
-    Snapshot: SnapshotT,
-    Shard: SharedT<Event, BinanceSnapshot = Snapshot>,
->(
-    message: Message,
-    shared: Arc<RwLock<Shard>>,
-    snapshot: Snapshot
-) -> Result<bool>{
+pub fn deserialize_event<Event: DeserializeOwned>(message: Message) -> Option<Event> {
     if !message.is_text() {
-        return Ok(false);
+        return None;
     }
 
     let text = match message.into_text() {
         Ok(e) => e,
-        Err(_) => return Ok(false),
+        Err(_) => return None,
     };
 
     let event: Event = match serde_json::from_str(&text) {
         Ok(e) => e,
-        Err(_) => return Ok(false),
+        Err(_) => return None,
     };
+
+    Some(event)
+}
+
+pub fn add_event_to_orderbook<
+    Event: EventT,
+    Snapshot: SnapshotT,
+    Shard: SharedT<Event, BinanceSnapshot = Snapshot>,
+>(
+    event: Event,
+    shared: Arc<RwLock<Shard>>,
+    snapshot: &Snapshot
+) -> Result<bool>{
     let snap_shot_id = snapshot.id();
     if event.behind(snap_shot_id) {
         return Ok(false)
