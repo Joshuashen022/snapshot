@@ -107,8 +107,6 @@ impl SharedSpot {
 
     /// Only used for "Event"
     pub fn add_event(&mut self, event: EventSpot) {
-        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-
         for ask in event.asks {
             if ask.amount == 0.0 {
                 self.asks.remove(&OrderedFloat(ask.price));
@@ -124,7 +122,8 @@ impl SharedSpot {
                 self.bids.insert(OrderedFloat(bid.price), bid.amount);
             }
         }
-
+        
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = event.last_update_id;
         self.send_time = event.ts;
         self.receive_time = time.as_millis() as i64;
@@ -150,6 +149,7 @@ impl SharedSpot {
 
         self.last_update_id = level_event.last_update_id;
         self.send_time = time_stamp;
+        self.receive_time = time_stamp;
     }
 
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {

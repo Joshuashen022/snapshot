@@ -230,10 +230,11 @@ impl SharedPerpetualU {
                 self.bids.insert(OrderedFloat(bid.price), bid.amount);
             }
         }
-
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = level_event.last_update_id;
         self.create_time = level_event.create_time;
         self.send_time = level_event.event_time;
+        self.receive_time = time.as_millis() as i64;
     }
 
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {

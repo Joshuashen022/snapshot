@@ -199,7 +199,7 @@ impl SharedPerpetualC {
 
     /// Only used for "Event"
     pub fn add_event(&mut self, event: EventPerpetualC) {
-        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
         for ask in event.asks {
             if ask.amount == 0.0 {
                 self.asks.remove(&OrderedFloat(ask.price));
@@ -215,7 +215,7 @@ impl SharedPerpetualC {
                 self.bids.insert(OrderedFloat(bid.price), bid.amount);
             }
         }
-
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = event.last_update_id;
         self.create_time = event.create_time;
         self.send_time = event.event_time;
@@ -239,10 +239,11 @@ impl SharedPerpetualC {
                 self.bids.insert(OrderedFloat(bid.price), bid.amount);
             }
         }
-
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = level_event.last_update_id;
         self.create_time = level_event.create_time;
         self.send_time = level_event.event_time;
+        self.receive_time = time.as_millis() as i64;
     }
 
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
