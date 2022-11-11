@@ -6,6 +6,11 @@ use url::Url;
 use serde::de::DeserializeOwned;
 use std::sync::{Arc, RwLock};
 use crate::binance::format::{SharedT, EventT, SnapshotT};
+use std::collections::VecDeque;
+use tracing::{debug, error, info, warn};
+use futures_util::StreamExt;
+
+const MAX_BUFFER_EVENTS: usize = 5;
 
 pub type BinanceWebSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
@@ -60,6 +65,76 @@ pub fn add_event_to_orderbook<
 
     if event.ahead(snap_shot_id) {
         return Ok(false)
+    }
+
+    Ok(false)
+}
+
+pub async fn initialize<
+    Event: DeserializeOwned + EventT,
+    Snapshot: SnapshotT + DeserializeOwned,
+    Shard: SharedT<Event, BinanceSnapshot = Snapshot>,
+>(
+    stream: &mut BinanceWebSocket,
+    rest_address: String,
+    shared: Arc<RwLock<Shard>>,
+) -> Result<bool> {
+
+    let mut buffer_events = VecDeque::new();
+
+    while let Ok(message) = stream.next().await.unwrap() {
+        let event = deserialize_event::<Event>(message).unwrap();
+
+        buffer_events.push_back(event);
+
+        if buffer_events.len() == MAX_BUFFER_EVENTS {
+            break;
+        }
+    }
+
+    // Wait for a while to collect event into buffer
+    let snapshot: Snapshot =
+        reqwest::get(&rest_address).await?.json().await?;
+
+    info!("Successfully connected to {}", rest_address);
+
+    let mut overbook_setup = false;
+    let shared_clone = shared.clone();
+    while let Some(event) = buffer_events.pop_front() {
+
+        if let Ok(add_success) = add_event_to_orderbook::<Event, Snapshot, Shard>
+            (event, shared_clone.clone(), &snapshot){
+            if add_success{
+                return Ok(true)
+            }
+        } else{
+            warn!("All event is not usable, need a new snap shot ");
+            return Ok(false)
+        };
+    }
+
+    if overbook_setup {
+
+        while let Some(event) = buffer_events.pop_front() {
+            let mut orderbook = shared.write().unwrap();
+            orderbook.add_event(event);
+        }
+    } else {
+        info!(" Try to wait new events for out snapshot");
+
+        while let Ok(message) = stream.next().await.unwrap() {
+            let event = deserialize_event::<Event>(message).unwrap();
+
+            if let Ok(add_success) = add_event_to_orderbook::<Event, Snapshot, Shard>
+                (event, shared_clone.clone(), &snapshot){
+                if add_success{
+                    return Ok(true)
+                }
+            } else{
+                warn!("All event is not usable, need a new snap shot ");
+                return Ok(false)
+            };
+        }
     }
 
     Ok(false)

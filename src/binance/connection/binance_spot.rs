@@ -21,7 +21,7 @@ use crate::binance::format::binance_spot::{
 };
 use crate::{Depth, OrderBookSnapshot};
 use crate::binance::connection::connect::{
-    socket_stream, BinanceWebSocket, add_event_to_orderbook, deserialize_event
+    socket_stream, BinanceWebSocket, initialize, deserialize_event
 };
 
 const MAX_BUFFER_EVENTS: usize = 5;
@@ -69,7 +69,9 @@ impl BinanceOrderBookSpot {
                     };
 
                     info!("Successfully connected to {}", depth_address);
-                    match self_clone.clone().initialize(&mut stream, rest_address.clone()).await{
+                    match initialize::<EventSpot, BinanceSnapshotSpot,SharedSpot>
+                        (&mut stream, rest_address.clone(), shared.clone()).await
+                    {
                         Ok(overbook_setup) => {
                             if overbook_setup {
                                 if let Ok(mut guard) = status.lock(){
@@ -238,73 +240,6 @@ impl BinanceOrderBookSpot {
             (*guard) = value;
         }
         Ok(())
-    }
-
-    async fn initialize(
-        &self,
-        stream: &mut BinanceWebSocket,
-        rest_address: String,
-    ) -> Result<bool> {
-
-        let mut buffer_events = VecDeque::new();
-
-        while let Ok(message) = stream.next().await.unwrap() {
-            let event = deserialize_event(message).unwrap();
-
-            buffer_events.push_back(event);
-
-            if buffer_events.len() == MAX_BUFFER_EVENTS {
-                break;
-            }
-        }
-
-        // Wait for a while to collect event into buffer
-        let snapshot: BinanceSnapshotSpot =
-            reqwest::get(&rest_address).await?.json().await?;
-
-        info!("Successfully connected to {}", rest_address);
-
-        let mut overbook_setup = false;
-        let shared = self.shared.clone();
-        while let Some(event) = buffer_events.pop_front() {
-
-            if let Ok(add_success) = add_event_to_orderbook::<EventSpot, BinanceSnapshotSpot,SharedSpot>
-                (event,shared.clone(),&snapshot){
-                if add_success{
-                    return Ok(true)
-                }
-            } else{
-                warn!("All event is not usable, need a new snap shot ");
-                return Ok(false)
-            };
-        }
-
-        if overbook_setup {
-            debug!("Emptying events in buffer");
-
-            while let Some(event) = buffer_events.pop_front() {
-                let mut orderbook = self.shared.write().unwrap();
-                orderbook.add_event(event);
-            }
-        } else {
-            info!(" Try to wait new events for out snapshot");
-
-            while let Ok(message) = stream.next().await.unwrap() {
-                let event = deserialize_event(message).unwrap();
-
-                if let Ok(add_success) = add_event_to_orderbook::<EventSpot, BinanceSnapshotSpot,SharedSpot>
-                    (event,shared.clone(),&snapshot){
-                    if add_success{
-                        return Ok(true)
-                    }
-                } else{
-                    warn!("All event is not usable, need a new snap shot ");
-                    return Ok(false)
-                };
-            }
-        }
-
-        Ok(false)
     }
 }
 
