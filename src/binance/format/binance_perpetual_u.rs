@@ -66,18 +66,6 @@ pub struct EventPerpetualU {
 }
 
 impl EventPerpetualU {
-
-    pub fn match_snapshot(&self, snap_shot_id: i64) -> bool {
-        debug!(
-            "order book {}, Event {}-{}({})",
-            snap_shot_id,
-            self.first_update_id,
-            self.last_update_id,
-            self.last_message_last_update_id
-        );
-        self.first_update_id <= snap_shot_id && snap_shot_id <= self.last_update_id
-    }
-
     //snapshot.last_update_id > event.last_update_id
     /// [E.U,..,E.u] S.u
     pub fn behind(&self, snap_shot_id: i64) -> bool{

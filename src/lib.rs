@@ -98,7 +98,7 @@ pub struct Depth {
     pub bids: Vec<Quote>,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Quote {
     pub price: f64,
     pub amount: f64,

@@ -10,7 +10,7 @@ use tracing::debug;
 use crate::binance::format::binance_spot::BinanceSnapshotSpot;
 // use anyhow::{Result, anyhow};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Default)]
 pub struct StreamEventPerpetualC {
     pub stream: String,
     pub data: EventPerpetualC,
@@ -23,7 +23,7 @@ pub struct StreamLevelEventPerpetualC {
 }
 
 /// 增量深度信息
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Default)]
 pub struct EventPerpetualC {
     /// Event type
     #[serde(rename = "e")]
@@ -70,18 +70,6 @@ pub struct EventPerpetualC {
 }
 
 impl EventPerpetualC {
-    // pub fn match_seq_num(&self, expected_id: &i64) -> bool {
-    //     self.first_update_id == *expected_id
-    // }
-
-    /// only for contract_U
-    /// Rule: `U<= id <= u`
-    pub fn match_snapshot(&self, snapshot_updated_id: i64) -> bool {
-        // let first = self.first_update_id <= snapshot_updated_id ;
-        // let second = snapshot_updated_id <= self.last_update_id;
-        // println!("{}, {}", first, second);
-        self.first_update_id <= snapshot_updated_id && snapshot_updated_id <= self.last_update_id
-    }
 
     /// [E.U,..,E.u] S.u
     pub fn behind(&self, snap_shot_id: i64) -> bool{
