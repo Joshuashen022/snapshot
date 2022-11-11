@@ -1,14 +1,13 @@
-pub mod binance_spot;
 pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
+pub mod binance_spot;
 
-use crate::Quote;
-use crate::Depth;
 use crate::binance::connection::{
-    binance_perpetual_u::BinanceSpotOrderBookPerpetualU,
-    binance_spot::BinanceOrderBookSpot,
     binance_perpetual_c::BinanceSpotOrderBookPerpetualC,
+    binance_perpetual_u::BinanceSpotOrderBookPerpetualU, binance_spot::BinanceOrderBookSpot,
 };
+use crate::Depth;
+use crate::Quote;
 
 use serde::Deserialize;
 // use std::borrow::Cow;
@@ -18,12 +17,10 @@ use tracing::error;
 // use std::thread::sleep;
 // use std::time::Duration;
 
-
-
-pub enum BinanceOrderBookType{
+pub enum BinanceOrderBookType {
     Spot,
-    PrepetualU,
-    PrepetualC,
+    PrepetualUSDT,
+    PrepetualCoin,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -42,17 +39,17 @@ impl BinanceOrderBookSnapshot {
     pub fn if_contains(&self, other: &BinanceOrderBookSnapshot) -> bool {
         let mut contains_bids = true;
         let mut contains_asks = true;
-        for bid in &other.bids{
+        for bid in &other.bids {
             if !self.bids.contains(bid) {
                 contains_bids = false;
-                break
+                break;
             }
         }
 
-        for ask in &other.bids{
-            if !self.asks.contains(&ask){
+        for ask in &other.bids {
+            if !self.asks.contains(&ask) {
                 contains_asks = false;
-                break
+                break;
             }
         }
 
@@ -65,14 +62,14 @@ impl BinanceOrderBookSnapshot {
         let mut bid_different = Vec::new();
         let mut ask_different = Vec::new();
 
-        for bid in &other.bids{
+        for bid in &other.bids {
             if !self.bids.contains(bid) {
                 bid_different.push(*bid);
             }
         }
 
-        for ask in &other.bids{
-            if !self.asks.contains(&ask){
+        for ask in &other.bids {
+            if !self.asks.contains(&ask) {
                 ask_different.push(*ask);
             }
         }
@@ -80,8 +77,8 @@ impl BinanceOrderBookSnapshot {
         (bid_different, ask_different)
     }
 
-    pub fn depth(&self) -> Depth{
-        Depth{
+    pub fn depth(&self) -> Depth {
+        Depth {
             lts: self.receive_time,
             ts: self.send_time,
             id: self.last_update_id,
@@ -91,64 +88,66 @@ impl BinanceOrderBookSnapshot {
     }
 }
 
-
 #[derive(Clone)]
-pub enum BinanceConnectionType{
+pub enum BinanceConnectionType {
     Spot(BinanceOrderBookSpot),
-    PrepetualU(BinanceSpotOrderBookPerpetualU),
-    PrepetualC(BinanceSpotOrderBookPerpetualC),
+    PrepetualUSDT(BinanceSpotOrderBookPerpetualU),
+    PrepetualCoin(BinanceSpotOrderBookPerpetualC),
 }
 
-impl BinanceConnectionType{
-    pub fn new_with_type(types: BinanceOrderBookType) -> Self {
+impl BinanceConnectionType {
+    pub fn with_type(types: BinanceOrderBookType) -> Self {
         match types {
             BinanceOrderBookType::Spot => BinanceConnectionType::Spot(BinanceOrderBookSpot::new()),
-            BinanceOrderBookType::PrepetualU => BinanceConnectionType::PrepetualU(BinanceSpotOrderBookPerpetualU::new()),
-            BinanceOrderBookType::PrepetualC => BinanceConnectionType::PrepetualC(BinanceSpotOrderBookPerpetualC::new()),
+            BinanceOrderBookType::PrepetualUSDT => {
+                BinanceConnectionType::PrepetualUSDT(BinanceSpotOrderBookPerpetualU::new())
+            }
+            BinanceOrderBookType::PrepetualCoin => {
+                BinanceConnectionType::PrepetualCoin(BinanceSpotOrderBookPerpetualC::new())
+            }
         }
     }
 
-    pub fn depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<Depth>>{
+    pub fn depth(
+        &self,
+        rest_address: String,
+        depth_address: String,
+    ) -> Result<UnboundedReceiver<Depth>> {
         match self {
-            BinanceConnectionType::Spot(inner) =>
-                inner.depth(rest_address, depth_address),
-            BinanceConnectionType::PrepetualU(inner) =>
-                inner.depth(rest_address, depth_address),
-            BinanceConnectionType::PrepetualC(inner) =>
-                inner.depth(rest_address, depth_address),
+            BinanceConnectionType::Spot(inner) => inner.depth(rest_address, depth_address),
+            BinanceConnectionType::PrepetualUSDT(inner) => inner.depth(rest_address, depth_address),
+            BinanceConnectionType::PrepetualCoin(inner) => inner.depth(rest_address, depth_address),
         }
     }
 
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>>{
+    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         match self {
             BinanceConnectionType::Spot(inner) => inner.level_depth(level_address),
-            BinanceConnectionType::PrepetualU(inner) => inner.level_depth(level_address),
-            BinanceConnectionType::PrepetualC(inner) => inner.level_depth(level_address),
+            BinanceConnectionType::PrepetualUSDT(inner) => inner.level_depth(level_address),
+            BinanceConnectionType::PrepetualCoin(inner) => inner.level_depth(level_address),
         }
     }
 
-    pub fn snapshot(&self) -> Option<Depth>{
+    pub fn snapshot(&self) -> Option<Depth> {
         match self {
             BinanceConnectionType::Spot(inner) => inner.snapshot(),
-            BinanceConnectionType::PrepetualU(inner) => inner.snapshot(),
-            BinanceConnectionType::PrepetualC(inner) => inner.snapshot(),
+            BinanceConnectionType::PrepetualUSDT(inner) => inner.snapshot(),
+            BinanceConnectionType::PrepetualCoin(inner) => inner.snapshot(),
         }
     }
 
     #[allow(dead_code)]
-    pub fn set_symbol(&mut self, symbol: String){
+    pub fn set_symbol(&mut self, symbol: String) {
         let res = match self {
             BinanceConnectionType::Spot(inner) => inner.set_symbol(symbol),
-            BinanceConnectionType::PrepetualU(inner) => inner.set_symbol(symbol),
-            BinanceConnectionType::PrepetualC(inner) => inner.set_symbol(symbol),
+            BinanceConnectionType::PrepetualUSDT(inner) => inner.set_symbol(symbol),
+            BinanceConnectionType::PrepetualCoin(inner) => inner.set_symbol(symbol),
         };
 
-        if let Err(e) = res{
+        if let Err(e) = res {
             error!("set symbol error {:?}", e);
         }
     }
 
-
-
-//pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
+    //pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
 }

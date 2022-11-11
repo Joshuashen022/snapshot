@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
 use ordered_float::OrderedFloat;
+use std::collections::BTreeMap;
 
 pub struct Shared {
     pub instrument: String,
@@ -11,7 +11,7 @@ pub struct Shared {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl Shared{
+impl Shared {
     pub fn new() -> Self {
         Shared {
             instrument: String::new(),

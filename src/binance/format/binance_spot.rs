@@ -1,13 +1,12 @@
-use crate::Quote;
 use crate::binance::connection::BinanceOrderBookSnapshot;
+use crate::Quote;
 
 use std::collections::btree_map::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
-use serde::Deserialize;
 use ordered_float::OrderedFloat;
+use serde::Deserialize;
 // use anyhow::{Result, anyhow};
-
 
 #[derive(Deserialize, Debug)]
 pub struct EventSpot {
@@ -54,7 +53,6 @@ pub struct LevelEventSpot {
     pub asks: Vec<Quote>,
 }
 
-
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BinanceSnapshotSpot {
@@ -87,7 +85,7 @@ impl SharedSpot {
     }
 
     /// return last_update_id
-    pub fn id(&self) -> i64{
+    pub fn id(&self) -> i64 {
         self.last_update_id
     }
 
@@ -130,8 +128,7 @@ impl SharedSpot {
     }
 
     /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventSpot, time_stamp: i64){
-
+    pub fn set_level_event(&mut self, level_event: LevelEventSpot, time_stamp: i64) {
         self.asks.clear();
         for ask in level_event.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);
@@ -148,15 +145,23 @@ impl SharedSpot {
     }
 
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
-        let asks = self.asks
+        let asks = self
+            .asks
             .iter()
-            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {
+                price: price.into_inner(),
+                amount: *amount,
+            })
             .collect();
 
-        let bids = self.bids
+        let bids = self
+            .bids
             .iter()
             .rev()
-            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {
+                price: price.into_inner(),
+                amount: *amount,
+            })
             .collect();
 
         BinanceOrderBookSnapshot {
@@ -188,8 +193,14 @@ impl SharedSpot {
 }
 
 #[test]
-fn depth_row(){
-    let a = Quote {amount:1.0, price: 2.0};
-    let b = Quote {amount:1.0, price: 2.0};
+fn depth_row() {
+    let a = Quote {
+        amount: 1.0,
+        price: 2.0,
+    };
+    let b = Quote {
+        amount: 1.0,
+        price: 2.0,
+    };
     assert_eq!(a, b);
 }

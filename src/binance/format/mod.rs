@@ -1,18 +1,16 @@
-pub mod binance_spot;
 pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
+pub mod binance_spot;
 
-
-use serde::{de::Visitor, Deserialize, Deserializer, de::SeqAccess};
+use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer};
 use std::fmt;
 
 use crate::Quote;
 
-
 impl<'de> Deserialize<'de> for Quote {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_tuple(2, QuoteVisitor)
     }
@@ -27,7 +25,10 @@ impl<'de> Visitor<'de> for QuoteVisitor {
         write!(formatter, "a map with keys 'first' and 'second'")
     }
 
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error> where A: SeqAccess<'de> {
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
         let mut price = None;
         let mut amount = None;
 
@@ -41,19 +42,25 @@ impl<'de> Visitor<'de> for QuoteVisitor {
         if let Some(val) = seq.next_element::<&str>()? {
             match val.parse::<f64>() {
                 Ok(num) => amount = Some(num),
-                Err(_) => return Err(serde::de::Error::custom("Fail to convert amount str to f64")),
+                Err(_) => {
+                    return Err(serde::de::Error::custom(
+                        "Fail to convert amount str to f64",
+                    ))
+                }
             }
         }
 
         if price.is_none() {
-            return Err(serde::de::Error::custom("Missing price field"))
+            return Err(serde::de::Error::custom("Missing price field"));
         }
 
         if amount.is_none() {
-            return Err(serde::de::Error::custom("Missing amount field"))
+            return Err(serde::de::Error::custom("Missing amount field"));
         }
 
-        Ok(Quote {price: price.unwrap(), amount: amount.unwrap()})
+        Ok(Quote {
+            price: price.unwrap(),
+            amount: amount.unwrap(),
+        })
     }
-
 }

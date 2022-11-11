@@ -1,11 +1,11 @@
-use crate::Quote;
 use crate::binance::connection::BinanceOrderBookSnapshot;
+use crate::Quote;
 
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
-use serde::Deserialize;
 use ordered_float::OrderedFloat;
+use serde::Deserialize;
 // use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
@@ -131,7 +131,6 @@ pub struct LevelEventPerpetualC {
 
 #[derive(Deserialize)]
 pub struct BinanceSnapshotPerpetualC {
-
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: i64,
 
@@ -177,7 +176,7 @@ impl SharedPerpetualC {
 
     /// return last_update_id
     /// or `u`
-    pub fn id(&self) -> i64{
+    pub fn id(&self) -> i64 {
         self.last_update_id
     }
 
@@ -199,7 +198,6 @@ impl SharedPerpetualC {
 
     /// Only used for "Event"
     pub fn add_event(&mut self, event: EventPerpetualC) {
-
         for ask in event.asks {
             if ask.amount == 0.0 {
                 self.asks.remove(&OrderedFloat(ask.price));
@@ -223,7 +221,7 @@ impl SharedPerpetualC {
     }
 
     /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualC){
+    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualC) {
         self.asks.clear();
         for ask in level_event.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);
@@ -233,7 +231,7 @@ impl SharedPerpetualC {
         for bid in level_event.bids {
             self.bids.insert(OrderedFloat(bid.price), bid.amount);
         }
-        
+
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = level_event.last_update_id;
         self.create_time = level_event.create_time;
@@ -242,15 +240,23 @@ impl SharedPerpetualC {
     }
 
     pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
-        let asks = self.asks
+        let asks = self
+            .asks
             .iter()
-            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {
+                price: price.into_inner(),
+                amount: *amount,
+            })
             .collect();
 
-        let bids = self.bids
+        let bids = self
+            .bids
             .iter()
             .rev()
-            .map(|(price, amount)| Quote {price: price.into_inner(), amount: *amount})
+            .map(|(price, amount)| Quote {
+                price: price.into_inner(),
+                amount: *amount,
+            })
             .collect();
 
         BinanceOrderBookSnapshot {
@@ -282,8 +288,14 @@ impl SharedPerpetualC {
 }
 
 #[test]
-fn depth_row(){
-    let a = Quote {amount:1.0, price: 2.0};
-    let b = Quote {amount:1.0, price: 2.0};
+fn depth_row() {
+    let a = Quote {
+        amount: 1.0,
+        price: 2.0,
+    };
+    let b = Quote {
+        amount: 1.0,
+        price: 2.0,
+    };
     assert_eq!(a, b);
 }
