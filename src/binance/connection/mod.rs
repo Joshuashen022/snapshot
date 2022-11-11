@@ -2,12 +2,8 @@ pub mod binance_spot;
 pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
 
-use crate::binance::format::Quote;
+use crate::Quote;
 use crate::Depth;
-// use crate::{
-    // OrderbookType, ExchangeType,
-    // OrderBookSnapshot
-// };
 use crate::binance::connection::{
     binance_perpetual_u::BinanceSpotOrderBookPerpetualU,
     binance_spot::BinanceOrderBookSpot,
@@ -22,36 +18,6 @@ use tracing::error;
 // use std::thread::sleep;
 // use std::time::Duration;
 
-#[derive(Clone)]
-pub enum Connection{
-    Binance(BinanceConnectionType),
-    Crypto,
-}
-
-impl Connection {
-    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> UnboundedReceiver<Depth>{
-        match self{
-            Connection::Binance(connection) =>
-                connection.depth(rest_address, depth_address).unwrap(),
-            Connection::Crypto => panic!("Unsupported exchange")
-        }
-    }
-
-    pub fn connect_depth_level(&self, level_address: String) -> UnboundedReceiver<Depth>{
-        match self{
-            Connection::Binance(connection) =>
-                connection.level_depth(level_address).unwrap(),
-            Connection::Crypto => panic!("Unsupported exchange")
-        }
-    }
-
-    pub fn get_snapshot(&self)-> Option<Depth>{
-        match self{
-            Connection::Binance(connection) => connection.snapshot(),
-            Connection::Crypto => None
-        }
-    }
-}
 
 
 pub enum BinanceOrderBookType{

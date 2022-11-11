@@ -6,11 +6,8 @@ pub mod binance_perpetual_u;
 use serde::{de::Visitor, Deserialize, Deserializer, de::SeqAccess};
 use std::fmt;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Quote {
-    pub price: f64,
-    pub amount: f64,
-}
+use crate::Quote;
+
 
 impl<'de> Deserialize<'de> for Quote {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

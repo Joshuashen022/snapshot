@@ -11,12 +11,12 @@ mod match_up;
 
 
 pub use binance::connection::{
-    BinanceOrderBookType, BinanceConnectionType, Connection,
+    BinanceOrderBookType, BinanceConnectionType,
     BinanceOrderBookSnapshot
 };
+use crypto::CryptoOrderBookSpot;
 
-pub use binance::format::Quote;
-use match_up::{match_up, Config, SymbolType};
+use match_up::{match_up, Config, SymbolType, Connection};
 
 // pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
 //                                               -> Result<UnboundedReceiver<T>>
@@ -72,23 +72,27 @@ impl QuotationManager{
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self{
         let config = match_up(exchange, symbol, limit);
 
-        let types = match config.symbol_type{
-            SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
-            SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
-            SymbolType::Spot(_) => BinanceOrderBookType::Spot,
-        };
-
-        let connection_inner = BinanceConnectionType::new_with_type(types);
-
         let connection = match config.exchange_type{
-            ExchangeType::Binance => Connection::Binance(connection_inner),
-            ExchangeType::Crypto => Connection::Crypto,
+            ExchangeType::Binance => {
+                let types = match config.symbol_type{
+                    SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
+                    SymbolType::ContractU(_) => BinanceOrderBookType::PrepetualU,
+                    SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+                };
+                let connection_inner = BinanceConnectionType::new_with_type(types);
+                Connection::Binance(connection_inner)
+            },
+            ExchangeType::Crypto => {
+                let connection_inner = CryptoOrderBookSpot::new();
+                Connection::Crypto(connection_inner)
+            },
         };
 
         Self{ config, connection}
     }
 
 }
+
 #[allow(dead_code)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct Depth{
@@ -103,6 +107,13 @@ pub struct Depth{
     bids: Vec<Quote>,
 
 }
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Quote {
+    pub price: f64,
+    pub amount: f64,
+}
+
 #[allow(dead_code)]
 impl Depth{
 

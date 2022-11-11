@@ -1,4 +1,4 @@
-use crate::binance::format::Quote;
+use crate::Quote;
 use crate::binance::connection::BinanceOrderBookSnapshot;
 
 use std::collections::btree_map::BTreeMap;

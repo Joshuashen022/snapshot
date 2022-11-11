@@ -40,8 +40,9 @@
 
 // use std::fmt::format;
 use anyhow::{Result, anyhow};
-
-use crate::ExchangeType;
+use tokio::sync::mpsc::UnboundedReceiver;
+use crate::{BinanceConnectionType, Depth, ExchangeType};
+use crate::crypto::CryptoOrderBookSpot;
 
 #[derive(Clone, Debug)]
 pub struct Config{
@@ -212,6 +213,36 @@ fn validate_symbol(symbol: &str) -> Result<SymbolType>{
     Ok(result)
 }
 
+#[derive(Clone)]
+pub enum Connection{
+    Binance(BinanceConnectionType),
+    Crypto(CryptoOrderBookSpot),
+}
+
+impl Connection {
+    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> UnboundedReceiver<Depth>{
+        match self{
+            Connection::Binance(connection) =>
+                connection.depth(rest_address, depth_address).unwrap(),
+            Connection::Crypto(connection) => panic!("Unsupported exchange")
+        }
+    }
+
+    pub fn connect_depth_level(&self, level_address: String) -> UnboundedReceiver<Depth>{
+        match self{
+            Connection::Binance(connection) =>
+                connection.level_depth(level_address).unwrap(),
+            Connection::Crypto(connection) => panic!("Unsupported exchange")
+        }
+    }
+
+    pub fn get_snapshot(&self)-> Option<Depth>{
+        match self{
+            Connection::Binance(connection) => connection.snapshot(),
+            Connection::Crypto(connection) => None
+        }
+    }
+}
 
 
 
