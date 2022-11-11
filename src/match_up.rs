@@ -38,10 +38,10 @@
 /// const REST_PU: &str =   "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000";
 /// const REST_SPOT: &str = "https://api.binance.com/api/v3/depth?symbol=BNBBTC&limit=1000";
 
-use std::fmt::format;
+// use std::fmt::format;
 use anyhow::{Result, anyhow};
 
-use crate::{Connection, ExchangeType};
+use crate::ExchangeType;
 
 #[derive(Clone, Debug)]
 pub struct Config{

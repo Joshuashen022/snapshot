@@ -2,23 +2,24 @@ pub mod binance_spot;
 pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
 
-use crate::format::Quote;
+use crate::binance::format::Quote;
 use crate::Depth;
 use crate::{
-    OrderbookType, ExchangeType,
+    // OrderbookType, ExchangeType,
     OrderBookSnapshot
 };
-use crate::connection::binance_spot::BinanceOrderBookSpot;
-use crate::connection::binance_perpetual_u::BinanceSpotOrderBookPerpetualU;
-use crate::connection::binance_perpetual_c::BinanceSpotOrderBookPerpetualC;
+use crate::binance::connection::{
+    binance_perpetual_u::BinanceSpotOrderBookPerpetualU,
+    binance_spot::BinanceOrderBookSpot,
+    binance_perpetual_c::BinanceSpotOrderBookPerpetualC,
+};
 
 use serde::Deserialize;
-use std::borrow::Cow;
-use tracing::{debug, error, info, trace};
+// use std::borrow::Cow;
 use anyhow::{anyhow, Result};
 use tokio::sync::mpsc::UnboundedReceiver;
-use std::thread::sleep;
-use std::time::Duration;
+// use std::thread::sleep;
+// use std::time::Duration;
 
 #[derive(Clone)]
 pub enum Connection{

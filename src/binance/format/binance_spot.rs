@@ -1,12 +1,12 @@
-use crate::format::Quote;
-use crate::connection::BinanceOrderBookSnapshot;
+use crate::binance::format::Quote;
+use crate::binance::connection::BinanceOrderBookSnapshot;
 
 use std::collections::btree_map::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
 use serde::Deserialize;
 use ordered_float::OrderedFloat;
-use anyhow::{Result, Error, anyhow};
+use anyhow::{Result, anyhow};
 
 
 #[derive(Deserialize, Debug)]

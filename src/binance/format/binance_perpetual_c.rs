@@ -1,30 +1,28 @@
-use crate::format::Quote;
-use crate::connection::BinanceOrderBookSnapshot;
+use crate::binance::format::Quote;
+use crate::binance::connection::BinanceOrderBookSnapshot;
 
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
 use serde::Deserialize;
 use ordered_float::OrderedFloat;
-use anyhow::{Result, Error, anyhow};
-
-
+use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
-pub struct StreamEventPerpetualU {
+pub struct StreamEventPerpetualC {
     pub stream: String,
-    pub data: EventPerpetualU,
+    pub data: EventPerpetualC,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct StreamLevelEventPerpetualU {
+pub struct StreamLevelEventPerpetualC {
     pub stream: String,
-    pub data: LevelEventPerpetualU,
+    pub data: LevelEventPerpetualC,
 }
 
 /// 增量深度信息
 #[derive(Deserialize, Debug)]
-pub struct EventPerpetualU {
+pub struct EventPerpetualC {
     /// Event type
     #[serde(rename = "e")]
     pub ttype: String,
@@ -40,6 +38,10 @@ pub struct EventPerpetualU {
     /// Transaction pair
     #[serde(rename = "s")]
     pub pair: String,
+
+    /// 标的交易对
+    #[serde(rename = "ps")]
+    pub stander_pair: String,
 
     /// First `update Id` during the time
     /// between last time update and now
@@ -65,7 +67,7 @@ pub struct EventPerpetualU {
     pub asks: Vec<Quote>,
 }
 
-impl EventPerpetualU {
+impl EventPerpetualC {
     pub fn match_seq_num(&self, expected_id: &i64) -> bool {
         self.first_update_id == *expected_id
     }
@@ -82,7 +84,7 @@ impl EventPerpetualU {
 
 /// 有限档深度信息
 #[derive(Deserialize, Debug)]
-pub struct LevelEventPerpetualU {
+pub struct LevelEventPerpetualC {
     /// Event type
     #[serde(rename = "e")]
     pub ttype: String,
@@ -98,6 +100,10 @@ pub struct LevelEventPerpetualU {
     /// Transaction pair
     #[serde(rename = "s")]
     pub pair: String,
+
+    /// 标的交易对
+    #[serde(rename = "ps")]
+    pub stander_pair: String,
 
     /// First `update Id` during the time
     /// between last time update and now
@@ -123,9 +129,8 @@ pub struct LevelEventPerpetualU {
     pub asks: Vec<Quote>,
 }
 
-
 #[derive(Deserialize)]
-pub struct BinanceSnapshotPerpetualU {
+pub struct BinanceSnapshotPerpetualC {
 
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: i64,
@@ -138,12 +143,16 @@ pub struct BinanceSnapshotPerpetualU {
     #[serde(rename = "T")]
     pub create_time: i64,
 
+    pub symbol: String,
+
+    pub pair: String,
+
     pub bids: Vec<Quote>,
 
     pub asks: Vec<Quote>,
 }
 
-pub struct SharedPerpetualU {
+pub struct SharedPerpetualC {
     pub symbol: String,
     last_update_id: i64,
     create_time: i64,
@@ -153,14 +162,14 @@ pub struct SharedPerpetualU {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl SharedPerpetualU {
+impl SharedPerpetualC {
     pub fn new() -> Self {
-        SharedPerpetualU {
+        SharedPerpetualC {
             symbol: String::new(),
             last_update_id: 0,
             create_time: 0,
             send_time: 0,
-            receive_time:0,
+            receive_time: 0,
             asks: BTreeMap::new(),
             bids: BTreeMap::new(),
         }
@@ -172,7 +181,7 @@ impl SharedPerpetualU {
         self.last_update_id
     }
 
-    pub fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualU) {
+    pub fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualC) {
         self.asks.clear();
         for ask in &snapshot.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);
@@ -189,7 +198,7 @@ impl SharedPerpetualU {
     }
 
     /// Only used for "Event"
-    pub fn add_event(&mut self, event: EventPerpetualU) {
+    pub fn add_event(&mut self, event: EventPerpetualC) {
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         for ask in event.asks {
             if ask.amount == 0.0 {
@@ -214,7 +223,7 @@ impl SharedPerpetualU {
     }
 
     /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualU){
+    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualC){
         for ask in level_event.asks {
             if ask.amount == 0.0 {
                 self.asks.remove(&OrderedFloat(ask.price));
@@ -249,7 +258,7 @@ impl SharedPerpetualU {
             .collect();
 
         BinanceOrderBookSnapshot {
-            symbol:self.symbol.clone(),
+            symbol: self.symbol.clone(),
             last_update_id: self.last_update_id,
             create_time: self.create_time,
             send_time: self.send_time,
@@ -261,7 +270,7 @@ impl SharedPerpetualU {
 
     /// With give event to update snapshot,
     /// if event doesn't satisfy return error
-    pub fn update_snapshot(&mut self, event: EventPerpetualU) -> Result<()>  {
+    pub fn update_snapshot(&mut self, event: EventPerpetualC) -> Result<()>  {
         if event.first_update_id != self.last_update_id + 1 {
             Err(anyhow!(
                 "Expect event u to be {}, found {}",

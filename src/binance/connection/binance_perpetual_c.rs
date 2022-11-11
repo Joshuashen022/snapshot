@@ -1,20 +1,20 @@
 use std::collections::VecDeque;
-use crate::format::binance_perpetual_c::{
-    EventPerpetualC,
-    StreamLevelEventPerpetualC, StreamEventPerpetualC,
-    SharedPerpetualC, BinanceSnapshotPerpetualC
-};
-use crate::Depth;
-use crate::connection::BinanceOrderBookSnapshot;
 
-use std::time::{UNIX_EPOCH, SystemTime};
+use crate::Depth;
+use crate::binance::format::binance_perpetual_c::{
+        EventPerpetualC,
+        StreamLevelEventPerpetualC, StreamEventPerpetualC,
+        SharedPerpetualC, BinanceSnapshotPerpetualC
+};
+
+
 use tokio_tungstenite::connect_async;
 use url::Url;
 use tokio::{
-    time::{sleep, Duration},
+    // time::{sleep, Duration},
     sync::mpsc::{self, UnboundedReceiver},
 };
-use tracing::{error, info, trace, debug, warn};
+use tracing::{error, info, debug, warn};
 use futures_util::StreamExt;
 use anyhow::{Result, Error};
 use anyhow::anyhow;
@@ -214,7 +214,7 @@ impl BinanceSpotOrderBookPerpetualC {
                             debug!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
 
                             let snapshot = orderbook.get_snapshot();
-                            if let Err(e) = sender.send(snapshot.depth()){
+                            if let Err(_) = sender.send(snapshot.depth()){
                                 error!("depth Send Snapshot error");
                             };
 
@@ -307,7 +307,7 @@ impl BinanceSpotOrderBookPerpetualC {
                         (*guard).set_level_event(level_event);
 
                         let snapshot = (*guard).get_snapshot().depth();
-                        if let Err(e) = sender.send(snapshot){
+                        if let Err(_) = sender.send(snapshot){
                             error!("level_depth Send Snapshot error");
                         };
 

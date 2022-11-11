@@ -1,23 +1,22 @@
-use std::borrow::Cow;
+
 use tokio::sync::mpsc::UnboundedReceiver;
 use anyhow::{Result, Error, anyhow};
 use serde::Deserialize;
-use tracing::{error, info, trace};
+use tracing::error;
 
 
-pub mod connection;
-mod format;
+pub mod binance;
+pub mod crypto;
 mod match_up;
 
-pub use connection::{
+
+pub use binance::connection::{
     BinanceOrderBookType, BinanceConnectionType, Connection,
-    OrderBookReceiver
+    OrderBookReceiver, BinanceOrderBookSnapshot
 };
 
-use match_up::{match_up, Config};
-use format::Quote;
-use crate::connection::BinanceOrderBookSnapshot;
-use crate::match_up::SymbolType;
+use binance::format::Quote;
+use match_up::{match_up, Config, SymbolType};
 
 // pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
 //                                               -> Result<UnboundedReceiver<T>>
@@ -96,7 +95,7 @@ impl QuotationManager{
     }
 
 }
-
+#[allow(dead_code)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct Depth{
     /// Send time from Exchange,
@@ -110,11 +109,11 @@ pub struct Depth{
     bids: Vec<Quote>,
 
 }
-
+#[allow(dead_code)]
 impl Depth{
     fn from_snapshot(orderbook: OrderBookSnapshot) -> Option<Self>{
         match orderbook{
-            OrderBookSnapshot::Binance(inner) => {},
+            OrderBookSnapshot::Binance(_) => {},
             OrderBookSnapshot::Crypto => (),
         }
         None
