@@ -33,20 +33,20 @@ fn main(){
 
         let symbol = pu_symbol;
         println!("using symbol {}", symbol);
-        let manager1 = QuotationManager::new_with_snapshot(exchange, symbol, 1000).unwrap();
+        let manager1 = QuotationManager::new_with_snapshot(exchange, symbol, 1000);
         let manager1_clone = manager1.clone();
         tokio::spawn(async move {
-            let mut receiver = manager1_clone.subscribe_depth().unwrap();
+            let mut receiver = manager1_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
                 println!("receive1 {}", message.id);
             }
         });
 
-        let manager2 = QuotationManager::new(exchange, symbol).unwrap();
+        let manager2 = QuotationManager::new(exchange, symbol);
         let manager2_clone = manager2.clone();
         tokio::spawn(async move {
-            let mut receiver = manager2_clone.subscribe_depth().unwrap();
+            let mut receiver = manager2_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
                 println!("receive2 {}", message.id);

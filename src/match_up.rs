@@ -113,7 +113,15 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config{
             (SymbolType::ContractC(inner), ExchangeType::Binance) => {
                 Some(format!("https://dapi.binance.com/dapi/v1/depth?symbol={}&limit={}", inner.to_uppercase(), limit))
             },
-            _ => panic!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type)
+            (SymbolType::Spot(_),ExchangeType::Crypto)  => {
+                None
+            },
+            (SymbolType::ContractU(_), ExchangeType::Crypto) => {
+                None
+            },
+            (SymbolType::ContractC(_), ExchangeType::Crypto) => {
+                None
+            },
         };
 
         depth_address = match (&symbol_type, exchange_type) {
@@ -126,7 +134,15 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config{
             (SymbolType::ContractC(inner), ExchangeType::Binance) => {
                 Some(format!("wss://dstream.binance.com/stream?streams={}@depth@100ms", inner))
             },
-            _ => panic!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type)
+            (SymbolType::Spot(_),ExchangeType::Crypto)  => {
+                None
+            },
+            (SymbolType::ContractU(_), ExchangeType::Crypto) => {
+                None
+            },
+            (SymbolType::ContractC(_), ExchangeType::Crypto) => {
+                None
+            },
         };
 
     } else {
@@ -142,7 +158,15 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config{
             (SymbolType::ContractC(inner), ExchangeType::Binance) => {
                 Some(format!("wss://dstream.binance.com/stream?streams={}@depth20@100ms", inner))
             },
-            _ => panic!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type)
+            (SymbolType::Spot(_),ExchangeType::Crypto)  => {
+                None
+            },
+            (SymbolType::ContractU(_), ExchangeType::Crypto) => {
+                None
+            },
+            (SymbolType::ContractC(_), ExchangeType::Crypto) => {
+                None
+            },
         };
 
     }
@@ -156,14 +180,22 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config{
     }
 }
 
+/// Valid symbol should be like
+/// "btcusd_221230_swap", "btcusdt_swap", "bnbbtc"
 fn validate_symbol(symbol: &str) -> Result<SymbolType>{
     if symbol.split("_").collect::<Vec<_>>().len() > 4 {
         return Err(anyhow!("Unsupported Symbol {}", symbol))
     }
 
-    let is_contract = symbol.contains("swap");
-    let is_spot = !symbol.contains("_");
-    let is_contract_coin = symbol.split("_").collect::<Vec<_>>().len() == 3;
+    let is_contract = {
+        symbol.contains("_swap") && symbol.split("_").collect::<Vec<_>>().len() <= 3
+    };
+    let is_spot = {
+        !symbol.contains("_") && !symbol.contains("swap")
+    };
+    let is_contract_coin = {
+        symbol.split("_").collect::<Vec<_>>().len() == 3 && is_contract
+    };
 
     let symbol_inner = symbol.split("_swap").collect::<Vec<_>>()[0];
 
@@ -201,4 +233,35 @@ mod tests {
         let _ = match_up("binance", "btcusd", Some(1000));
     }
 
+    #[test]
+    #[should_panic]
+    fn in_valid_symbol1(){
+        use crate::match_up::validate_symbol;
+        let symbol = "btcusd_221230_swap_";
+        validate_symbol(symbol).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn in_valid_symbol2(){
+        use crate::match_up::validate_symbol;
+        let symbol = "btcusd_221230_abc";
+        validate_symbol(symbol).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn in_valid_symbol3(){
+        use crate::match_up::validate_symbol;
+        let symbol = "btcusd_221230swap";
+        validate_symbol(symbol).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn in_valid_symbol4(){
+        use crate::match_up::validate_symbol;
+        let symbol = "btcusdswap";
+        validate_symbol(symbol).unwrap();
+    }
 }

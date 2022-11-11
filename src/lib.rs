@@ -27,9 +27,6 @@ pub struct QuotationManager{
     connection: Connection,
 }
 
-
-
-
 impl QuotationManager{
 
     /// Create one-time-20-sized snapshot manager
@@ -140,62 +137,58 @@ pub enum ExchangeType {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn spot_receiver_works() {
-        use tokio::runtime::Runtime;
-        
-        use crate::connection::BinanceOrderBookType;
-        use crate::connection::BinanceConnectionType;
+    fn manager_builder_works() {
 
-        Runtime::new().unwrap().block_on(async {
+        use crate::QuotationManager;
 
-            let spot = BinanceConnectionType::new_with_type(BinanceOrderBookType::Spot);
-            let mut spot_rx_d= spot.depth().unwrap();
-            let mut spot_rx_ld= spot.level_depth().unwrap();
+        let exchange = "binance";
+        let exchange2 = "crypto";
+        let pc_symbol = "btcusd_221230_swap";
+        let pu_symbol = "btcusdt_swap";
+        let spot_symbol = "bnbbtc";
+        let limit = 1000;
 
-            assert!(spot_rx_d.recv().await.is_some(),"spot.depth!");
-            assert!(spot_rx_ld.recv().await.is_some(), "spot.level_depth!");
+        let _ = QuotationManager::new_with_snapshot(exchange, pc_symbol, limit);
+        let _ = QuotationManager::new_with_snapshot(exchange, pu_symbol, limit);
+        let _ = QuotationManager::new_with_snapshot(exchange, spot_symbol, limit);
 
-        });
-                
+        let _ = QuotationManager::new(exchange, pc_symbol);
+        let _ = QuotationManager::new(exchange, pu_symbol);
+        let _ = QuotationManager::new(exchange, spot_symbol);
+
+        let _ = QuotationManager::new_with_snapshot(exchange2, pc_symbol, limit);
+        let _ = QuotationManager::new_with_snapshot(exchange2, pu_symbol, limit);
+        let _ = QuotationManager::new_with_snapshot(exchange2, spot_symbol, limit);
+
+        let _ = QuotationManager::new(exchange2, pc_symbol);
+        let _ = QuotationManager::new(exchange2, pu_symbol);
+        let _ = QuotationManager::new(exchange2, spot_symbol);
     }
+
     #[test]
-    fn contract_u_receiver_works() {
-        // Can't pass, but example works
-        use tokio::runtime::Runtime;
-        
-        use crate::connection::BinanceOrderBookType;
-        use crate::connection::BinanceConnectionType;
+    #[should_panic]
+    fn manager_builder_wrong_exchange() {
+        use crate::QuotationManager;
 
-        Runtime::new().unwrap().block_on(async {
-            let contract_u = BinanceConnectionType::new_with_type(BinanceOrderBookType::PrepetualU);
+        let wrong_exchange = "binanc";
+        let pc_symbol = "btcusd_221230_swap";
+        let limit = 1000;
 
-            let mut con_u_rx_d = contract_u.depth().unwrap();
-            let mut con_u_rx_ld = contract_u.level_depth().unwrap();
+        let _ = QuotationManager::new_with_snapshot(wrong_exchange, pc_symbol, limit);
 
-            assert!(con_u_rx_d.recv().await.is_some(), "contract_u.depth!");
-            assert!(con_u_rx_ld.recv().await.is_some(), "contract_u.level_depth!");
-
-        });
-                
     }
+
     #[test]
-    fn contract_c_receiver_works() {
-        use tokio::runtime::Runtime;
-        
-        use crate::connection::BinanceOrderBookType;
-        use crate::connection::BinanceConnectionType;
+    #[should_panic]
+    fn manager_builder_wrong_symbol() {
+        use crate::QuotationManager;
 
-        Runtime::new().unwrap().block_on(async {
-            let contract_c = BinanceConnectionType::new_with_type(BinanceOrderBookType::PrepetualC);
+        let wrong_exchange = "binance";
+        let pc_symbol = "btcusd_221230swap";
+        let limit = 1000;
 
-            let mut con_c_rx_d = contract_c.depth().unwrap();
-            let mut con_c_rx_ld = contract_c.level_depth().unwrap();
+        let _ = QuotationManager::new_with_snapshot(wrong_exchange, pc_symbol, limit);
 
-            assert!(con_c_rx_d.recv().await.is_some(), "contract_c.depth");
-            assert!(con_c_rx_ld.recv().await.is_some(), "contract_c.level_depth!");
-
-        });
-                
     }
 }
 
