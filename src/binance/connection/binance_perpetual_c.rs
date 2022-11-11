@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-
+use crate::binance::connection::connect::{socket_stream, BinanceWebSocket};
 use crate::binance::format::binance_perpetual_c::{
     BinanceSnapshotPerpetualC, EventPerpetualC, SharedPerpetualC, StreamEventPerpetualC,
     StreamLevelEventPerpetualC,
@@ -45,6 +45,7 @@ impl BinanceSpotOrderBookPerpetualC {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
+        let self_clone = self.clone();
         // Thread to maintain Order Book
         let _ = tokio::spawn(async move {
             let mut default_exit = 0;
@@ -55,161 +56,52 @@ impl BinanceSpotOrderBookPerpetualC {
                         (*guard) = false;
                     }
 
-                    let url = Url::parse(&depth_address).expect("Bad URL");
-
-                    let res = connect_async(url).await;
-                    let mut stream = match res {
-                        Ok((stream, _)) => stream,
+                    let mut stream = match socket_stream(&depth_address).await {
+                        Ok(stream) => stream,
                         Err(e) => {
-                            default_exit += 1;
                             error!("Error calling {}, {:?}", depth_address, e);
-                            continue;
+                            default_exit += 1;
+                            continue
                         }
                     };
 
                     info!("Successfully connected to {}", depth_address);
-
-                    let mut buffer_events = VecDeque::new();
-                    while let Ok(message) = stream.next().await.unwrap() {
-                        //
-                        let event = deserialize_message(message.clone());
-                        if event.is_none() {
-                            error!("Message decode error {:?}", message);
-                            continue;
-                        }
-                        let event = event.unwrap();
-
-                        buffer_events.push_back(event);
-
-                        if buffer_events.len() == MAX_BUFFER_EVENTS {
-                            break;
-                        }
-                    }
-
-                    // Wait for a while to collect event into buffer
-                    info!("Calling {} success", rest_address);
-                    let snapshot: BinanceSnapshotPerpetualC =
-                        reqwest::get(&rest_address).await?.json().await?;
-
-                    info!("Successfully connected to {}", rest_address);
-
-                    debug!("Snap shot {}", snapshot.last_update_id);
-
-                    let mut overbook_setup = false;
-                    while let Some(event) = buffer_events.pop_front() {
-                        debug!(" Event {}-{}", event.first_update_id, event.last_update_id);
-
-                        if snapshot.last_update_id > event.last_update_id {
-                            continue;
-                        }
-
-                        if event.match_snapshot(snapshot.last_update_id) {
-                            info!(" Found match snapshot at buffer");
-                            let mut orderbook = shared.write().unwrap();
-                            orderbook.load_snapshot(&snapshot);
-                            orderbook.add_event(event);
-
-                            overbook_setup = true;
-
-                            break;
-                        }
-
-                        if event.first_update_id > snapshot.last_update_id {
-                            error!("Rest event is not usable, need a new snap shot ");
-
-                            break;
-                        }
-                    }
-
-                    if overbook_setup {
-                        debug!("Emptying events in buffer");
-                        while let Some(event) = buffer_events.pop_front() {
-                            let mut orderbook = shared.write().unwrap();
-                            orderbook.add_event(event);
-                        }
-                    } else {
-                        info!(" Try to wait new events for out snapshot");
-                        while let Ok(message) = stream.next().await.unwrap() {
-                            let event = deserialize_message(message);
-                            if event.is_none() {
-                                continue;
+                    match self_clone.clone().initialize(&mut stream, rest_address.clone()).await{
+                        Ok(overbook_setup) => {
+                            if overbook_setup {
+                                if let Ok(mut guard) = status.lock(){
+                                    (*guard) = true;
+                                };
+                            } else {
+                                continue
                             }
-                            let event = event.unwrap();
-
-                            debug!(" Event {}-{}", event.first_update_id, event.last_update_id);
-
-                            // [E.U,..,E.u] S.u
-                            if snapshot.last_update_id > event.last_update_id {
-                                continue;
-                            }
-
-                            let mut orderbook = shared.write().unwrap();
-                            // [E.U,..,S.u,..,E.u]
-                            if event.match_snapshot(snapshot.last_update_id) {
-                                info!(" Found match snapshot with new event");
-
-                                orderbook.load_snapshot(&snapshot);
-                                orderbook.add_event(event);
-
-                                overbook_setup = true;
-                                break;
-                            }
-
-                            // S.u [E.U,..,E.u]
-                            if event.first_update_id > snapshot.last_update_id {
-                                error!("Rest event is not usable, need a new snap shot ");
-
-                                break;
-                            }
+                        },
+                        Err(e) => {
+                            error!("{:?}",e);
+                            continue
                         }
-                    }
-
-                    if overbook_setup {
-                        if let Ok(mut guard) = status.lock() {
-                            (*guard) = true;
-                        }
-                    } else {
-                        continue;
-                    }
+                    };
 
                     info!(" Overbook initialize success, now keep listening ");
                     // Overbook initialize success
                     while let Ok(message) = stream.next().await.unwrap() {
-                        let event = deserialize_message(message);
+                        let event = deserialize_message(message.clone());
                         if event.is_none() {
+                            warn!("Message decode error {:?}", message);
                             continue;
                         }
                         let event = event.unwrap();
 
-                        debug!(
-                            "receive event {}-{}({}) ts: {}",
-                            event.first_update_id,
-                            event.last_update_id,
-                            event.last_message_last_update_id,
-                            event.event_time,
-                        );
-
                         let mut orderbook = shared.write().unwrap();
-                        if event.last_message_last_update_id != orderbook.id() {
-                            error!("All event is not usable, need a new snap shot ");
-                            debug!(
-                                "order book {}, Event {}-{}",
-                                orderbook.id(),
-                                event.first_update_id,
-                                event.last_update_id
-                            );
-                            break;
-                        } else {
-                            let f_id = event.first_update_id;
-                            let l_id = event.last_update_id;
+                        if event.equals(orderbook.id()) {
                             orderbook.add_event(event);
-
-                            debug!("After add event {}, {} {}", orderbook.id(), f_id, l_id);
-
                             let snapshot = orderbook.get_snapshot();
                             if let Err(_) = sender.send(snapshot.depth()) {
-                                error!("depth Send Snapshot error");
+                                error!("depth send Snapshot error");
                             };
+                        } else {
+                            warn!("All event is not usable, need a new snapshot");
+                            break;
                         }
                     }
 
@@ -344,6 +236,96 @@ impl BinanceSpotOrderBookPerpetualC {
                 Err(e) => Err(anyhow!("{:?}", e)),
             }
         }
+    }
+
+
+    async fn initialize(
+        &self,
+        stream: &mut BinanceWebSocket,
+        rest_address: String,
+    ) -> Result<bool> {
+
+        let mut buffer_events = VecDeque::new();
+
+        while let Ok(message) = stream.next().await.unwrap() {
+            let event = deserialize_message(message);
+            if event.is_none() {
+                continue;
+            }
+            let event = event.unwrap();
+
+            buffer_events.push_back(event);
+
+            if buffer_events.len() == MAX_BUFFER_EVENTS {
+                break;
+            }
+        }
+
+        // Wait for a while to collect event into buffer
+        let snapshot: BinanceSnapshotPerpetualC =
+            reqwest::get(&rest_address).await?.json().await?;
+
+        info!("Successfully connected to {}", rest_address);
+
+        let snap_shot_id = snapshot.last_update_id;
+
+        let mut overbook_setup = false;
+        while let Some(event) = buffer_events.pop_front() {
+
+            if event.behind(snap_shot_id) {
+                continue
+            }
+
+            if event.matches(snap_shot_id) {
+                let mut orderbook = self.shared.write().unwrap();
+                orderbook.load_snapshot(&snapshot);
+                orderbook.add_event(event);
+                overbook_setup = true;
+                return Ok(true)
+            }
+
+            if event.ahead(snap_shot_id) {
+                warn!("All event is not usable, need a new snap shot ");
+                return Ok(false)
+            }
+        }
+
+        if overbook_setup {
+            debug!("Emptying events in buffer");
+
+            while let Some(event) = buffer_events.pop_front() {
+                let mut orderbook = self.shared.write().unwrap();
+                orderbook.add_event(event);
+            }
+        } else {
+            info!(" Try to wait new events for out snapshot");
+
+            while let Ok(message) = stream.next().await.unwrap() {
+                let event = deserialize_message(message);
+                if event.is_none() {
+                    continue;
+                }
+
+                let event = event.unwrap();
+                if event.behind(snap_shot_id) {
+                    continue;
+                }
+
+                let mut orderbook = self.shared.write().unwrap();
+                if event.matches(snap_shot_id) {
+                    orderbook.load_snapshot(&snapshot);
+                    orderbook.add_event(event);
+                    overbook_setup = true;
+                    return Ok(true)
+                }
+
+                if event.ahead(snap_shot_id) {
+                    break;
+                }
+            }
+        }
+
+        Ok(false)
     }
 }
 
