@@ -215,21 +215,17 @@ impl SharedPerpetualU {
 
     /// Only used for "LevelEvent"
     pub fn set_level_event(&mut self, level_event: LevelEventPerpetualU){
+
+        self.asks.clear();
         for ask in level_event.asks {
-            if ask.amount == 0.0 {
-                self.asks.remove(&OrderedFloat(ask.price));
-            } else {
-                self.asks.insert(OrderedFloat(ask.price), ask.amount);
-            }
+            self.asks.insert(OrderedFloat(ask.price), ask.amount);
         }
 
+        self.bids.clear();
         for bid in level_event.bids {
-            if bid.amount == 0.0 {
-                self.bids.remove(&OrderedFloat(bid.price));
-            } else {
-                self.bids.insert(OrderedFloat(bid.price), bid.amount);
-            }
+            self.bids.insert(OrderedFloat(bid.price), bid.amount);
         }
+
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = level_event.last_update_id;
         self.create_time = level_event.create_time;
