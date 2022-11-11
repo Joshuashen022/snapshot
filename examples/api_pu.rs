@@ -17,8 +17,7 @@ use snapshot::QuotationManager;
 /// const REST_PU: &str =   "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000";
 /// const REST_SPOT: &str = "https://api.binance.com/api/v3/depth?symbol=BNBBTC&limit=1000";
 
-
-fn main(){
+fn main() {
     println!("Hello");
 
     tracing_subscriber::fmt::init();
@@ -28,19 +27,23 @@ fn main(){
         let pc_symbol = "btcusd_221230_swap";
         let pu_symbol = "btcusdt_swap";
         let spot_symbol = "bnbbtc";
-        let _ = vec![pc_symbol,pu_symbol,spot_symbol];
+        let _ = vec![pc_symbol, pu_symbol, spot_symbol];
 
         let symbol = pu_symbol;
         println!("using symbol {}", symbol);
-        let manager1 = QuotationManager::new_with_snapshot(exchange, symbol, 1000);
+        let manager1 = QuotationManager::with_snapshot(exchange, symbol, 1000);
         let manager1_clone = manager1.clone();
         tokio::spawn(async move {
             let mut receiver = manager1_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!("manager1 id {}, ts {}, lts {} asks {} bids {}",
-                         message.id, message.ts, message.lts,
-                         message.asks().len(), message.bids().len()
+                println!(
+                    "manager1 id {}, ts {}, lts {} asks {} bids {}",
+                    message.id,
+                    message.ts,
+                    message.lts,
+                    message.asks().len(),
+                    message.bids().len()
                 );
             }
         });
@@ -51,27 +54,39 @@ fn main(){
             let mut receiver = manager2_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!("manager2 id {}, ts {}, lts {} asks {} bids {}",
-                         message.id, message.ts, message.lts,
-                         message.asks().len(), message.bids().len()
+                println!(
+                    "manager2 id {}, ts {}, lts {} asks {} bids {}",
+                    message.id,
+                    message.ts,
+                    message.lts,
+                    message.asks().len(),
+                    message.bids().len()
                 );
             }
         });
 
         sleep(Duration::from_secs(3)).await;
         let message = manager1.latest_depth().unwrap();
-        println!("snapshot1 id {}, ts {}, lts {} asks {} bids {}",
-                 message.id, message.ts, message.lts,
-                 message.asks().len(), message.bids().len()
+        println!(
+            "snapshot1 id {}, ts {}, lts {} asks {} bids {}",
+            message.id,
+            message.ts,
+            message.lts,
+            message.asks().len(),
+            message.bids().len()
         );
 
         let message = manager2.latest_depth().unwrap();
-        println!("snapshot2 id {}, ts {}, lts {} asks {} bids {}",
-                 message.id, message.ts, message.lts,
-                 message.asks().len(), message.bids().len()
+        println!(
+            "snapshot2 id {}, ts {}, lts {} asks {} bids {}",
+            message.id,
+            message.ts,
+            message.lts,
+            message.asks().len(),
+            message.bids().len()
         );
 
-        loop{
+        loop {
             println!();
             println!();
             sleep(Duration::from_secs(1)).await;
