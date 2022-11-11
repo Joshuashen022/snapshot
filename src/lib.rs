@@ -15,7 +15,7 @@ pub use binance::connection::{
     BinanceOrderBookSnapshot
 };
 
-use binance::format::Quote;
+pub use binance::format::Quote;
 use match_up::{match_up, Config, SymbolType};
 
 // pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
@@ -105,6 +105,15 @@ pub struct Depth{
 }
 #[allow(dead_code)]
 impl Depth{
+
+    pub fn bids(&self) -> &Vec<Quote>{
+        &self.bids
+    }
+
+    pub fn asks(&self) -> &Vec<Quote>{
+        &self.asks
+    }
+
     fn from_snapshot(orderbook: OrderBookSnapshot) -> Option<Self>{
         match orderbook{
             OrderBookSnapshot::Binance(_) => {},
@@ -112,6 +121,8 @@ impl Depth{
         }
         None
     }
+
+
 }
 #[allow(dead_code)]
 pub(crate) enum OrderBookSnapshot {
