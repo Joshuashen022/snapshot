@@ -18,6 +18,7 @@ use serde::Deserialize;
 // use std::borrow::Cow;
 use anyhow::{anyhow, Result};
 use tokio::sync::mpsc::UnboundedReceiver;
+use tracing::error;
 // use std::thread::sleep;
 // use std::time::Duration;
 
@@ -46,31 +47,25 @@ impl OrderBookReceiver{
 
 
 impl Connection {
-    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> Result<UnboundedReceiver<Depth>>{
+    pub fn connect_depth(&self, rest_address: String, depth_address: String) -> UnboundedReceiver<Depth>{
         match self{
-            Connection::Binance(connection) => {
-                let receiver = connection.depth(rest_address, depth_address)?;
-                Ok(receiver)
-            }
-            Connection::Crypto => Err(anyhow!("Unsupported exchange"))
+            Connection::Binance(connection) =>
+                connection.depth(rest_address, depth_address).unwrap(),
+            Connection::Crypto => panic!("Unsupported exchange")
         }
     }
 
-    pub fn connect_depth_level(&self, level_address: String) -> Result<UnboundedReceiver<Depth>>{
+    pub fn connect_depth_level(&self, level_address: String) -> UnboundedReceiver<Depth>{
         match self{
-            Connection::Binance(connection) => {
-                let receiver = connection.level_depth(level_address)?;
-                Ok(receiver)
-            }
-            Connection::Crypto => Err(anyhow!("Unsupported exchange"))
+            Connection::Binance(connection) =>
+                connection.level_depth(level_address).unwrap(),
+            Connection::Crypto => panic!("Unsupported exchange")
         }
     }
 
     pub fn get_snapshot(&self)-> Option<Depth>{
         match self{
-            Connection::Binance(connection) => {
-                Some(connection.snapshot()?)
-            }
+            Connection::Binance(connection) => connection.snapshot(),
             Connection::Crypto => None
         }
     }
@@ -191,6 +186,20 @@ impl BinanceConnectionType{
             BinanceConnectionType::PrepetualC(inner) => inner.snapshot(),
         }
     }
+
+    #[allow(dead_code)]
+    pub fn set_symbol(&mut self, symbol: String){
+        let res = match self {
+            BinanceConnectionType::Spot(inner) => inner.set_symbol(symbol),
+            BinanceConnectionType::PrepetualU(inner) => inner.set_symbol(symbol),
+            BinanceConnectionType::PrepetualC(inner) => inner.set_symbol(symbol),
+        };
+
+        if let Err(e) = res{
+            error!("set symbol error {:?}", e);
+        }
+    }
+
 
 
 //pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{

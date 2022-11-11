@@ -85,15 +85,16 @@ pub enum SymbolType{
     ContractC(String),
 }
 
-pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Config>{
+pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config{
 
     let exchange_type = match exchange {
         "binance" => ExchangeType::Binance,
         "crypto" => ExchangeType::Crypto,
-        _ => return Err(anyhow!("Unsupported Exchange {}", exchange))
+        _ => panic!("Unsupported Exchange {}", exchange)
     };
 
-    let symbol_type = validate_symbol(symbol)?;
+    let symbol_type = validate_symbol(symbol)
+        .expect(&format!("Unsupported Symbol {}", symbol));
 
     let mut rest_address: Option<String> = None;
     let mut depth_address: Option<String> = None;
@@ -112,7 +113,7 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Conf
             (SymbolType::ContractC(inner), ExchangeType::Binance) => {
                 Some(format!("https://dapi.binance.com/dapi/v1/depth?symbol={}&limit={}", inner.to_uppercase(), limit))
             },
-            _ => return Err(anyhow!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type))
+            _ => panic!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type)
         };
 
         depth_address = match (&symbol_type, exchange_type) {
@@ -125,7 +126,7 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Conf
             (SymbolType::ContractC(inner), ExchangeType::Binance) => {
                 Some(format!("wss://dstream.binance.com/stream?streams={}@depth@100ms", inner))
             },
-            _ => return Err(anyhow!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type))
+            _ => panic!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type)
         };
 
     } else {
@@ -141,21 +142,18 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Conf
             (SymbolType::ContractC(inner), ExchangeType::Binance) => {
                 Some(format!("wss://dstream.binance.com/stream?streams={}@depth20@100ms", inner))
             },
-            _ => return Err(anyhow!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type))
+            _ => panic!("Unsupported Combination {:?}, {:?}.", symbol_type, exchange_type)
         };
 
     }
 
-
-    Ok(
-        Config{
-            rest: rest_address,
-            depth: depth_address,
-            level_depth: level_depth_address,
-            symbol_type,
-            exchange_type
-        }
-    )
+    Config{
+        rest: rest_address,
+        depth: depth_address,
+        level_depth: level_depth_address,
+        symbol_type,
+        exchange_type
+    }
 }
 
 fn validate_symbol(symbol: &str) -> Result<SymbolType>{

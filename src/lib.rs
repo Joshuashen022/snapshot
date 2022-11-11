@@ -35,35 +35,35 @@ pub enum OrderBookSnapshot {
 impl QuotationManager{
 
     /// One-time snapshot
-    pub fn new(exchange: &str, symbol: &str) -> Result<Self>{
+    pub fn new(exchange: &str, symbol: &str) -> Self{
         Self::new_from(exchange, symbol, None)
     }
 
     /// Keep-updating snapshot
-    pub fn new_with_snapshot(exchange: &str, symbol: &str, limit: i32) -> Result<Self>{
+    pub fn new_with_snapshot(exchange: &str, symbol: &str, limit: i32) -> Self{
         Self::new_from(exchange, symbol, Some(limit))
     }
 
     // snapshot stream
-    pub fn subscribe_depth(&self) -> Result<UnboundedReceiver<Depth>> {
+    pub fn subscribe_depth(&self) -> UnboundedReceiver<Depth> {
         let config = self.config.clone();
         if config.is_depth(){
-            let rest_address = config.rest.
-                ok_or(Error::msg("rest address is empty"))?;
-            let depth_address = config.depth
-                .ok_or(Error::msg("depth address is empty"))?;
-            let connection = self.connection.clone();
-            connection.connect_depth(rest_address, depth_address)
+
+            let rest_address = config.rest.expect("rest address is empty");
+
+            let depth_address = config.depth.expect("depth address is empty");
+
+            self.connection.clone().connect_depth(rest_address, depth_address)
+
 
         } else if config.is_normal() {
-            let level_address = config.level_depth
-                .ok_or(Error::msg("level address is empty"))?;
-            let connection = self.connection.clone();
-            connection.connect_depth_level(level_address)
+
+            let level_address = config.level_depth.expect("level address is empty");
+
+            self.connection.clone().connect_depth_level(level_address)
 
         } else{
-            error!("Unsupported Config {:?}", config);
-            Err(anyhow!("Unsupported Config"))
+            panic!("Unsupported Config {:?}", config);
         }
 
 
@@ -75,8 +75,8 @@ impl QuotationManager{
         connection.get_snapshot()
     }
 
-    fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Result<Self>{
-        let config = match_up(exchange, symbol, limit)?;
+    fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self{
+        let config = match_up(exchange, symbol, limit);
 
         let types = match config.symbol_type{
             SymbolType::ContractC(_) => BinanceOrderBookType::PrepetualC,
@@ -91,7 +91,7 @@ impl QuotationManager{
             ExchangeType::Crypto => Connection::Crypto,
         };
 
-        Ok(Self{ config, connection})
+        Self{ config, connection}
     }
 
 }
