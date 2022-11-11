@@ -21,7 +21,6 @@ use snapshot::QuotationManager;
 fn main(){
     println!("Hello");
 
-    use tracing_subscriber;
     tracing_subscriber::fmt::init();
 
     Runtime::new().unwrap().block_on(async {
@@ -39,7 +38,10 @@ fn main(){
             let mut receiver = manager1_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!("receive1 {}", message.id);
+                println!("manager1 id {}, ts {}, lts {} asks {} bids {}",
+                         message.id, message.ts, message.lts,
+                         message.asks().len(), message.bids().len()
+                );
             }
         });
 
@@ -49,25 +51,25 @@ fn main(){
             let mut receiver = manager2_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!("receive2 {}", message.id);
+                println!("manager2 id {}, ts {}, lts {} asks {} bids {}",
+                         message.id, message.ts, message.lts,
+                         message.asks().len(), message.bids().len()
+                );
             }
         });
 
         sleep(Duration::from_secs(3)).await;
-        if let Some(snapshot1) = manager1.latest_depth(){
-            println!("snapshot1 {}", snapshot1.id);
-        } else{
-            let config = manager1.config;
-            println!("config1 {:?}",config);
-        };
+        let message = manager1.latest_depth().unwrap();
+        println!("snapshot1 id {}, ts {}, lts {} asks {} bids {}",
+                 message.id, message.ts, message.lts,
+                 message.asks().len(), message.bids().len()
+        );
 
-
-        if let Some(snapshot2) = manager2.latest_depth(){
-            println!("snapshot2 {}", snapshot2.id);
-        } else{
-            let config = manager2.config;
-            println!("config1 {:?}",config);
-        };
+        let message = manager2.latest_depth().unwrap();
+        println!("snapshot2 id {}, ts {}, lts {} asks {} bids {}",
+                 message.id, message.ts, message.lts,
+                 message.asks().len(), message.bids().len()
+        );
 
         loop{
             println!();

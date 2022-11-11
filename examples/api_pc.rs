@@ -2,7 +2,7 @@ use tokio::runtime::Runtime;
 use tokio::time::{sleep, Duration};
 
 use snapshot::QuotationManager;
-
+use snapshot::Quote;
 /// const DEPTH_URL_PC: &str =      "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
 /// const DEPTH_URL_PU: &str =      "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
 /// const DEPTH_URL_SPOT: &str =    "wss://stream.binance.com:9443/ws/bnbbtc@depth@100ms";
@@ -21,7 +21,6 @@ use snapshot::QuotationManager;
 fn main(){
     println!("Hello");
 
-    use tracing_subscriber;
     tracing_subscriber::fmt::init();
 
     Runtime::new().unwrap().block_on(async {
@@ -39,7 +38,10 @@ fn main(){
             let mut receiver = manager1_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!("receive1 {}", message.id);
+                println!("manager1 id {}, ts {}, lts {} asks {} bids {}",
+                         message.id, message.ts, message.lts,
+                         message.asks().len(), message.bids().len()
+                );
             }
         });
 
@@ -49,16 +51,25 @@ fn main(){
             let mut receiver = manager2_clone.subscribe_depth();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!("receive2 {}", message.id);
+                println!("manager2 id {}, ts {}, lts {} asks {} bids {}",
+                         message.id, message.ts, message.lts,
+                         message.asks().len(), message.bids().len()
+                );
             }
         });
 
         sleep(Duration::from_secs(3)).await;
-        let snapshot1 = manager1.latest_depth().unwrap();
-        println!("snapshot1 {}", snapshot1.id);
+        let message = manager1.latest_depth().unwrap();
+        println!("snapshot1 id {}, ts {}, lts {} asks {} bids {}",
+                 message.id, message.ts, message.lts,
+                 message.asks().len(), message.bids().len()
+        );
 
-        let snapshot1 = manager2.latest_depth().unwrap();
-        println!("snapshot2 {}", snapshot1.id);
+        let message = manager2.latest_depth().unwrap();
+        println!("snapshot2 id {}, ts {}, lts {} asks {} bids {}",
+                 message.id, message.ts, message.lts,
+                 message.asks().len(), message.bids().len()
+        );
 
         loop{
             println!();
