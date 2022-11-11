@@ -4,10 +4,10 @@ pub mod binance_perpetual_u;
 
 use crate::binance::format::Quote;
 use crate::Depth;
-use crate::{
+// use crate::{
     // OrderbookType, ExchangeType,
-    OrderBookSnapshot
-};
+    // OrderBookSnapshot
+// };
 use crate::binance::connection::{
     binance_perpetual_u::BinanceSpotOrderBookPerpetualU,
     binance_spot::BinanceOrderBookSpot,
@@ -16,7 +16,7 @@ use crate::binance::connection::{
 
 use serde::Deserialize;
 // use std::borrow::Cow;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tracing::error;
 // use std::thread::sleep;
@@ -27,24 +27,6 @@ pub enum Connection{
     Binance(BinanceConnectionType),
     Crypto,
 }
-
-pub enum OrderBookReceiver {
-    Binance(UnboundedReceiver<BinanceOrderBookSnapshot>),
-    Crypto,
-}
-
-impl OrderBookReceiver{
-     pub async fn recv(&mut self) -> Option<OrderBookSnapshot> {
-         match self {
-            OrderBookReceiver::Binance(rx) =>
-                Some(OrderBookSnapshot::Binance(rx.recv().await?)),
-            _ => None
-        }
-    }
-}
-
-
-
 
 impl Connection {
     pub fn connect_depth(&self, rest_address: String, depth_address: String) -> UnboundedReceiver<Depth>{

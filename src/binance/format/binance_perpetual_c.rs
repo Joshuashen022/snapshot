@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
 use serde::Deserialize;
 use ordered_float::OrderedFloat;
-use anyhow::{Result, anyhow};
+// use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
 pub struct StreamEventPerpetualC {
@@ -68,9 +68,9 @@ pub struct EventPerpetualC {
 }
 
 impl EventPerpetualC {
-    pub fn match_seq_num(&self, expected_id: &i64) -> bool {
-        self.first_update_id == *expected_id
-    }
+    // pub fn match_seq_num(&self, expected_id: &i64) -> bool {
+    //     self.first_update_id == *expected_id
+    // }
 
     /// only for contract_U
     /// Rule: `U<= id <= u`
@@ -268,21 +268,21 @@ impl SharedPerpetualC {
         }
     }
 
-    /// With give event to update snapshot,
-    /// if event doesn't satisfy return error
-    pub fn update_snapshot(&mut self, event: EventPerpetualC) -> Result<()>  {
-        if event.first_update_id != self.last_update_id + 1 {
-            Err(anyhow!(
-                "Expect event u to be {}, found {}",
-                self.last_update_id + 1,
-                event.first_update_id
-            ))
-        } else{
-            self.add_event(event);
-            Ok(())
-        }
-
-    }
+    // With give event to update snapshot,
+    // if event doesn't satisfy return error
+    // pub fn update_snapshot(&mut self, event: EventPerpetualC) -> Result<()>  {
+    //     if event.first_update_id != self.last_update_id + 1 {
+    //         Err(anyhow!(
+    //             "Expect event u to be {}, found {}",
+    //             self.last_update_id + 1,
+    //             event.first_update_id
+    //         ))
+    //     } else{
+    //         self.add_event(event);
+    //         Ok(())
+    //     }
+    //
+    // }
 }
 
 #[test]

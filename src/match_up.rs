@@ -194,14 +194,11 @@ mod tests {
         assert!(validate_symbol("btcusd_swap").is_ok());
         assert!(validate_symbol("btcusd").is_ok());
 
-        let config1 = match_up("binance", "btcusd_221230_swap", Some(1000));
-        assert!(config1.is_ok());
+        let _ = match_up("binance", "btcusd_221230_swap", Some(1000));
 
-        let config2 = match_up("binance", "btcusd_swap", Some(1000));
-        assert!(config2.is_ok());
+        let _ = match_up("binance", "btcusd_swap", Some(1000));
 
-        let config3 = match_up("binance", "btcusd", Some(1000));
-        assert!(config3.is_ok());
+        let _ = match_up("binance", "btcusd", Some(1000));
     }
 
 }

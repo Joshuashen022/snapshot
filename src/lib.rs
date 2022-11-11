@@ -1,18 +1,18 @@
 
 use tokio::sync::mpsc::UnboundedReceiver;
-use anyhow::{Result, Error, anyhow};
+// use anyhow::{Result, Error, anyhow};
 use serde::Deserialize;
-use tracing::error;
+// use tracing::error;
 
 
-pub mod binance;
-pub mod crypto;
+pub(crate) mod binance;
+pub(crate) mod crypto;
 mod match_up;
 
 
 pub use binance::connection::{
     BinanceOrderBookType, BinanceConnectionType, Connection,
-    OrderBookReceiver, BinanceOrderBookSnapshot
+    BinanceOrderBookSnapshot
 };
 
 use binance::format::Quote;
@@ -27,24 +27,22 @@ pub struct QuotationManager{
     connection: Connection,
 }
 
-pub enum OrderBookSnapshot {
-    Binance(BinanceOrderBookSnapshot),
-    Crypto,
-}
+
+
 
 impl QuotationManager{
 
-    /// One-time snapshot
+    /// Create one-time-20-sized snapshot manager
     pub fn new(exchange: &str, symbol: &str) -> Self{
         Self::new_from(exchange, symbol, None)
     }
 
-    /// Keep-updating snapshot
+    /// Create constant-updating-<limit>-sized snapshot manager
     pub fn new_with_snapshot(exchange: &str, symbol: &str, limit: i32) -> Self{
         Self::new_from(exchange, symbol, Some(limit))
     }
 
-    // snapshot stream
+    /// Get snapshot stream
     pub fn subscribe_depth(&self) -> UnboundedReceiver<Depth> {
         let config = self.config.clone();
         if config.is_depth(){
@@ -69,10 +67,9 @@ impl QuotationManager{
 
     }
 
-    // One single snapshot
+    /// Get one single snapshot
     pub fn latest_depth(&self) -> Option<Depth> {
-        let connection = self.connection.clone();
-        connection.get_snapshot()
+        self.connection.clone().get_snapshot()
     }
 
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self{
@@ -114,17 +111,22 @@ impl Depth{
     fn from_snapshot(orderbook: OrderBookSnapshot) -> Option<Self>{
         match orderbook{
             OrderBookSnapshot::Binance(_) => {},
-            OrderBookSnapshot::Crypto => (),
+            OrderBookSnapshot::Crypto => {},
         }
         None
     }
 }
-
-/// 行情类型: 现货、永续合约
-pub enum OrderbookType {
-    Spot,
-    Perpetual,
+#[allow(dead_code)]
+pub(crate) enum OrderBookSnapshot {
+    Binance(BinanceOrderBookSnapshot),
+    Crypto,
 }
+
+// /// 行情类型: 现货、永续合约
+// pub enum OrderbookType {
+//     Spot,
+//     Perpetual,
+// }
 
 /// 交易所类型
 #[derive(Clone, Debug, Copy)]
