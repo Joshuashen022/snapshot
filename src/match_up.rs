@@ -190,7 +190,6 @@ fn validate_symbol_binance(symbol: &str) -> Result<SymbolType> {
     Ok(result)
 }
 
-
 fn set_addr_for_binance(
     symbol_type: SymbolType,
     limit: Option<i32>,

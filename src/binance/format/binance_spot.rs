@@ -6,6 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;
+use tracing::{debug, info, warn};
 // use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
@@ -27,16 +28,53 @@ pub struct EventSpot {
 }
 
 impl EventSpot {
-    // pub fn match_seq_num(&self, expected_id: &i64) -> bool {
-    //     self.first_update_id == *expected_id
-    // }
 
-    pub fn match_snapshot(&self, updated_id: i64) -> bool {
-        // let first = self.first_update_id <= updated_id + 1;
-        // let second = updated_id + 1 <= self.last_update_id;
-        // println!("{}, {}", first, second);
-        self.first_update_id <= updated_id + 1 && updated_id + 1 <= self.last_update_id
+    /// [E.U,..,S.u,..,E.u]
+    pub fn matches(&self, snap_shot_id: i64) -> bool {
+
+        debug!("order book {}, Event {}-{}",
+            snap_shot_id,
+            self.first_update_id,
+            self.last_update_id
+        );
+
+        self.first_update_id <= snap_shot_id + 1 && snap_shot_id + 1 <= self.last_update_id
     }
+
+    /// [E.U,..,E.u] S.u
+    pub fn behind(&self, snap_shot_id: i64) -> bool{
+
+        debug!("order book {}, Event {}-{}",
+            snap_shot_id,
+            self.first_update_id,
+            self.last_update_id
+        );
+
+        self.last_update_id <= snap_shot_id
+    }
+
+    /// S.u [E.U,..,E.u]
+    pub fn ahead(&self, snap_shot_id: i64) -> bool{
+
+        debug!("order book {}, Event {}-{}",
+            snap_shot_id,
+            self.first_update_id,
+            self.last_update_id
+        );
+
+        self.first_update_id > snap_shot_id + 1
+    }
+
+    ///
+    pub fn equals(&self, snap_shot_id: i64) -> bool{
+        debug!("order book {}, Event {}-{}",
+            snap_shot_id,
+            self.first_update_id,
+            self.last_update_id
+        );
+        self.first_update_id == snap_shot_id + 1
+    }
+    //event.first_update_id == orderbook.id() + 1
 }
 
 #[derive(Deserialize, Debug)]

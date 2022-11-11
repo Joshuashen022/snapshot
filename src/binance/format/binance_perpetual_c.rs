@@ -6,6 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;
+use crate::binance::format::binance_spot::BinanceSnapshotSpot;
 // use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
@@ -80,6 +81,29 @@ impl EventPerpetualC {
         // println!("{}, {}", first, second);
         self.first_update_id <= snapshot_updated_id && snapshot_updated_id <= self.last_update_id
     }
+
+    //snapshot.last_update_id > event.last_update_id
+    /// [E.U,..,E.u] S.u
+    pub fn behind(&self, snapshot: &BinanceSnapshotSpot) -> bool{
+        let snap_shot_id = snapshot.last_update_id;
+        self.last_update_id < snap_shot_id
+    }
+
+    /// only for contract_U
+    /// Rule: `U<= id <= u`
+    /// [E.U,..,S.u,..,E.u]
+    pub fn matches(&self, snapshot: &BinanceSnapshotSpot) -> bool {
+        let snap_shot_id = snapshot.last_update_id;
+        self.first_update_id <= snap_shot_id && snap_shot_id <= self.last_update_id
+    }
+
+    //event.first_update_id > snapshot.last_update_id
+    /// S.u [E.U,..,E.u]
+    pub fn ahead(&self, snapshot: &BinanceSnapshotSpot) -> bool{
+        let snap_shot_id = snapshot.last_update_id;
+        self.first_update_id > snap_shot_id
+    }
+
 }
 
 /// 有限档深度信息

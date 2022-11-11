@@ -1,6 +1,7 @@
 pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
 pub mod binance_spot;
+mod connect;
 
 use crate::binance::connection::{
     binance_perpetual_c::BinanceSpotOrderBookPerpetualC,
