@@ -64,3 +64,30 @@ impl<'de> Visitor<'de> for QuoteVisitor {
         })
     }
 }
+
+
+pub trait SharedT<Event>{
+    type BinanceSnapshot;
+    /// return last_update_id
+    fn id(&self) -> i64;
+
+    fn load_snapshot(&mut self, snapshot: &Self::BinanceSnapshot);
+
+    /// Only used for "Event"
+    fn add_event(&mut self, event: Event);
+}
+
+pub trait EventT{
+    fn matches(&self, snap_shot_id: i64) -> bool;
+    fn behind(&self, snap_shot_id: i64) -> bool;
+    fn ahead(&self, snap_shot_id: i64) -> bool;
+    fn equals(&self, snap_shot_id: i64) -> bool;
+}
+
+pub trait SnapshotT{
+    fn id(&self) -> i64;
+
+    fn bids(&self) -> &Vec<Quote>;
+
+    fn asks(&self) -> &Vec<Quote>;
+}

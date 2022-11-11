@@ -1,4 +1,5 @@
 use crate::binance::connection::BinanceOrderBookSnapshot;
+use crate::binance::format::{SharedT, EventT, SnapshotT};
 use crate::Quote;
 
 use std::collections::btree_map::BTreeMap;
@@ -27,10 +28,10 @@ pub struct EventSpot {
     pub asks: Vec<Quote>,
 }
 
-impl EventSpot {
+impl EventT for EventSpot {
 
     /// [E.U,..,S.u,..,E.u]
-    pub fn matches(&self, snap_shot_id: i64) -> bool {
+    fn matches(&self, snap_shot_id: i64) -> bool {
 
         debug!("order book {}, Event {}-{}",
             snap_shot_id,
@@ -42,7 +43,7 @@ impl EventSpot {
     }
 
     /// [E.U,..,E.u] S.u
-    pub fn behind(&self, snap_shot_id: i64) -> bool{
+    fn behind(&self, snap_shot_id: i64) -> bool{
 
         debug!("order book {}, Event {}-{}",
             snap_shot_id,
@@ -54,7 +55,7 @@ impl EventSpot {
     }
 
     /// S.u [E.U,..,E.u]
-    pub fn ahead(&self, snap_shot_id: i64) -> bool{
+    fn ahead(&self, snap_shot_id: i64) -> bool{
 
         debug!("order book {}, Event {}-{}",
             snap_shot_id,
@@ -66,7 +67,7 @@ impl EventSpot {
     }
 
     ///
-    pub fn equals(&self, snap_shot_id: i64) -> bool{
+    fn equals(&self, snap_shot_id: i64) -> bool{
         debug!("order book {}, Event {}-{}",
             snap_shot_id,
             self.first_update_id,
@@ -74,7 +75,6 @@ impl EventSpot {
         );
         self.first_update_id == snap_shot_id + 1
     }
-    //event.first_update_id == orderbook.id() + 1
 }
 
 #[derive(Deserialize, Debug)]
@@ -99,6 +99,21 @@ pub struct BinanceSnapshotSpot {
     pub asks: Vec<Quote>,
 }
 
+impl SnapshotT for BinanceSnapshotSpot{
+    fn id(&self) -> i64 {
+        self.last_update_id
+    }
+
+    fn bids(&self) -> &Vec<Quote> {
+        &self.bids
+    }
+
+    fn asks(&self) -> &Vec<Quote> {
+        &self.asks
+    }
+
+}
+
 pub struct SharedSpot {
     pub symbol: String,
     last_update_id: i64,
@@ -120,49 +135,6 @@ impl SharedSpot {
             asks: BTreeMap::new(),
             bids: BTreeMap::new(),
         }
-    }
-
-    /// return last_update_id
-    pub fn id(&self) -> i64 {
-        self.last_update_id
-    }
-
-    pub fn load_snapshot(&mut self, snapshot: &BinanceSnapshotSpot) {
-        self.asks.clear();
-        for ask in &snapshot.asks {
-            self.asks.insert(OrderedFloat(ask.price), ask.amount);
-        }
-
-        self.bids.clear();
-        for bid in &snapshot.bids {
-            self.bids.insert(OrderedFloat(bid.price), bid.amount);
-        }
-
-        self.last_update_id = snapshot.last_update_id;
-    }
-
-    /// Only used for "Event"
-    pub fn add_event(&mut self, event: EventSpot) {
-        for ask in event.asks {
-            if ask.amount == 0.0 {
-                self.asks.remove(&OrderedFloat(ask.price));
-            } else {
-                self.asks.insert(OrderedFloat(ask.price), ask.amount);
-            }
-        }
-
-        for bid in event.bids {
-            if bid.amount == 0.0 {
-                self.bids.remove(&OrderedFloat(bid.price));
-            } else {
-                self.bids.insert(OrderedFloat(bid.price), bid.amount);
-            }
-        }
-
-        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-        self.last_update_id = event.last_update_id;
-        self.send_time = event.ts;
-        self.receive_time = time.as_millis() as i64;
     }
 
     /// Only used for "LevelEvent"
@@ -213,21 +185,52 @@ impl SharedSpot {
         }
     }
 
-    // With give event to update snapshot,
-    // if event doesn't satisfy return error
-    // pub fn update_snapshot(&mut self, event: EventSpot) -> Result<()>  {
-    //     if event.first_update_id != self.last_update_id + 1 {
-    //         Err(anyhow!(
-    //             "Expect event u to be {}, found {}",
-    //             self.last_update_id + 1,
-    //             event.first_update_id
-    //         ))
-    //     } else{
-    //         self.add_event(event);
-    //         Ok(())
-    //     }
-    //
-    // }
+}
+
+impl SharedT<EventSpot> for SharedSpot{
+    type BinanceSnapshot = BinanceSnapshotSpot;
+    /// return last_update_id
+    fn id(&self) -> i64 {
+        self.last_update_id
+    }
+
+    fn load_snapshot(&mut self, snapshot: &BinanceSnapshotSpot) {
+        self.asks.clear();
+        for ask in &snapshot.asks {
+            self.asks.insert(OrderedFloat(ask.price), ask.amount);
+        }
+
+        self.bids.clear();
+        for bid in &snapshot.bids {
+            self.bids.insert(OrderedFloat(bid.price), bid.amount);
+        }
+
+        self.last_update_id = snapshot.last_update_id;
+    }
+
+    /// Only used for "Event"
+    fn add_event(&mut self, event: EventSpot) {
+        for ask in event.asks {
+            if ask.amount == 0.0 {
+                self.asks.remove(&OrderedFloat(ask.price));
+            } else {
+                self.asks.insert(OrderedFloat(ask.price), ask.amount);
+            }
+        }
+
+        for bid in event.bids {
+            if bid.amount == 0.0 {
+                self.bids.remove(&OrderedFloat(bid.price));
+            } else {
+                self.bids.insert(OrderedFloat(bid.price), bid.amount);
+            }
+        }
+
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        self.last_update_id = event.last_update_id;
+        self.send_time = event.ts;
+        self.receive_time = time.as_millis() as i64;
+    }
 }
 
 #[test]

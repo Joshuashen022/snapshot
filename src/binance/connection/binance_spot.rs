@@ -1,3 +1,5 @@
+use crate::binance::format::SharedT;
+use crate::binance::format::EventT;
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, RwLock};
