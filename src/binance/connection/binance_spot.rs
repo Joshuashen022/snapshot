@@ -94,12 +94,6 @@ impl BinanceOrderBookSpot {
                         let mut orderbook = shared.write().unwrap();
                         if event.ahead(orderbook.id()) {
                             warn!("All event is not usable, need a new snapshot");
-                            debug!(
-                                "order book {}, Event {}-{}",
-                                orderbook.id(),
-                                event.first_update_id,
-                                event.last_update_id
-                            );
                             break;
                         } else if event.equals(orderbook.id()) {
                             orderbook.add_event(event);
