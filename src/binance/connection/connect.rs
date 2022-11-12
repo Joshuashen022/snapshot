@@ -124,7 +124,8 @@ pub async fn initialize<
         info!(" Try to wait new events for out snapshot");
 
         while let Ok(message) = stream.next().await.unwrap() {
-            let event = deserialize_event::<Event>(message).unwrap();
+            let event = deserialize_event::<StreamEvent>(message).unwrap();
+            let event = event.event();
 
             if let Ok(add_success) = add_event_to_orderbook::<Event, Snapshot, Shard>
                 (event, shared_clone.clone(), &snapshot){
