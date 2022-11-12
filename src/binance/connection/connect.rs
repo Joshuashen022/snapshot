@@ -24,7 +24,7 @@ pub async fn socket_stream(address: &str) -> Result<BinanceWebSocket, String>{
 
 }
 
-pub fn deserialize_event<Event: DeserializeOwned>(message: Message) -> Option<Event> {
+fn deserialize_event<Event: DeserializeOwned>(message: Message) -> Option<Event> {
     if !message.is_text() {
         return None;
     }
@@ -42,7 +42,7 @@ pub fn deserialize_event<Event: DeserializeOwned>(message: Message) -> Option<Ev
     Some(event)
 }
 
-pub fn add_event_to_orderbook<
+fn add_event_to_orderbook<
     Event: EventT,
     Snapshot: SnapshotT,
     Shard: SharedT<Event, BinanceSnapshot = Snapshot>,

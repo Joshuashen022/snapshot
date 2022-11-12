@@ -2,8 +2,11 @@ use crate::binance::format::binance_perpetual_u::{
     BinanceSnapshotPerpetualU, EventPerpetualU, SharedPerpetualU, StreamEventPerpetualU,
     StreamLevelEventPerpetualU,
 };
+use crate::binance::format::{SharedT, EventT, SnapshotT};
 use crate::Depth;
-use crate::binance::connection::connect::{socket_stream, BinanceWebSocket};
+use crate::binance::connection::connect::{
+    socket_stream, BinanceWebSocket, initialize
+};
 
 use anyhow::anyhow;
 use anyhow::{Error, Result};
@@ -18,11 +21,7 @@ use std::sync::{Arc, Mutex, RwLock};
 // use std::time::{Instant, SystemTime, UNIX_EPOCH};
 // use futures_util::future::err;
 use tokio_tungstenite::tungstenite::Message;
-// use tokio::spawn;
-
-// const DEPTH_URL: &str = "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
-// const LEVEL_DEPTH_URL: &str = "wss://fstream.binance.com/stream?streams=btcusdt@depth20@100ms";
-// const REST: &str = "https://fapi.binance.com/fapi/v1/depth?symbol=BTCUSDT&limit=1000";
+// use tokio::spawn;;
 // const MAX_BUFFER: usize = 30;
 const MAX_BUFFER_EVENTS: usize = 5;
 
@@ -69,7 +68,9 @@ impl BinanceSpotOrderBookPerpetualU {
                         }
                     };
                     info!("Successfully connected to {}", depth_address);
-                    match self_clone.clone().initialize(&mut stream, rest_address.clone()).await{
+                    match initialize::<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU>
+                        (&mut stream, rest_address.clone(), shared.clone()).await
+                    {
                         Ok(overbook_setup) => {
                             if overbook_setup {
                                 if let Ok(mut guard) = status.lock(){
@@ -238,95 +239,6 @@ impl BinanceSpotOrderBookPerpetualU {
                 Err(e) => Err(anyhow!("{:?}", e)),
             }
         }
-    }
-
-    async fn initialize(
-        &self,
-        stream: &mut BinanceWebSocket,
-        rest_address: String,
-    ) -> Result<bool> {
-
-        let mut buffer_events = VecDeque::new();
-
-        while let Ok(message) = stream.next().await.unwrap() {
-            let event = deserialize_message(message);
-            if event.is_none() {
-                continue;
-            }
-            let event = event.unwrap();
-
-            buffer_events.push_back(event);
-
-            if buffer_events.len() == MAX_BUFFER_EVENTS {
-                break;
-            }
-        }
-
-        // Wait for a while to collect event into buffer
-        let snapshot: BinanceSnapshotPerpetualU =
-            reqwest::get(&rest_address).await?.json().await?;
-
-        info!("Successfully connected to {}", rest_address);
-
-        let snap_shot_id = snapshot.last_update_id;
-
-        let mut overbook_setup = false;
-        while let Some(event) = buffer_events.pop_front() {
-
-            if event.behind(snap_shot_id) {
-                continue
-            }
-
-            if event.matches(snap_shot_id) {
-                let mut orderbook = self.shared.write().unwrap();
-                orderbook.load_snapshot(&snapshot);
-                orderbook.add_event(event);
-                overbook_setup = true;
-                return Ok(true)
-            }
-
-            if event.ahead(snap_shot_id) {
-                warn!("All event is not usable, need a new snap shot ");
-                return Ok(false)
-            }
-        }
-
-        if overbook_setup {
-            debug!("Emptying events in buffer");
-
-            while let Some(event) = buffer_events.pop_front() {
-                let mut orderbook = self.shared.write().unwrap();
-                orderbook.add_event(event);
-            }
-        } else {
-            info!(" Try to wait new events for out snapshot");
-
-            while let Ok(message) = stream.next().await.unwrap() {
-                let event = deserialize_message(message);
-                if event.is_none() {
-                    continue;
-                }
-
-                let event = event.unwrap();
-                if event.behind(snap_shot_id) {
-                    continue;
-                }
-
-                let mut orderbook = self.shared.write().unwrap();
-                if event.matches(snap_shot_id) {
-                    orderbook.load_snapshot(&snapshot);
-                    orderbook.add_event(event);
-                    overbook_setup = true;
-                    return Ok(true)
-                }
-
-                if event.ahead(snap_shot_id) {
-                    break;
-                }
-            }
-        }
-
-        Ok(false)
     }
 }
 

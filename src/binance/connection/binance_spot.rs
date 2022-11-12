@@ -1,5 +1,4 @@
-use crate::binance::format::SharedT;
-use crate::binance::format::EventT;
+use crate::binance::format::{SharedT, EventT, SnapshotT};
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, RwLock};
@@ -21,7 +20,7 @@ use crate::binance::format::binance_spot::{
 };
 use crate::{Depth, OrderBookSnapshot};
 use crate::binance::connection::connect::{
-    socket_stream, BinanceWebSocket, initialize, deserialize_event
+    socket_stream, BinanceWebSocket, initialize
 };
 
 const MAX_BUFFER_EVENTS: usize = 5;
@@ -69,7 +68,7 @@ impl BinanceOrderBookSpot {
                     };
 
                     info!("Successfully connected to {}", depth_address);
-                    match initialize::<EventSpot, BinanceSnapshotSpot,SharedSpot>
+                    match initialize::<EventSpot, BinanceSnapshotSpot, SharedSpot>
                         (&mut stream, rest_address.clone(), shared.clone()).await
                     {
                         Ok(overbook_setup) => {

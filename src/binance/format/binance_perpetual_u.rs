@@ -8,6 +8,7 @@ use ordered_float::OrderedFloat;
 use serde::Deserialize;
 use tracing::debug;
 use crate::binance::format::binance_spot::BinanceSnapshotSpot;
+use crate::binance::format::{SharedT, EventT, SnapshotT};
 // use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
@@ -65,24 +66,11 @@ pub struct EventPerpetualU {
     pub asks: Vec<Quote>,
 }
 
-impl EventPerpetualU {
-    //snapshot.last_update_id > event.last_update_id
-    /// [E.U,..,E.u] S.u
-    pub fn behind(&self, snap_shot_id: i64) -> bool{
-        debug!(
-            "order book {}, Event {}-{}({})",
-            snap_shot_id,
-            self.first_update_id,
-            self.last_update_id,
-            self.last_message_last_update_id
-        );
-        self.last_update_id < snap_shot_id
-    }
-
+impl EventT for EventPerpetualU {
     /// only for contract_U
     /// Rule: `U<= id <= u`
     /// [E.U,..,S.u,..,E.u]
-    pub fn matches(&self, snap_shot_id: i64) -> bool {
+    fn matches(&self, snap_shot_id: i64) -> bool {
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -93,9 +81,22 @@ impl EventPerpetualU {
         self.first_update_id <= snap_shot_id && snap_shot_id <= self.last_update_id
     }
 
+    //snapshot.last_update_id > event.last_update_id
+    /// [E.U,..,E.u] S.u
+    fn behind(&self, snap_shot_id: i64) -> bool{
+        debug!(
+            "order book {}, Event {}-{}({})",
+            snap_shot_id,
+            self.first_update_id,
+            self.last_update_id,
+            self.last_message_last_update_id
+        );
+        self.last_update_id < snap_shot_id
+    }
+
     //event.first_update_id > snapshot.last_update_id
     /// S.u [E.U,..,E.u]
-    pub fn ahead(&self, snap_shot_id: i64) -> bool{
+    fn ahead(&self, snap_shot_id: i64) -> bool{
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -106,7 +107,7 @@ impl EventPerpetualU {
         self.first_update_id > snap_shot_id
     }
 
-    pub fn equals(&self, snap_shot_id: i64) -> bool{
+    fn equals(&self, snap_shot_id: i64) -> bool{
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -180,6 +181,21 @@ pub struct BinanceSnapshotPerpetualU {
     pub asks: Vec<Quote>,
 }
 
+impl SnapshotT for BinanceSnapshotPerpetualU{
+    fn id(&self) -> i64 {
+        self.last_update_id
+    }
+
+    fn bids(&self) -> &Vec<Quote> {
+        &self.bids
+    }
+
+    fn asks(&self) -> &Vec<Quote> {
+        &self.asks
+    }
+
+}
+
 pub struct SharedPerpetualU {
     pub symbol: String,
     last_update_id: i64,
@@ -190,26 +206,17 @@ pub struct SharedPerpetualU {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl SharedPerpetualU {
-    pub fn new() -> Self {
-        SharedPerpetualU {
-            symbol: String::new(),
-            last_update_id: 0,
-            create_time: 0,
-            send_time: 0,
-            receive_time: 0,
-            asks: BTreeMap::new(),
-            bids: BTreeMap::new(),
-        }
-    }
+impl SharedT<EventPerpetualU> for SharedPerpetualU{
 
+    type BinanceSnapshot = BinanceSnapshotPerpetualU;
     /// return last_update_id
     /// or `u`
-    pub fn id(&self) -> i64 {
+    fn id(&self) -> i64 {
         self.last_update_id
     }
 
-    pub fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualU) {
+
+    fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualU) {
         self.asks.clear();
         for ask in &snapshot.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);
@@ -226,7 +233,7 @@ impl SharedPerpetualU {
     }
 
     /// Only used for "Event"
-    pub fn add_event(&mut self, event: EventPerpetualU) {
+    fn add_event(&mut self, event: EventPerpetualU) {
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         for ask in event.asks {
             if ask.amount == 0.0 {
@@ -249,6 +256,23 @@ impl SharedPerpetualU {
         self.send_time = event.event_time;
         self.receive_time = time.as_millis() as i64;
     }
+
+}
+
+
+impl SharedPerpetualU {
+    pub fn new() -> Self {
+        SharedPerpetualU {
+            symbol: String::new(),
+            last_update_id: 0,
+            create_time: 0,
+            send_time: 0,
+            receive_time: 0,
+            asks: BTreeMap::new(),
+            bids: BTreeMap::new(),
+        }
+    }
+
 
     /// Only used for "LevelEvent"
     pub fn set_level_event(&mut self, level_event: LevelEventPerpetualU) {
@@ -299,22 +323,6 @@ impl SharedPerpetualU {
             bids,
         }
     }
-
-    // /// With give event to update snapshot,
-    // /// if event doesn't satisfy return error
-    // pub fn update_snapshot(&mut self, event: EventPerpetualU) -> Result<()>  {
-    //     if event.first_update_id != self.last_update_id + 1 {
-    //         Err(anyhow!(
-    //             "Expect event u to be {}, found {}",
-    //             self.last_update_id + 1,
-    //             event.first_update_id
-    //         ))
-    //     } else{
-    //         self.add_event(event);
-    //         Ok(())
-    //     }
-    //
-    // }
 }
 
 #[test]
