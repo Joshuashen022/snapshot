@@ -122,7 +122,7 @@ impl EventT for EventPerpetualU {
             self.last_update_id,
             self.last_message_last_update_id
         );
-        self.last_message_last_update_id != snap_shot_id
+        self.last_message_last_update_id == snap_shot_id
     }
 
 }

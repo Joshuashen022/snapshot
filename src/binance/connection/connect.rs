@@ -212,23 +212,3 @@ pub async fn try_get_connection<
         }
     Ok(false)
 }
-// while let Ok(message) = stream.next().await.unwrap() {
-// let event = deserialize_message(message.clone());
-// if event.is_none() {
-// warn!("Message decode error {:?}", message);
-// continue;
-// }
-// let event = event.unwrap();
-//
-// let mut orderbook = shared.write().unwrap();
-// if event.equals(orderbook.id()) {
-// orderbook.add_event(event);
-// let snapshot = orderbook.get_snapshot();
-// if let Err(_) = sender.send(snapshot.depth()) {
-// error!("depth send Snapshot error");
-// };
-// } else {
-// warn!("All event is not usable, need a new snapshot");
-// break;
-// }
-// }
