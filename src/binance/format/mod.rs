@@ -2,12 +2,11 @@ pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
 pub mod binance_spot;
 
-
 use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer};
 use std::fmt;
 
-use crate::Quote;
 use crate::binance::connection::BinanceOrderBookSnapshot;
+use crate::Quote;
 
 impl<'de> Deserialize<'de> for Quote {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -67,8 +66,7 @@ impl<'de> Visitor<'de> for QuoteVisitor {
     }
 }
 
-
-pub trait SharedT<Event>{
+pub trait SharedT<Event> {
     type BinanceSnapshot;
     /// return last_update_id
     fn id(&self) -> i64;
@@ -81,19 +79,19 @@ pub trait SharedT<Event>{
     fn get_snapshot(&self) -> BinanceOrderBookSnapshot;
 }
 
-pub trait EventT{
+pub trait EventT {
     fn matches(&self, snap_shot_id: i64) -> bool;
     fn behind(&self, snap_shot_id: i64) -> bool;
     fn ahead(&self, snap_shot_id: i64) -> bool;
     fn equals(&self, snap_shot_id: i64) -> bool;
 }
 
-pub trait StreamEventT{
+pub trait StreamEventT {
     type Event;
     fn event(&self) -> Self::Event;
 }
 
-pub trait SnapshotT{
+pub trait SnapshotT {
     fn id(&self) -> i64;
 
     fn bids(&self) -> &Vec<Quote>;

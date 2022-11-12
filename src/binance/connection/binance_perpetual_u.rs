@@ -1,12 +1,12 @@
+use crate::binance::connection::connect::{
+    initialize, socket_stream, try_get_connection, BinanceWebSocket,
+};
 use crate::binance::format::binance_perpetual_u::{
     BinanceSnapshotPerpetualU, EventPerpetualU, SharedPerpetualU, StreamEventPerpetualU,
     StreamLevelEventPerpetualU,
 };
-use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Depth;
-use crate::binance::connection::connect::{
-    socket_stream, BinanceWebSocket, initialize, try_get_connection
-};
 
 use anyhow::anyhow;
 use anyhow::{Error, Result};
@@ -53,16 +53,21 @@ impl BinanceSpotOrderBookPerpetualU {
         let _ = tokio::spawn(async move {
             let mut default_exit = 0;
             info!("Start OrderBook thread");
-            loop {//<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU>
+            loop {
+                //<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU>
                 let res = try_get_connection::<
-                    EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU
+                    EventPerpetualU,
+                    BinanceSnapshotPerpetualU,
+                    SharedPerpetualU,
+                    StreamEventPerpetualU,
                 >(
                     sender.clone(),
                     rest_address.clone(),
                     depth_address.clone(),
                     status.clone(),
                     shared.clone(),
-                ).await;
+                )
+                .await;
 
                 match res {
                     Ok(success) => {
@@ -72,14 +77,13 @@ impl BinanceSpotOrderBookPerpetualU {
                                 break;
                             }
                             default_exit += 1;
-                        } else{
+                        } else {
                             error!("This should not be happening");
                             break;
                         }
-                    },
+                    }
                     Err(e) => error!("Error happen when running code: {:?}", e),
                 }
-
             }
             error!("OrderBook thread stopped");
             Ok::<(), Error>(())

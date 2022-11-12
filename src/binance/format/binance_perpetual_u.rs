@@ -4,11 +4,11 @@ use crate::Quote;
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
+use crate::binance::format::binance_spot::BinanceSnapshotSpot;
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;
 use tracing::debug;
-use crate::binance::format::binance_spot::BinanceSnapshotSpot;
-use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 // use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
@@ -23,7 +23,7 @@ pub struct StreamLevelEventPerpetualU {
     pub data: LevelEventPerpetualU,
 }
 
-impl StreamEventT for StreamEventPerpetualU{
+impl StreamEventT for StreamEventPerpetualU {
     type Event = EventPerpetualU;
     fn event(&self) -> Self::Event {
         self.data.clone()
@@ -90,7 +90,7 @@ impl EventT for EventPerpetualU {
 
     //snapshot.last_update_id > event.last_update_id
     /// [E.U,..,E.u] S.u
-    fn behind(&self, snap_shot_id: i64) -> bool{
+    fn behind(&self, snap_shot_id: i64) -> bool {
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -103,7 +103,7 @@ impl EventT for EventPerpetualU {
 
     //event.first_update_id > snapshot.last_update_id
     /// S.u [E.U,..,E.u]
-    fn ahead(&self, snap_shot_id: i64) -> bool{
+    fn ahead(&self, snap_shot_id: i64) -> bool {
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -114,7 +114,7 @@ impl EventT for EventPerpetualU {
         self.first_update_id > snap_shot_id
     }
 
-    fn equals(&self, snap_shot_id: i64) -> bool{
+    fn equals(&self, snap_shot_id: i64) -> bool {
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -124,7 +124,6 @@ impl EventT for EventPerpetualU {
         );
         self.last_message_last_update_id == snap_shot_id
     }
-
 }
 
 /// 有限档深度信息
@@ -188,7 +187,7 @@ pub struct BinanceSnapshotPerpetualU {
     pub asks: Vec<Quote>,
 }
 
-impl SnapshotT for BinanceSnapshotPerpetualU{
+impl SnapshotT for BinanceSnapshotPerpetualU {
     fn id(&self) -> i64 {
         self.last_update_id
     }
@@ -200,7 +199,6 @@ impl SnapshotT for BinanceSnapshotPerpetualU{
     fn asks(&self) -> &Vec<Quote> {
         &self.asks
     }
-
 }
 
 pub struct SharedPerpetualU {
@@ -213,15 +211,13 @@ pub struct SharedPerpetualU {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl SharedT<EventPerpetualU> for SharedPerpetualU{
-
+impl SharedT<EventPerpetualU> for SharedPerpetualU {
     type BinanceSnapshot = BinanceSnapshotPerpetualU;
     /// return last_update_id
     /// or `u`
     fn id(&self) -> i64 {
         self.last_update_id
     }
-
 
     fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualU) {
         self.asks.clear();
@@ -296,7 +292,6 @@ impl SharedT<EventPerpetualU> for SharedPerpetualU{
     }
 }
 
-
 impl SharedPerpetualU {
     pub fn new() -> Self {
         SharedPerpetualU {
@@ -309,7 +304,6 @@ impl SharedPerpetualU {
             bids: BTreeMap::new(),
         }
     }
-
 
     /// Only used for "LevelEvent"
     pub fn set_level_event(&mut self, level_event: LevelEventPerpetualU) {

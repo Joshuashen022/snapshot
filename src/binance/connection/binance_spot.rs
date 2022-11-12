@@ -1,27 +1,26 @@
-use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 // use crate::binance::connection::BinanceOrderBookSnapshot;
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use tokio_tungstenite::{connect_async, MaybeTlsStream, tungstenite, WebSocketStream};
-use futures_util::StreamExt;
-use tungstenite::{Message, WebSocket};
 use anyhow::anyhow;
 use anyhow::{Error, Result};
+use futures_util::StreamExt;
 use tokio::net::TcpStream;
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
+use tungstenite::{Message, WebSocket};
 use url::Url;
 
-
-use tracing::{debug, error, info, warn};
+use crate::binance::connection::connect::{
+    initialize, socket_stream, try_get_connection, BinanceWebSocket,
+};
 use crate::binance::format::binance_spot::{
     BinanceSnapshotSpot, EventSpot, LevelEventSpot, SharedSpot,
 };
 use crate::{Depth, OrderBookSnapshot};
-use crate::binance::connection::connect::{
-    socket_stream, BinanceWebSocket, initialize, try_get_connection
-};
+use tracing::{debug, error, info, warn};
 
 const MAX_BUFFER_EVENTS: usize = 5;
 
@@ -54,15 +53,15 @@ impl BinanceOrderBookSpot {
             let mut default_exit = 0;
             info!("Start OrderBook thread");
             loop {
-                let res = try_get_connection::<
-                    EventSpot, BinanceSnapshotSpot, SharedSpot, EventSpot
-                >(
-                    sender.clone(),
-                    rest_address.clone(),
-                    depth_address.clone(),
-                    status.clone(),
-                    shared.clone(),
-                ).await;
+                let res =
+                    try_get_connection::<EventSpot, BinanceSnapshotSpot, SharedSpot, EventSpot>(
+                        sender.clone(),
+                        rest_address.clone(),
+                        depth_address.clone(),
+                        status.clone(),
+                        shared.clone(),
+                    )
+                    .await;
 
                 match res {
                     Ok(success) => {
@@ -72,14 +71,13 @@ impl BinanceOrderBookSpot {
                                 break;
                             }
                             default_exit += 1;
-                        } else{
+                        } else {
                             error!("This should not be happening");
                             break;
                         }
-                    },
+                    }
                     Err(e) => error!("Error happen when running code: {:?}", e),
                 }
-
             }
             error!("BinanceOrderBookSpot thread stopped Unexpectedly");
             Ok::<(), Error>(())
@@ -189,7 +187,7 @@ impl BinanceOrderBookSpot {
         }
     }
 
-    fn update_status(&mut self, value: bool) -> Result<()>{
+    fn update_status(&mut self, value: bool) -> Result<()> {
         if let Ok(mut guard) = self.status.lock() {
             (*guard) = value;
         }

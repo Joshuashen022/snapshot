@@ -1,13 +1,13 @@
-use std::collections::VecDeque;
 use crate::binance::connection::connect::{
-    socket_stream, BinanceWebSocket, initialize, try_get_connection
+    initialize, socket_stream, try_get_connection, BinanceWebSocket,
 };
 use crate::binance::format::binance_perpetual_c::{
     BinanceSnapshotPerpetualC, EventPerpetualC, SharedPerpetualC, StreamEventPerpetualC,
     StreamLevelEventPerpetualC,
 };
-use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Depth;
+use std::collections::VecDeque;
 
 use anyhow::anyhow;
 use anyhow::{Error, Result};
@@ -51,14 +51,18 @@ impl BinanceSpotOrderBookPerpetualC {
             info!("Start OrderBook thread");
             loop {
                 let res = try_get_connection::<
-                    EventPerpetualC, BinanceSnapshotPerpetualC, SharedPerpetualC, StreamEventPerpetualC
+                    EventPerpetualC,
+                    BinanceSnapshotPerpetualC,
+                    SharedPerpetualC,
+                    StreamEventPerpetualC,
                 >(
                     sender.clone(),
                     rest_address.clone(),
                     depth_address.clone(),
                     status.clone(),
                     shared.clone(),
-                ).await;
+                )
+                .await;
 
                 match res {
                     Ok(success) => {
@@ -68,11 +72,11 @@ impl BinanceSpotOrderBookPerpetualC {
                                 break;
                             }
                             default_exit += 1;
-                        } else{
+                        } else {
                             error!("This should not be happening");
                             break;
                         }
-                    },
+                    }
                     Err(e) => error!("Error happen when running code: {:?}", e),
                 }
             }

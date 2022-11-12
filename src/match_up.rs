@@ -95,19 +95,17 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config {
         _ => panic!("Unsupported Exchange {}", exchange),
     };
 
-    let symbol_type = match exchange_type{
+    let symbol_type = match exchange_type {
         ExchangeType::Binance => validate_symbol_binance(symbol).unwrap(),
         ExchangeType::Crypto => validate_symbol_crypto(symbol).unwrap(),
     };
 
     let (rest_address, depth_address, level_depth_address) = match exchange_type {
-        ExchangeType::Binance => {
-            set_addr_for_binance(symbol_type.clone(), limit)
-        },
+        ExchangeType::Binance => set_addr_for_binance(symbol_type.clone(), limit),
         ExchangeType::Crypto => {
-            let symbol = match symbol_type.clone(){
+            let symbol = match symbol_type.clone() {
                 SymbolType::Spot(s) => s,
-                _ => panic!("Crypto is supported for {}", symbol)
+                _ => panic!("Crypto is supported for {}", symbol),
             };
             set_addr_for_crypto(&symbol, limit)
         }
@@ -162,19 +160,17 @@ fn validate_symbol_binance(symbol: &str) -> Result<SymbolType> {
     let is_contract_coin = { splits.len() == 4 && is_contract };
 
     let symbol_inner = {
-
         let mut splits = splits;
 
-        if is_contract{
+        if is_contract {
             splits.pop();
         }
 
-        if splits.len() == 3{
-            format!("{}{}_{}",splits[0] ,splits[1] ,splits[2]).to_lowercase()
+        if splits.len() == 3 {
+            format!("{}{}_{}", splits[0], splits[1], splits[2]).to_lowercase()
         } else {
-            format!("{}{}",splits[0] ,splits[1]).to_lowercase()
+            format!("{}{}", splits[0], splits[1]).to_lowercase()
         }
-
     };
 
     let result = match (is_contract, is_contract_coin, is_spot) {
@@ -335,7 +331,7 @@ mod tests {
     }
 
     #[test]
-    fn valid_symbols(){
+    fn valid_symbols() {
         use crate::match_up::validate_symbol_binance;
         use crate::match_up::SymbolType;
         let symbol = SymbolType::ContractCoin(String::from("btcusdt_221230"));
@@ -345,17 +341,10 @@ mod tests {
         );
 
         let symbol = SymbolType::ContractUSDT(String::from("btcusdt"));
-        assert_eq!(
-            symbol,
-            validate_symbol_binance("BTC_USDT_SWAP").unwrap(),
-        );
+        assert_eq!(symbol, validate_symbol_binance("BTC_USDT_SWAP").unwrap(),);
 
         let symbol = SymbolType::Spot(String::from("btcusdt"));
-        assert_eq!(
-            symbol,
-            validate_symbol_binance("BTC_USDT").unwrap(),
-        );
-
+        assert_eq!(symbol, validate_symbol_binance("BTC_USDT").unwrap(),);
     }
 
     #[test]

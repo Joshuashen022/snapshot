@@ -1,5 +1,5 @@
 use crate::binance::connection::BinanceOrderBookSnapshot;
-use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Quote;
 
 use std::collections::btree_map::BTreeMap;
@@ -28,10 +28,10 @@ pub struct EventSpot {
     pub asks: Vec<Quote>,
 }
 
-impl StreamEventT for EventSpot{
+impl StreamEventT for EventSpot {
     type Event = EventSpot;
     fn event(&self) -> Self::Event {
-        EventSpot{
+        EventSpot {
             ttype: self.ttype.clone(),
             ts: self.ts,
             pair: self.pair.clone(),
@@ -44,49 +44,41 @@ impl StreamEventT for EventSpot{
 }
 
 impl EventT for EventSpot {
-
     /// [E.U,..,S.u,..,E.u]
     fn matches(&self, snap_shot_id: i64) -> bool {
-
-        debug!("order book {}, Event {}-{}",
-            snap_shot_id,
-            self.first_update_id,
-            self.last_update_id
+        debug!(
+            "order book {}, Event {}-{}",
+            snap_shot_id, self.first_update_id, self.last_update_id
         );
 
         self.first_update_id <= snap_shot_id + 1 && snap_shot_id + 1 <= self.last_update_id
     }
 
     /// [E.U,..,E.u] S.u
-    fn behind(&self, snap_shot_id: i64) -> bool{
-
-        debug!("order book {}, Event {}-{}",
-            snap_shot_id,
-            self.first_update_id,
-            self.last_update_id
+    fn behind(&self, snap_shot_id: i64) -> bool {
+        debug!(
+            "order book {}, Event {}-{}",
+            snap_shot_id, self.first_update_id, self.last_update_id
         );
 
         self.last_update_id <= snap_shot_id
     }
 
     /// S.u [E.U,..,E.u]
-    fn ahead(&self, snap_shot_id: i64) -> bool{
-
-        debug!("order book {}, Event {}-{}",
-            snap_shot_id,
-            self.first_update_id,
-            self.last_update_id
+    fn ahead(&self, snap_shot_id: i64) -> bool {
+        debug!(
+            "order book {}, Event {}-{}",
+            snap_shot_id, self.first_update_id, self.last_update_id
         );
 
         self.first_update_id > snap_shot_id + 1
     }
 
     ///
-    fn equals(&self, snap_shot_id: i64) -> bool{
-        debug!("order book {}, Event {}-{}",
-            snap_shot_id,
-            self.first_update_id,
-            self.last_update_id
+    fn equals(&self, snap_shot_id: i64) -> bool {
+        debug!(
+            "order book {}, Event {}-{}",
+            snap_shot_id, self.first_update_id, self.last_update_id
         );
         self.first_update_id == snap_shot_id + 1
     }
@@ -114,7 +106,7 @@ pub struct BinanceSnapshotSpot {
     pub asks: Vec<Quote>,
 }
 
-impl SnapshotT for BinanceSnapshotSpot{
+impl SnapshotT for BinanceSnapshotSpot {
     fn id(&self) -> i64 {
         self.last_update_id
     }
@@ -126,7 +118,6 @@ impl SnapshotT for BinanceSnapshotSpot{
     fn asks(&self) -> &Vec<Quote> {
         &self.asks
     }
-
 }
 
 pub struct SharedSpot {
@@ -168,10 +159,9 @@ impl SharedSpot {
         self.send_time = time_stamp;
         self.receive_time = time_stamp;
     }
-
 }
 
-impl SharedT<EventSpot> for SharedSpot{
+impl SharedT<EventSpot> for SharedSpot {
     type BinanceSnapshot = BinanceSnapshotSpot;
     /// return last_update_id
     fn id(&self) -> i64 {

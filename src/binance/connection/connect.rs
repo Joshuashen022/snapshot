@@ -1,29 +1,28 @@
-use tokio::net::TcpStream;
-use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
-use tungstenite::{Message, WebSocket};
-use anyhow::Result;
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Depth;
-use url::Url;
-use serde::de::DeserializeOwned;
-use std::sync::{Arc, Mutex, RwLock};
-use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
-use std::collections::VecDeque;
-use tracing::{debug, error, info, warn};
+use anyhow::Result;
 use futures_util::StreamExt;
+use serde::de::DeserializeOwned;
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex, RwLock};
+use tokio::net::TcpStream;
 use tokio::sync::mpsc::UnboundedSender;
+use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
+use tracing::{debug, error, info, warn};
+use tungstenite::{Message, WebSocket};
+use url::Url;
 
 const MAX_BUFFER_EVENTS: usize = 5;
 
 pub type BinanceWebSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
-pub async fn socket_stream(address: &str) -> Result<BinanceWebSocket, String>{
+pub async fn socket_stream(address: &str) -> Result<BinanceWebSocket, String> {
     let url = Url::parse(&address).expect("Bad URL");
 
-    match connect_async(url).await{
+    match connect_async(url).await {
         Ok((connection, _)) => Ok(connection),
-        Err(e) => Err(format!("{:?}", e))
+        Err(e) => Err(format!("{:?}", e)),
     }
-
 }
 
 fn deserialize_event<StreamEvent: DeserializeOwned>(message: Message) -> Option<StreamEvent> {
@@ -51,22 +50,22 @@ fn add_event_to_orderbook<
 >(
     event: Event,
     shared: Arc<RwLock<Shard>>,
-    snapshot: &Snapshot
-) -> Result<bool>{
+    snapshot: &Snapshot,
+) -> Result<bool> {
     let snap_shot_id = snapshot.id();
     if event.behind(snap_shot_id) {
-        return Ok(false)
+        return Ok(false);
     }
 
     if event.matches(snap_shot_id) {
         let mut orderbook = shared.write().unwrap();
         orderbook.load_snapshot(&snapshot);
         orderbook.add_event(event);
-        return Ok(true)
+        return Ok(true);
     }
 
     if event.ahead(snap_shot_id) {
-        return Ok(false)
+        return Ok(false);
     }
 
     Ok(false)
@@ -82,7 +81,6 @@ pub async fn initialize<
     rest_address: String,
     shared: Arc<RwLock<Shard>>,
 ) -> Result<bool> {
-
     let mut buffer_events = VecDeque::new();
 
     while let Ok(message) = stream.next().await.unwrap() {
@@ -96,27 +94,25 @@ pub async fn initialize<
     }
 
     // Wait for a while to collect event into buffer
-    let snapshot: Snapshot =
-        reqwest::get(&rest_address).await?.json().await?;
+    let snapshot: Snapshot = reqwest::get(&rest_address).await?.json().await?;
 
     info!("Successfully connected to {}", rest_address);
 
     let mut overbook_setup = false;
     let shared_clone = shared.clone();
     while let Some(event) = buffer_events.pop_front() {
-
-        if let Ok(add_success) = add_event_to_orderbook::<Event, Snapshot, Shard>
-            (event, shared_clone.clone(), &snapshot){
-            if add_success{
-                return Ok(true)
+        if let Ok(add_success) =
+            add_event_to_orderbook::<Event, Snapshot, Shard>(event, shared_clone.clone(), &snapshot)
+        {
+            if add_success {
+                return Ok(true);
             }
-        } else{
-            return Ok(false)
+        } else {
+            return Ok(false);
         };
     }
 
     if overbook_setup {
-
         while let Some(event) = buffer_events.pop_front() {
             let mut orderbook = shared.write().unwrap();
             orderbook.add_event(event);
@@ -128,20 +124,22 @@ pub async fn initialize<
             let event = deserialize_event::<StreamEvent>(message).unwrap();
             let event = event.event();
 
-            if let Ok(add_success) = add_event_to_orderbook::<Event, Snapshot, Shard>
-                (event, shared_clone.clone(), &snapshot){
-                if add_success{
-                    return Ok(true)
+            if let Ok(add_success) = add_event_to_orderbook::<Event, Snapshot, Shard>(
+                event,
+                shared_clone.clone(),
+                &snapshot,
+            ) {
+                if add_success {
+                    return Ok(true);
                 }
-            } else{
-                return Ok(false)
+            } else {
+                return Ok(false);
             };
         }
     }
 
     Ok(false)
 }
-
 
 pub async fn try_get_connection<
     Event: DeserializeOwned + EventT,
@@ -154,61 +152,65 @@ pub async fn try_get_connection<
     depth_address: String,
     status: Arc<Mutex<bool>>,
     shared: Arc<RwLock<Shard>>,
-) -> Result<bool>{
-        if let Ok(mut guard) = status.lock() {
-            (*guard) = false;
+) -> Result<bool> {
+    if let Ok(mut guard) = status.lock() {
+        (*guard) = false;
+    }
+    let mut stream = match socket_stream(&depth_address).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            error!("Error calling {}, {:?}", depth_address, e);
+            return Ok(false);
         }
-        let mut stream = match socket_stream(&depth_address).await {
-            Ok(stream) => stream,
-            Err(e) => {
-                error!("Error calling {}, {:?}", depth_address, e);
-                return Ok(false)
-            }
-        };
+    };
 
-        info!("Successfully connected to {}", depth_address);
-        match initialize::<Event, Snapshot, Shard, StreamEvent>
-            (&mut stream, rest_address.clone(), shared.clone()).await
-        {
-            Ok(overbook_setup) => {
-                if overbook_setup {
-                    if let Ok(mut guard) = status.lock(){
-                        (*guard) = true;
-                    };
-                } else {
-                    warn!("All event is not usable, need a new snapshot");
-                    return Ok(false)
-                }
-            },
-            Err(e) => {
-                error!("{:?}",e);
-                return Ok(false)
-            }
-        };
-
-        info!(" Overbook initialize success, now keep listening ");
-
-        while let Ok(message) = stream.next().await.unwrap() {
-            let event = deserialize_event::<StreamEvent>(message.clone());
-            if event.is_none() {
-                warn!("Message decode error {:?}", message);
-                continue;
-            }
-            let event = event.unwrap().event();
-
-            let mut orderbook = shared.write().unwrap();
-             if event.equals(orderbook.id()) {
-                orderbook.add_event(event);
-
-                let snapshot = orderbook.get_snapshot();
-
-                if let Err(_) = sender.send(snapshot.depth()) {
-                    error!("depth send Snapshot error");
+    info!("Successfully connected to {}", depth_address);
+    match initialize::<Event, Snapshot, Shard, StreamEvent>(
+        &mut stream,
+        rest_address.clone(),
+        shared.clone(),
+    )
+    .await
+    {
+        Ok(overbook_setup) => {
+            if overbook_setup {
+                if let Ok(mut guard) = status.lock() {
+                    (*guard) = true;
                 };
             } else {
                 warn!("All event is not usable, need a new snapshot");
-                break;
+                return Ok(false);
             }
         }
+        Err(e) => {
+            error!("{:?}", e);
+            return Ok(false);
+        }
+    };
+
+    info!(" Overbook initialize success, now keep listening ");
+
+    while let Ok(message) = stream.next().await.unwrap() {
+        let event = deserialize_event::<StreamEvent>(message.clone());
+        if event.is_none() {
+            warn!("Message decode error {:?}", message);
+            continue;
+        }
+        let event = event.unwrap().event();
+
+        let mut orderbook = shared.write().unwrap();
+        if event.equals(orderbook.id()) {
+            orderbook.add_event(event);
+
+            let snapshot = orderbook.get_snapshot();
+
+            if let Err(_) = sender.send(snapshot.depth()) {
+                error!("depth send Snapshot error");
+            };
+        } else {
+            warn!("All event is not usable, need a new snapshot");
+            break;
+        }
+    }
     Ok(false)
 }

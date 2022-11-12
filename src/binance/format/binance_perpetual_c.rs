@@ -4,11 +4,11 @@ use crate::Quote;
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 // use std::sync::{Arc, RwLock};
+use crate::binance::format::binance_spot::BinanceSnapshotSpot;
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;
 use tracing::debug;
-use crate::binance::format::binance_spot::BinanceSnapshotSpot;
-use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 // use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug, Default)]
@@ -17,13 +17,12 @@ pub struct StreamEventPerpetualC {
     pub data: EventPerpetualC,
 }
 
-impl StreamEventT for StreamEventPerpetualC{
+impl StreamEventT for StreamEventPerpetualC {
     type Event = EventPerpetualC;
     fn event(&self) -> Self::Event {
         self.data.clone()
     }
 }
-
 
 #[derive(Deserialize, Debug)]
 pub struct StreamLevelEventPerpetualC {
@@ -78,7 +77,6 @@ pub struct EventPerpetualC {
     pub asks: Vec<Quote>,
 }
 
-
 impl EventT for EventPerpetualC {
     /// only for contract_U
     /// Rule: `U<= id <= u`
@@ -95,7 +93,7 @@ impl EventT for EventPerpetualC {
     }
 
     /// [E.U,..,E.u] S.u
-    fn behind(&self, snap_shot_id: i64) -> bool{
+    fn behind(&self, snap_shot_id: i64) -> bool {
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -108,7 +106,7 @@ impl EventT for EventPerpetualC {
 
     //event.first_update_id > snapshot.last_update_id
     /// S.u [E.U,..,E.u]
-    fn ahead(&self, snap_shot_id: i64) -> bool{
+    fn ahead(&self, snap_shot_id: i64) -> bool {
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -119,7 +117,7 @@ impl EventT for EventPerpetualC {
         self.first_update_id > snap_shot_id
     }
 
-    fn equals(&self, snap_shot_id: i64) -> bool{
+    fn equals(&self, snap_shot_id: i64) -> bool {
         debug!(
             "order book {}, Event {}-{}({})",
             snap_shot_id,
@@ -129,7 +127,6 @@ impl EventT for EventPerpetualC {
         );
         self.last_message_last_update_id == snap_shot_id
     }
-
 }
 
 /// 有限档深度信息
@@ -201,7 +198,7 @@ pub struct BinanceSnapshotPerpetualC {
     pub asks: Vec<Quote>,
 }
 
-impl SnapshotT for BinanceSnapshotPerpetualC{
+impl SnapshotT for BinanceSnapshotPerpetualC {
     fn id(&self) -> i64 {
         self.last_update_id
     }
@@ -213,9 +210,7 @@ impl SnapshotT for BinanceSnapshotPerpetualC{
     fn asks(&self) -> &Vec<Quote> {
         &self.asks
     }
-
 }
-
 
 pub struct SharedPerpetualC {
     pub symbol: String,
@@ -227,7 +222,7 @@ pub struct SharedPerpetualC {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl  SharedT<EventPerpetualC> for SharedPerpetualC{
+impl SharedT<EventPerpetualC> for SharedPerpetualC {
     type BinanceSnapshot = BinanceSnapshotPerpetualC;
     /// return last_update_id
     /// or `u`
@@ -307,7 +302,6 @@ impl  SharedT<EventPerpetualC> for SharedPerpetualC{
     }
 }
 
-
 impl SharedPerpetualC {
     pub fn new() -> Self {
         SharedPerpetualC {
@@ -320,7 +314,6 @@ impl SharedPerpetualC {
             bids: BTreeMap::new(),
         }
     }
-
 
     /// Only used for "LevelEvent"
     pub fn set_level_event(&mut self, level_event: LevelEventPerpetualC) {
