@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
-use crate::binance::connection::connect::{socket_stream, BinanceWebSocket, initialize};
+use crate::binance::connection::connect::{
+    socket_stream, BinanceWebSocket, initialize, try_get_connection
+};
 use crate::binance::format::binance_perpetual_c::{
     BinanceSnapshotPerpetualC, EventPerpetualC, SharedPerpetualC, StreamEventPerpetualC,
     StreamLevelEventPerpetualC,

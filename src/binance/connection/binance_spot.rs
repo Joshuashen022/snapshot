@@ -20,7 +20,7 @@ use crate::binance::format::binance_spot::{
 };
 use crate::{Depth, OrderBookSnapshot};
 use crate::binance::connection::connect::{
-    socket_stream, BinanceWebSocket, initialize
+    socket_stream, BinanceWebSocket, initialize, try_get_connection
 };
 
 const MAX_BUFFER_EVENTS: usize = 5;
@@ -49,27 +49,38 @@ impl BinanceOrderBookSpot {
         let status = self.status.clone();
         let self_clone = self.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
+        let sender = sender.clone();
         // Thread to maintain Order Book
         let _ = tokio::spawn(async move {
             let mut default_exit = 0;
             info!("Start OrderBook thread");
             loop {
-                let res: Result<()> = {
-
-                    Ok(())
-                };
+                let res = try_get_connection::<
+                    EventSpot, BinanceSnapshotSpot, SharedSpot, EventSpot
+                >(
+                    sender.clone(),
+                    rest_address.clone(),
+                    depth_address.clone(),
+                    status.clone(),
+                    shared.clone(),
+                ).await;
 
                 match res {
-                    Ok(_) => (),
+                    Ok(success) => {
+                        if !success {
+                            if default_exit > 20 {
+                                error!("Using default break");
+                                break;
+                            }
+                            default_exit += 1;
+                        } else{
+                            error!("This should not be happening");
+                            break;
+                        }
+                    },
                     Err(e) => error!("Error happen when running code: {:?}", e),
                 }
 
-                if default_exit > 20 {
-                    error!("Using default break");
-                    break;
-                }
-
-                default_exit += 1;
             }
             error!("OrderBook thread stopped");
             Ok::<(), Error>(())

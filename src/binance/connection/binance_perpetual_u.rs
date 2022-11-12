@@ -5,7 +5,7 @@ use crate::binance::format::binance_perpetual_u::{
 use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 use crate::Depth;
 use crate::binance::connection::connect::{
-    socket_stream, BinanceWebSocket, initialize
+    socket_stream, BinanceWebSocket, initialize, try_get_connection
 };
 
 use anyhow::anyhow;
