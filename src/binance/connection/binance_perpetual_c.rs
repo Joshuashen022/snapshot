@@ -98,13 +98,13 @@ impl BinanceSpotOrderBookPerpetualC {
         let _ = tokio::spawn(async move {
             info!("Start Level OrderBook thread");
             loop {
-                let url = Url::parse(&level_address).expect("Bad URL");
-
-                let res = connect_async(url).await;
-                let mut stream = match res {
-                    Ok((stream, _)) => stream,
+                if let Ok(mut guard) = status.lock() {
+                    (*guard) = false;
+                }
+                let mut stream = match socket_stream(&level_address).await {
+                    Ok(stream) => stream,
                     Err(e) => {
-                        error!("Error {:?}, reconnecting {}", e, level_address);
+                        error!("Error calling {}, {:?}", level_address, e);
                         continue;
                     }
                 };
