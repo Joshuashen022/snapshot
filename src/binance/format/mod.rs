@@ -89,6 +89,8 @@ pub trait EventT {
 pub trait StreamEventT {
     type Event;
     fn event(&self) -> Self::Event;
+
+    fn display(&self) {}
 }
 
 pub trait SnapshotT {

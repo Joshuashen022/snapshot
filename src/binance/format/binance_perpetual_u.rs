@@ -17,16 +17,33 @@ pub struct StreamEventPerpetualU {
     pub data: EventPerpetualU,
 }
 
+impl StreamEventT for StreamEventPerpetualU {
+    type Event = EventPerpetualU;
+    fn event(&self) -> Self::Event {
+        self.data.clone()
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct StreamLevelEventPerpetualU {
     pub stream: String,
     pub data: LevelEventPerpetualU,
 }
 
-impl StreamEventT for StreamEventPerpetualU {
-    type Event = EventPerpetualU;
+impl StreamEventT for StreamLevelEventPerpetualU {
+    type Event = LevelEventPerpetualU;
     fn event(&self) -> Self::Event {
         self.data.clone()
+    }
+    fn display(&self) {
+        let level_event = &self.data;
+        debug!(
+            "receive level_event {}-{}({}) ts: {}",
+            level_event.first_update_id,
+            level_event.last_update_id,
+            level_event.last_message_last_update_id,
+            level_event.event_time,
+        );
     }
 }
 
@@ -127,7 +144,7 @@ impl EventT for EventPerpetualU {
 }
 
 /// 有限档深度信息
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct LevelEventPerpetualU {
     /// Event type
     #[serde(rename = "e")]

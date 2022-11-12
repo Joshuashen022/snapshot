@@ -29,6 +29,24 @@ pub struct StreamLevelEventPerpetualC {
     pub stream: String,
     pub data: LevelEventPerpetualC,
 }
+impl StreamEventT for StreamLevelEventPerpetualC {
+    type Event = LevelEventPerpetualC;
+
+    fn event(&self) -> Self::Event {
+        self.data.clone()
+    }
+
+    fn display(&self) {
+        let level_event = &self.data;
+        debug!(
+            "receive level_event {}-{}({}) ts: {}",
+            level_event.first_update_id,
+            level_event.last_update_id,
+            level_event.last_message_last_update_id,
+            level_event.event_time,
+        );
+    }
+}
 
 /// 增量深度信息
 #[derive(Deserialize, Debug, Default, Clone)]

@@ -98,6 +98,21 @@ pub struct LevelEventSpot {
     pub asks: Vec<Quote>,
 }
 
+impl StreamEventT for LevelEventSpot {
+    type Event = LevelEventSpot;
+    fn event(&self) -> Self::Event {
+        LevelEventSpot {
+            last_update_id: self.last_update_id,
+            bids: self.bids.clone(),
+            asks: self.asks.clone(),
+        }
+    }
+
+    fn display(&self) {
+        debug!("Level Event {}", self.last_update_id);
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BinanceSnapshotSpot {
