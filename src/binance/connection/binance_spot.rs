@@ -139,9 +139,8 @@ impl BinanceOrderBookSpot {
 
                     debug!("Level Event {}", level_event.last_update_id);
 
-                    let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
                     if let Ok(mut guard) = shared.write() {
-                        (*guard).set_level_event(level_event, time.as_millis() as i64);
+                        (*guard).set_level_event(level_event);
 
                         let snapshot = (*guard).get_snapshot().depth();
 

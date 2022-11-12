@@ -144,7 +144,7 @@ impl SharedSpot {
     }
 
     /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventSpot, time_stamp: i64) {
+    pub fn set_level_event(&mut self, level_event: LevelEventSpot) {
         self.asks.clear();
         for ask in level_event.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);
@@ -155,9 +155,10 @@ impl SharedSpot {
             self.bids.insert(OrderedFloat(bid.price), bid.amount);
         }
 
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = level_event.last_update_id;
-        self.send_time = time_stamp;
-        self.receive_time = time_stamp;
+        self.send_time = time.as_millis() as i64;
+        self.receive_time = time.as_millis() as i64;
     }
 }
 
