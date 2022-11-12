@@ -1,5 +1,5 @@
 use crate::binance::connection::BinanceOrderBookSnapshot;
-use crate::binance::format::{SharedT, EventT, SnapshotT};
+use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 use crate::Quote;
 
 use std::collections::btree_map::BTreeMap;
@@ -26,6 +26,21 @@ pub struct EventSpot {
     pub bids: Vec<Quote>,
     #[serde(rename = "a")]
     pub asks: Vec<Quote>,
+}
+
+impl StreamEventT for EventSpot{
+    type Event = EventSpot;
+    fn event(&self) -> Self::Event {
+        EventSpot{
+            ttype: self.ttype.clone(),
+            ts: self.ts,
+            pair: self.pair.clone(),
+            first_update_id: self.first_update_id,
+            last_update_id: self.last_update_id,
+            bids: self.bids.clone(),
+            asks: self.bids.clone(),
+        }
+    }
 }
 
 impl EventT for EventSpot {

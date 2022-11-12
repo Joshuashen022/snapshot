@@ -1,4 +1,4 @@
-use crate::binance::format::{SharedT, EventT, SnapshotT};
+use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, RwLock};
@@ -68,7 +68,7 @@ impl BinanceOrderBookSpot {
                     };
 
                     info!("Successfully connected to {}", depth_address);
-                    match initialize::<EventSpot, BinanceSnapshotSpot, SharedSpot>
+                    match initialize::<EventSpot, BinanceSnapshotSpot, SharedSpot, EventSpot>
                         (&mut stream, rest_address.clone(), shared.clone()).await
                     {
                         Ok(overbook_setup) => {

@@ -8,7 +8,7 @@ use ordered_float::OrderedFloat;
 use serde::Deserialize;
 use tracing::debug;
 use crate::binance::format::binance_spot::BinanceSnapshotSpot;
-use crate::binance::format::{SharedT, EventT, SnapshotT};
+use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 // use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
@@ -23,8 +23,15 @@ pub struct StreamLevelEventPerpetualU {
     pub data: LevelEventPerpetualU,
 }
 
+impl StreamEventT for StreamEventPerpetualU{
+    type Event = EventPerpetualU;
+    fn event(&self) -> Self::Event {
+        self.data.clone()
+    }
+}
+
 /// 增量深度信息
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct EventPerpetualU {
     /// Event type
     #[serde(rename = "e")]

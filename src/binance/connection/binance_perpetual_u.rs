@@ -2,7 +2,7 @@ use crate::binance::format::binance_perpetual_u::{
     BinanceSnapshotPerpetualU, EventPerpetualU, SharedPerpetualU, StreamEventPerpetualU,
     StreamLevelEventPerpetualU,
 };
-use crate::binance::format::{SharedT, EventT, SnapshotT};
+use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 use crate::Depth;
 use crate::binance::connection::connect::{
     socket_stream, BinanceWebSocket, initialize
@@ -68,7 +68,7 @@ impl BinanceSpotOrderBookPerpetualU {
                         }
                     };
                     info!("Successfully connected to {}", depth_address);
-                    match initialize::<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU>
+                    match initialize::<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU>
                         (&mut stream, rest_address.clone(), shared.clone()).await
                     {
                         Ok(overbook_setup) => {

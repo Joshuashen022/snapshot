@@ -4,7 +4,7 @@ use crate::binance::format::binance_perpetual_c::{
     BinanceSnapshotPerpetualC, EventPerpetualC, SharedPerpetualC, StreamEventPerpetualC,
     StreamLevelEventPerpetualC,
 };
-use crate::binance::format::{SharedT, EventT, SnapshotT};
+use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 use crate::Depth;
 
 use anyhow::anyhow;
@@ -63,7 +63,7 @@ impl BinanceSpotOrderBookPerpetualC {
                     };
 
                     info!("Successfully connected to {}", depth_address);
-                    match initialize::<EventPerpetualC, BinanceSnapshotPerpetualC, SharedPerpetualC>
+                    match initialize::<EventPerpetualC, BinanceSnapshotPerpetualC, SharedPerpetualC, StreamEventPerpetualC>
                         (&mut stream, rest_address.clone(), shared.clone()).await
                     {
                         Ok(overbook_setup) => {

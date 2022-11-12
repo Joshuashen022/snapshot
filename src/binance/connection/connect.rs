@@ -5,7 +5,7 @@ use anyhow::Result;
 use url::Url;
 use serde::de::DeserializeOwned;
 use std::sync::{Arc, RwLock};
-use crate::binance::format::{SharedT, EventT, SnapshotT};
+use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 use std::collections::VecDeque;
 use tracing::{debug, error, info, warn};
 use futures_util::StreamExt;
@@ -24,7 +24,7 @@ pub async fn socket_stream(address: &str) -> Result<BinanceWebSocket, String>{
 
 }
 
-fn deserialize_event<Event: DeserializeOwned>(message: Message) -> Option<Event> {
+fn deserialize_event<StreamEvent: DeserializeOwned>(message: Message) -> Option<StreamEvent> {
     if !message.is_text() {
         return None;
     }
@@ -34,7 +34,7 @@ fn deserialize_event<Event: DeserializeOwned>(message: Message) -> Option<Event>
         Err(_) => return None,
     };
 
-    let event: Event = match serde_json::from_str(&text) {
+    let event: StreamEvent = match serde_json::from_str(&text) {
         Ok(e) => e,
         Err(_) => return None,
     };
@@ -74,6 +74,7 @@ pub async fn initialize<
     Event: DeserializeOwned + EventT,
     Snapshot: SnapshotT + DeserializeOwned,
     Shard: SharedT<Event, BinanceSnapshot = Snapshot>,
+    StreamEvent: StreamEventT + DeserializeOwned + StreamEventT<Event = Event>,
 >(
     stream: &mut BinanceWebSocket,
     rest_address: String,
@@ -83,8 +84,8 @@ pub async fn initialize<
     let mut buffer_events = VecDeque::new();
 
     while let Ok(message) = stream.next().await.unwrap() {
-        let event = deserialize_event::<Event>(message).unwrap();
-
+        let event = deserialize_event::<StreamEvent>(message).unwrap();
+        let event = event.event();
         buffer_events.push_back(event);
 
         if buffer_events.len() == MAX_BUFFER_EVENTS {

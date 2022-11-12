@@ -84,6 +84,11 @@ pub trait EventT{
     fn equals(&self, snap_shot_id: i64) -> bool;
 }
 
+pub trait StreamEventT{
+    type Event;
+    fn event(&self) -> Self::Event;
+}
+
 pub trait SnapshotT{
     fn id(&self) -> i64;
 
