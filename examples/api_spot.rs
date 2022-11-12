@@ -2,8 +2,9 @@ use tokio::runtime::Runtime;
 use tokio::time::{sleep, Duration};
 
 use snapshot::QuotationManager;
-
+///
 /// const DEPTH_URL_PC: &str =      "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
+///
 /// const DEPTH_URL_PU: &str =      "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
 /// const DEPTH_URL_SPOT: &str =    "wss://stream.binance.com:9443/ws/bnbbtc@depth@100ms";
 ///

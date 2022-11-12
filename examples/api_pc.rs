@@ -24,9 +24,9 @@ fn main() {
 
     Runtime::new().unwrap().block_on(async {
         let exchange = "binance";
-        let pc_symbol = "BTC_USDT_221230_SWAP";
-        let pu_symbol = "BTC_USDT_SWAP";
-        let spot_symbol = "BTC_USDT";
+        let pc_symbol = "BTC_USD_221230_SWAP";
+        let pu_symbol = "BTC_USD_SWAP";
+        let spot_symbol = "BTC_USD";
         let _ = vec![pc_symbol, pu_symbol, spot_symbol];
 
         let symbol = pc_symbol;
