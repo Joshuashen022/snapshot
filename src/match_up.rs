@@ -80,7 +80,7 @@ impl Config {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialOrd, PartialEq)]
 pub enum SymbolType {
     Spot(String),
     ContractUSDT(String),
@@ -321,48 +321,72 @@ mod tests {
     #[test]
     fn match_up_input_test() {
         use crate::match_up::match_up;
-        use crate::match_up::validate_symbol;
+        use crate::match_up::validate_symbol_binance;
 
-        assert!(validate_symbol("btcusd_221230_swap").is_ok());
-        assert!(validate_symbol("btcusd_swap").is_ok());
-        assert!(validate_symbol("btcusd").is_ok());
+        assert!(validate_symbol_binance("BTC_USTD_221230_SWAP").is_ok());
+        assert!(validate_symbol_binance("BTC_USTD_SWAP").is_ok());
+        assert!(validate_symbol_binance("BTC_USTD").is_ok());
 
-        let _ = match_up("binance", "btcusd_221230_swap", Some(1000));
+        let _ = match_up("binance", "BTC_USTD_221230_SWAP", Some(1000));
 
-        let _ = match_up("binance", "btcusd_swap", Some(1000));
+        let _ = match_up("binance", "BTC_USTD_SWAP", Some(1000));
 
-        let _ = match_up("binance", "btcusd", Some(1000));
+        let _ = match_up("binance", "BTC_USTD", Some(1000));
+    }
+
+    #[test]
+    fn valid_symbols(){
+        use crate::match_up::validate_symbol_binance;
+        use crate::match_up::SymbolType;
+        let symbol = SymbolType::ContractCoin(String::from("btcusdt_221230"));
+        assert_eq!(
+            symbol,
+            validate_symbol_binance("BTC_USDT_221230_SWAP").unwrap(),
+        );
+
+        let symbol = SymbolType::ContractUSDT(String::from("btcusdt"));
+        assert_eq!(
+            symbol,
+            validate_symbol_binance("BTC_USDT_SWAP").unwrap(),
+        );
+
+        let symbol = SymbolType::Spot(String::from("btcusdt"));
+        assert_eq!(
+            symbol,
+            validate_symbol_binance("BTC_USDT").unwrap(),
+        );
+
     }
 
     #[test]
     #[should_panic]
     fn in_valid_symbol1() {
-        use crate::match_up::validate_symbol;
-        let symbol = "btcusd_221230_swap_";
-        validate_symbol(symbol).unwrap();
+        use crate::match_up::validate_symbol_binance;
+        let symbol = "BTC_USTD_221230_SWAP_";
+        validate_symbol_binance(symbol).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn in_valid_symbol2() {
-        use crate::match_up::validate_symbol;
-        let symbol = "btcusd_221230_abc";
-        validate_symbol(symbol).unwrap();
+        use crate::match_up::validate_symbol_binance;
+        let symbol = "BTC_USTD_221230_ABC";
+        validate_symbol_binance(symbol).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn in_valid_symbol3() {
-        use crate::match_up::validate_symbol;
-        let symbol = "btcusd_221230swap";
-        validate_symbol(symbol).unwrap();
+        use crate::match_up::validate_symbol_binance;
+        let symbol = "BTC_USTD_221230SWAP";
+        validate_symbol_binance(symbol).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn in_valid_symbol4() {
-        use crate::match_up::validate_symbol;
-        let symbol = "btcusdswap";
-        validate_symbol(symbol).unwrap();
+        use crate::match_up::validate_symbol_binance;
+        let symbol = "BTC_USTDSWAP";
+        validate_symbol_binance(symbol).unwrap();
     }
 }
