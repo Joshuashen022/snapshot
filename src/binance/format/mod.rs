@@ -2,10 +2,12 @@ pub mod binance_perpetual_c;
 pub mod binance_perpetual_u;
 pub mod binance_spot;
 
+
 use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer};
 use std::fmt;
 
 use crate::Quote;
+use crate::binance::connection::BinanceOrderBookSnapshot;
 
 impl<'de> Deserialize<'de> for Quote {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -75,6 +77,8 @@ pub trait SharedT<Event>{
 
     /// Only used for "Event"
     fn add_event(&mut self, event: Event);
+
+    fn get_snapshot(&self) -> BinanceOrderBookSnapshot;
 }
 
 pub trait EventT{

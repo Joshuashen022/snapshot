@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 // use crate::binance::connection::BinanceOrderBookSnapshot;
-use tokio::sync::mpsc::{self, UnboundedReceiver};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, tungstenite, WebSocketStream};
 use futures_util::StreamExt;
 use tungstenite::{Message, WebSocket};
@@ -55,62 +55,6 @@ impl BinanceOrderBookSpot {
             info!("Start OrderBook thread");
             loop {
                 let res: Result<()> = {
-                    if let Ok(mut guard) = status.lock() {
-                        (*guard) = false;
-                    }
-                    let mut stream = match socket_stream(&depth_address).await {
-                        Ok(stream) => stream,
-                        Err(e) => {
-                            error!("Error calling {}, {:?}", depth_address, e);
-                            default_exit += 1;
-                            continue
-                        }
-                    };
-
-                    info!("Successfully connected to {}", depth_address);
-                    match initialize::<EventSpot, BinanceSnapshotSpot, SharedSpot, EventSpot>
-                        (&mut stream, rest_address.clone(), shared.clone()).await
-                    {
-                        Ok(overbook_setup) => {
-                            if overbook_setup {
-                                if let Ok(mut guard) = status.lock(){
-                                    (*guard) = true;
-                                };
-                            } else {
-                                warn!("All event is not usable, need a new snapshot");
-                                continue
-                            }
-                        },
-                        Err(e) => {
-                            error!("{:?}",e);
-                            continue
-                        }
-                    };
-
-                    info!(" Overbook initialize success, now keep listening ");
-
-                    while let Ok(message) = stream.next().await.unwrap() {
-                        let event = deserialize_message(message.clone());
-                        if event.is_none() {
-                            warn!("Message decode error {:?}", message);
-                            continue;
-                        }
-                        let event = event.unwrap();
-
-                        let mut orderbook = shared.write().unwrap();
-                        if event.ahead(orderbook.id()) {
-                            warn!("All event is not usable, need a new snapshot");
-                            break;
-                        } else if event.equals(orderbook.id()) {
-                            orderbook.add_event(event);
-
-                            let snapshot = orderbook.get_snapshot();
-
-                            if let Err(_) = sender.send(snapshot.depth()) {
-                                warn!("depth send Snapshot error");
-                            };
-                        }
-                    }
 
                     Ok(())
                 };

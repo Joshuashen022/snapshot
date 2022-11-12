@@ -274,6 +274,37 @@ impl  SharedT<EventPerpetualC> for SharedPerpetualC{
         self.send_time = event.event_time;
         self.receive_time = time.as_millis() as i64;
     }
+
+    fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
+        let asks = self
+            .asks
+            .iter()
+            .map(|(price, amount)| Quote {
+                price: price.into_inner(),
+                amount: *amount,
+            })
+            .collect();
+
+        let bids = self
+            .bids
+            .iter()
+            .rev()
+            .map(|(price, amount)| Quote {
+                price: price.into_inner(),
+                amount: *amount,
+            })
+            .collect();
+
+        BinanceOrderBookSnapshot {
+            symbol: self.symbol.clone(),
+            last_update_id: self.last_update_id,
+            create_time: self.create_time,
+            send_time: self.send_time,
+            receive_time: self.receive_time,
+            asks,
+            bids,
+        }
+    }
 }
 
 
@@ -308,37 +339,6 @@ impl SharedPerpetualC {
         self.create_time = level_event.create_time;
         self.send_time = level_event.event_time;
         self.receive_time = time.as_millis() as i64;
-    }
-
-    pub fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
-        let asks = self
-            .asks
-            .iter()
-            .map(|(price, amount)| Quote {
-                price: price.into_inner(),
-                amount: *amount,
-            })
-            .collect();
-
-        let bids = self
-            .bids
-            .iter()
-            .rev()
-            .map(|(price, amount)| Quote {
-                price: price.into_inner(),
-                amount: *amount,
-            })
-            .collect();
-
-        BinanceOrderBookSnapshot {
-            symbol: self.symbol.clone(),
-            last_update_id: self.last_update_id,
-            create_time: self.create_time,
-            send_time: self.send_time,
-            receive_time: self.receive_time,
-            asks,
-            bids,
-        }
     }
 
     // With give event to update snapshot,

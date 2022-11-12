@@ -2,13 +2,15 @@ use tokio::net::TcpStream;
 use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
 use tungstenite::{Message, WebSocket};
 use anyhow::Result;
+use crate::Depth;
 use url::Url;
 use serde::de::DeserializeOwned;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 use crate::binance::format::{SharedT, EventT, SnapshotT, StreamEventT};
 use std::collections::VecDeque;
 use tracing::{debug, error, info, warn};
 use futures_util::StreamExt;
+use tokio::sync::mpsc::UnboundedSender;
 
 const MAX_BUFFER_EVENTS: usize = 5;
 
@@ -137,5 +139,76 @@ pub async fn initialize<
         }
     }
 
+    Ok(false)
+}
+
+
+pub async fn try_get_connection<
+    Event: DeserializeOwned + EventT,
+    Snapshot: SnapshotT + DeserializeOwned,
+    Shard: SharedT<Event, BinanceSnapshot = Snapshot>,
+    StreamEvent: StreamEventT + DeserializeOwned + StreamEventT<Event = Event>,
+>(
+    sender: UnboundedSender<Depth>,
+    rest_address: String,
+    depth_address: String,
+    status: Arc<Mutex<bool>>,
+    shared: Arc<RwLock<Shard>>,
+) -> Result<bool>{
+        if let Ok(mut guard) = status.lock() {
+            (*guard) = false;
+        }
+        let mut stream = match socket_stream(&depth_address).await {
+            Ok(stream) => stream,
+            Err(e) => {
+                error!("Error calling {}, {:?}", depth_address, e);
+                return Ok(false)
+            }
+        };
+
+        info!("Successfully connected to {}", depth_address);
+        match initialize::<Event, Snapshot, Shard, StreamEvent>
+            (&mut stream, rest_address.clone(), shared.clone()).await
+        {
+            Ok(overbook_setup) => {
+                if overbook_setup {
+                    if let Ok(mut guard) = status.lock(){
+                        (*guard) = true;
+                    };
+                } else {
+                    warn!("All event is not usable, need a new snapshot");
+                    return Ok(false)
+                }
+            },
+            Err(e) => {
+                error!("{:?}",e);
+                return Ok(false)
+            }
+        };
+
+        info!(" Overbook initialize success, now keep listening ");
+
+        while let Ok(message) = stream.next().await.unwrap() {
+            let event = deserialize_event::<StreamEvent>(message.clone());
+            if event.is_none() {
+                warn!("Message decode error {:?}", message);
+                continue;
+            }
+            let event = event.unwrap().event();
+
+            let mut orderbook = shared.write().unwrap();
+            if event.ahead(orderbook.id()) {
+                warn!("All event is not usable, need a new snapshot");
+                break;
+            } else if event.equals(orderbook.id()) {
+                orderbook.add_event(event);
+
+                let snapshot = orderbook.get_snapshot();
+
+                if let Err(_) = sender.send(snapshot.depth()) {
+                    warn!("depth send Snapshot error");
+                };
+            }
+        }
     Ok(false)
 }
