@@ -32,6 +32,7 @@ fn main() {
         let symbol = spot_symbol;
         println!("using symbol {}", symbol);
         let manager1 = QuotationManager::with_snapshot(exchange, symbol, 1000);
+        println!("using manager1 config {:?}", manager1.config);
         let manager1_clone = manager1.clone();
         tokio::spawn(async move {
             let mut receiver = manager1_clone.subscribe_depth();
@@ -49,6 +50,7 @@ fn main() {
         });
 
         let manager2 = QuotationManager::new(exchange, symbol);
+        println!("using manager2 config {:?}", manager2.config);
         let manager2_clone = manager2.clone();
         tokio::spawn(async move {
             let mut receiver = manager2_clone.subscribe_depth();
