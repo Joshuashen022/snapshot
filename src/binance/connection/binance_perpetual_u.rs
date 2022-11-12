@@ -48,81 +48,38 @@ impl BinanceSpotOrderBookPerpetualU {
         let shared = self.shared.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
-        let self_clone = self.clone();
+        let sender = sender.clone();
         // Thread to maintain Order Book
         let _ = tokio::spawn(async move {
             let mut default_exit = 0;
             info!("Start OrderBook thread");
-            loop {
-                let res: Result<()> = {
-                    if let Ok(mut guard) = status.lock() {
-                        (*guard) = false;
-                    }
-
-                    let mut stream = match socket_stream(&depth_address).await {
-                        Ok(stream) => stream,
-                        Err(e) => {
-                            error!("Error calling {}, {:?}", depth_address, e);
-                            default_exit += 1;
-                            continue
-                        }
-                    };
-                    info!("Successfully connected to {}", depth_address);
-                    match initialize::<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU>
-                        (&mut stream, rest_address.clone(), shared.clone()).await
-                    {
-                        Ok(overbook_setup) => {
-                            if overbook_setup {
-                                if let Ok(mut guard) = status.lock(){
-                                    (*guard) = true;
-                                };
-                            } else {
-                                continue
-                            }
-                        },
-                        Err(e) => {
-                            error!("{:?}",e);
-                            continue
-                        }
-                    };
-
-                    info!(" Overbook initialize success, now keep listening ");
-
-                    while let Ok(message) = stream.next().await.unwrap() {
-                        let event = deserialize_message(message.clone());
-                        if event.is_none() {
-                            warn!("Message decode error {:?}", message);
-                            continue;
-                        }
-                        let event = event.unwrap();
-
-                        let mut orderbook = shared.write().unwrap();
-                        if event.equals(orderbook.id()) {
-                            orderbook.add_event(event);
-                            let snapshot = orderbook.get_snapshot();
-                            if let Err(_) = sender.send(snapshot.depth()) {
-                                error!("depth send Snapshot error");
-                            };
-                        } else {
-                            warn!("All event is not usable, need a new snapshot");
-                            break;
-                        }
-                    }
-
-                    Ok(())
-                };
+            loop {//<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU>
+                let res = try_get_connection::<
+                    EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU
+                >(
+                    sender.clone(),
+                    rest_address.clone(),
+                    depth_address.clone(),
+                    status.clone(),
+                    shared.clone(),
+                ).await;
 
                 match res {
-                    Ok(_) => (),
+                    Ok(success) => {
+                        if !success {
+                            if default_exit > 20 {
+                                error!("Using default break");
+                                break;
+                            }
+                            default_exit += 1;
+                        } else{
+                            error!("This should not be happening");
+                            break;
+                        }
+                    },
                     Err(e) => error!("Error happen when running code: {:?}", e),
                 }
 
-                if default_exit > 20 {
-                    error!("Using default break");
-                    break;
-                }
-
-                default_exit += 1;
             }
             error!("OrderBook thread stopped");
             Ok::<(), Error>(())

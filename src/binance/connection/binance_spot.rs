@@ -47,7 +47,6 @@ impl BinanceOrderBookSpot {
     ) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
-        let self_clone = self.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
         let sender = sender.clone();
         // Thread to maintain Order Book
@@ -82,7 +81,7 @@ impl BinanceOrderBookSpot {
                 }
 
             }
-            error!("OrderBook thread stopped");
+            error!("BinanceOrderBookSpot thread stopped Unexpectedly");
             Ok::<(), Error>(())
         });
 

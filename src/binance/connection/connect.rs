@@ -197,18 +197,38 @@ pub async fn try_get_connection<
             let event = event.unwrap().event();
 
             let mut orderbook = shared.write().unwrap();
-            if event.ahead(orderbook.id()) {
-                warn!("All event is not usable, need a new snapshot");
-                break;
-            } else if event.equals(orderbook.id()) {
+             if event.equals(orderbook.id()) {
                 orderbook.add_event(event);
 
                 let snapshot = orderbook.get_snapshot();
 
                 if let Err(_) = sender.send(snapshot.depth()) {
-                    warn!("depth send Snapshot error");
+                    error!("depth send Snapshot error");
                 };
+            } else {
+                warn!("All event is not usable, need a new snapshot");
+                break;
             }
         }
     Ok(false)
 }
+// while let Ok(message) = stream.next().await.unwrap() {
+// let event = deserialize_message(message.clone());
+// if event.is_none() {
+// warn!("Message decode error {:?}", message);
+// continue;
+// }
+// let event = event.unwrap();
+//
+// let mut orderbook = shared.write().unwrap();
+// if event.equals(orderbook.id()) {
+// orderbook.add_event(event);
+// let snapshot = orderbook.get_snapshot();
+// if let Err(_) = sender.send(snapshot.depth()) {
+// error!("depth send Snapshot error");
+// };
+// } else {
+// warn!("All event is not usable, need a new snapshot");
+// break;
+// }
+// }
