@@ -9,13 +9,11 @@ use anyhow::{Error, Result};
 use futures_util::StreamExt;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{tungstenite, MaybeTlsStream, WebSocketStream};
 use tungstenite::{Message, WebSocket};
 use url::Url;
 
-use crate::binance::connection::connect::{
-    initialize, socket_stream, try_get_connection, BinanceWebSocket,
-};
+use crate::binance::connection::connect::{socket_stream, try_get_connection};
 use crate::binance::format::binance_spot::{
     BinanceSnapshotSpot, EventSpot, LevelEventSpot, SharedSpot,
 };

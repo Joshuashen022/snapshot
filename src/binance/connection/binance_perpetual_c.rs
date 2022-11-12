@@ -1,6 +1,4 @@
-use crate::binance::connection::connect::{
-    initialize, socket_stream, try_get_connection, BinanceWebSocket,
-};
+use crate::binance::connection::connect::{socket_stream, try_get_connection};
 use crate::binance::format::binance_perpetual_c::{
     BinanceSnapshotPerpetualC, EventPerpetualC, SharedPerpetualC, StreamEventPerpetualC,
     StreamLevelEventPerpetualC,
@@ -13,7 +11,6 @@ use anyhow::anyhow;
 use anyhow::{Error, Result};
 use futures_util::StreamExt;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
-use tokio_tungstenite::connect_async;
 use tracing::{debug, error, info, warn};
 use url::Url;
 // use tokio::select;
