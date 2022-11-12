@@ -109,7 +109,6 @@ pub async fn initialize<
                 return Ok(true)
             }
         } else{
-            warn!("All event is not usable, need a new snap shot ");
             return Ok(false)
         };
     }
@@ -133,7 +132,6 @@ pub async fn initialize<
                     return Ok(true)
                 }
             } else{
-                warn!("All event is not usable, need a new snap shot ");
                 return Ok(false)
             };
         }

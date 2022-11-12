@@ -77,6 +77,7 @@ impl BinanceOrderBookSpot {
                                     (*guard) = true;
                                 };
                             } else {
+                                warn!("All event is not usable, need a new snapshot");
                                 continue
                             }
                         },
