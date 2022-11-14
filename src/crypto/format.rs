@@ -30,8 +30,9 @@ impl Shared {
 }
 #[derive(Deserialize, Debug)]
 pub struct LevelEventStream{
-    pub code: i64,
+    pub id: i64,
     pub method: String,
+    pub code: i64,
     pub result: Event,
 }
 
