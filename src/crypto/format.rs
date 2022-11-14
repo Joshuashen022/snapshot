@@ -37,7 +37,7 @@ pub struct LevelEventStream{
     pub result: Event,
 }
 
-#[derive(Deserialize, Debug， Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Event{
     pub depth: i64,
     pub data: Vec<Data>,
