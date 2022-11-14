@@ -1,8 +1,8 @@
 pub mod binance_perpetual_coin;
 pub mod binance_perpetual_usdt;
 pub mod binance_spot;
-
-use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer};
+use serde::ser::SerializeTuple;
+use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
 use crate::binance::connection::BinanceOrderBookSnapshot;
@@ -63,6 +63,18 @@ impl<'de> Visitor<'de> for QuoteVisitor {
             price: price.unwrap(),
             amount: amount.unwrap(),
         })
+    }
+}
+
+impl Serialize for Quote{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer
+    {
+        let mut seq = serializer.serialize_tuple(2)?;
+        seq.serialize_element(&self.price)?;
+        seq.serialize_element(&self.amount)?;
+        seq.end()
     }
 }
 

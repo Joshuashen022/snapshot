@@ -11,7 +11,7 @@ use crate::Depth;
 use crate::Quote;
 
 use anyhow::Result;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedReceiver;
 use tracing::error;
 
@@ -84,6 +84,26 @@ impl BinanceOrderBookSnapshot {
             asks: self.asks.clone(),
         }
     }
+
+    /// Transform into data that could be serialized
+    pub fn transform_to_local(&self) -> OrderBookStore{
+        let bids :Vec<_> = self.bids.iter().map(|x|(x.price,x.amount)).collect();
+        let asks :Vec<_> = self.asks.iter().map(|x|(x.price,x.amount)).collect();
+        OrderBookStore{
+            last_update_id: self.last_update_id,
+            time_stamp: self.send_time,
+            bids,
+            asks,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct OrderBookStore{
+    pub last_update_id: i64,
+    pub time_stamp: i64,
+    pub bids: Vec<(f64,f64)>,
+    pub asks: Vec<(f64,f64)>,
 }
 
 #[derive(Clone)]

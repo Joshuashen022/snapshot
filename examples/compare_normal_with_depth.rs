@@ -18,13 +18,41 @@ fn main() {
         println!("using symbol {}", symbol);
 
         let manager1 = QuotationManager::with_snapshot(exchange, symbol, 1000);
-        let _ = manager1.subscribe_depth();
+        let manager1_clone = manager1.clone();
         println!("using manager1 config {:?}", manager1.config);
+        tokio::spawn(async move {
+            let mut receiver = manager1_clone.subscribe_depth();
+            sleep(Duration::from_secs(2)).await;
+            while let Some(message) = receiver.recv().await {
+                println!(
+                    "manager1 id {}, ts {}, lts {} asks {} bids {}",
+                    message.id,
+                    message.ts,
+                    message.lts,
+                    message.asks.len(),
+                    message.bids.len()
+                );
+            }
+        });
+
 
         let manager2 = QuotationManager::new(exchange, symbol);
         println!("using manager2 config {:?}", manager2.config);
-        let _ = manager2.subscribe_depth();
-
+        let manager2_clone = manager2.clone();
+        tokio::spawn(async move {
+            let mut receiver = manager2_clone.subscribe_depth();
+            sleep(Duration::from_secs(2)).await;
+            while let Some(message) = receiver.recv().await {
+                println!(
+                    "manager2 id {}, ts {}, lts {} asks {} bids {}",
+                    message.id,
+                    message.ts,
+                    message.lts,
+                    message.asks.len(),
+                    message.bids.len()
+                );
+            }
+        });
         sleep(Duration::from_secs(3)).await;
 
         loop {

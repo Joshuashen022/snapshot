@@ -1,6 +1,6 @@
 extern crate core;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedReceiver;
 
 pub(crate) mod binance;
@@ -60,6 +60,19 @@ impl QuotationManager {
         self.connection.clone().get_snapshot()
     }
 
+    /// Generate writable String to be stored into local file
+    /// `OrderBookStore` serialized String
+    pub fn writable(&self) -> Option<String>{
+        let transformed = self.snapshot()?.transform_to_local();
+
+        if let Ok(raw) = serde_json::to_string(&transformed){
+            Some(format!("{}", raw))
+        } else{
+            // Unlikely happen
+            None
+        }
+    }
+
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
         let config = match_up(exchange, symbol, limit);
 
@@ -84,7 +97,7 @@ impl QuotationManager {
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Depth {
     /// Send time from Exchange,
     /// if not have, use receive time
