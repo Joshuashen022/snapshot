@@ -73,7 +73,7 @@ impl QuotationManager {
         }
     }
 
-    fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
+    pub fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
         let config = match_up(exchange, symbol, limit);
 
         let connection = match config.exchange_type {
@@ -177,7 +177,6 @@ pub enum ExchangeType {
 mod tests {
     use std::io::Write;
     use anyhow::Result;
-    use crate::Depth;
 
     #[test]
     fn manager_builder_works() {
