@@ -1,5 +1,5 @@
 use crate::binance::connection::connect::{socket_stream, try_get_connection};
-use crate::binance::format::binance_perpetual_u::{
+use crate::binance::format::binance_perpetual_usdt::{
     BinanceSnapshotPerpetualUSDT, EventPerpetualUSDT, SharedPerpetualUSDT, StreamEventPerpetualUSDT,
     StreamLevelEventPerpetualUSDT,
 };

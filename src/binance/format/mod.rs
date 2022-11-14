@@ -1,5 +1,5 @@
-pub mod binance_perpetual_c;
-pub mod binance_perpetual_u;
+pub mod binance_perpetual_coin;
+pub mod binance_perpetual_usdt;
 pub mod binance_spot;
 
 use serde::{de::SeqAccess, de::Visitor, Deserialize, Deserializer};
