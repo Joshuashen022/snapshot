@@ -4,7 +4,7 @@ use crate::binance::format::binance_perpetual_usdt::{
     StreamLevelEventPerpetualUSDT,
 };
 use crate::binance::format::SharedT;
-use crate::Depth;
+use crate::{BinanceOrderBookSnapshot, Depth};
 
 use anyhow::anyhow;
 use anyhow::{Error, Result};
@@ -160,7 +160,7 @@ impl BinanceSpotOrderBookPerpetualUSDT {
     }
 
     /// Get the snapshot of the current Order Book
-    pub fn snapshot(&self) -> Option<Depth> {
+    pub fn get_depth(&self) -> Option<Depth> {
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock() {
@@ -173,6 +173,23 @@ impl BinanceSpotOrderBookPerpetualUSDT {
             Some(self.shared.write().unwrap().get_snapshot().depth())
         } else {
             debug!("data is not ready");
+            None
+        }
+    }
+
+    /// Get the snapshot of the current Order Book
+    pub fn get_snapshot(&self) -> Option<BinanceOrderBookSnapshot> {
+        let mut current_status = false;
+
+        if let Ok(status_guard) = self.status.lock() {
+            current_status = (*status_guard).clone();
+        } else {
+            error!("BinanceSpotOrderBookPerpetualU lock is busy");
+        }
+
+        if current_status {
+            Some(self.shared.write().unwrap().get_snapshot())
+        } else {
             None
         }
     }

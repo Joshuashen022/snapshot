@@ -126,11 +126,19 @@ impl BinanceConnectionType {
         }
     }
 
-    pub fn snapshot(&self) -> Option<Depth> {
+    pub fn get_depth(&self) -> Option<Depth> {
         match self {
-            BinanceConnectionType::Spot(inner) => inner.snapshot(),
-            BinanceConnectionType::PrepetualUSDT(inner) => inner.snapshot(),
-            BinanceConnectionType::PrepetualCoin(inner) => inner.snapshot(),
+            BinanceConnectionType::Spot(inner) => inner.get_depth(),
+            BinanceConnectionType::PrepetualUSDT(inner) => inner.get_depth(),
+            BinanceConnectionType::PrepetualCoin(inner) => inner.get_depth(),
+        }
+    }
+
+    pub fn get_snapshot(&self) -> Option<BinanceOrderBookSnapshot> {
+        match self {
+            BinanceConnectionType::Spot(inner) => inner.get_snapshot(),
+            BinanceConnectionType::PrepetualUSDT(inner) => inner.get_snapshot(),
+            BinanceConnectionType::PrepetualCoin(inner) => inner.get_snapshot(),
         }
     }
 

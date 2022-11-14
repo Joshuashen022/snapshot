@@ -62,7 +62,7 @@ impl CryptoOrderBookSpot {
         Ok(receiver)
     }
 
-    pub fn snapshot(&self) -> Option<Depth> {
+    pub fn get_depth(&self) -> Option<Depth> {
         if let Ok(_) = self.status.lock() {
             Some(self.shared.write().unwrap().get_snapshot())
         } else {

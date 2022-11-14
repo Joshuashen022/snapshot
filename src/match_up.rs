@@ -1,5 +1,5 @@
 use crate::crypto::CryptoOrderBookSpot;
-use crate::{BinanceConnectionType, Depth, ExchangeType};
+use crate::{BinanceConnectionType, BinanceOrderBookSnapshot, Depth, ExchangeType};
 /// exchange: "binance" / "crypto"
 /// symbol: "BTC_USDT" / "FTT_USDT"
 ///
@@ -304,10 +304,17 @@ impl Connection {
         }
     }
 
-    pub fn get_snapshot(&self) -> Option<Depth> {
+    pub fn get_depth(&self) -> Option<Depth> {
         match self {
-            Connection::Binance(connection) => connection.snapshot(),
-            Connection::Crypto(connection) => connection.snapshot(),
+            Connection::Binance(connection) => connection.get_depth(),
+            Connection::Crypto(connection) => connection.get_depth(),
+        }
+    }
+
+    pub fn get_snapshot(&self) -> Option<BinanceOrderBookSnapshot> {
+        match self {
+            Connection::Binance(connection) => connection.get_snapshot(),
+            Connection::Crypto(connection) => connection.get_snapshot(),
         }
     }
 }

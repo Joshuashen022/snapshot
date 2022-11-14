@@ -53,6 +53,10 @@ impl QuotationManager {
 
     /// Get one single snapshot
     pub fn latest_depth(&self) -> Option<Depth> {
+        self.connection.clone().get_depth()
+    }
+
+    pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot> {
         self.connection.clone().get_snapshot()
     }
 
