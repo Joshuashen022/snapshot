@@ -99,30 +99,6 @@ pub struct Quote {
     pub amount: f64,
 }
 
-#[allow(dead_code)]
-impl Depth {
-    pub fn bids(&self) -> &Vec<Quote> {
-        &self.bids
-    }
-
-    pub fn asks(&self) -> &Vec<Quote> {
-        &self.asks
-    }
-
-    fn from_snapshot(orderbook: OrderBookSnapshot) -> Option<Self> {
-        match orderbook {
-            OrderBookSnapshot::Binance(_) => {}
-            OrderBookSnapshot::Crypto => {}
-        }
-        None
-    }
-}
-#[allow(dead_code)]
-pub(crate) enum OrderBookSnapshot {
-    Binance(BinanceOrderBookSnapshot),
-    Crypto,
-}
-
 /// 交易所类型
 #[derive(Clone, Debug, Copy)]
 pub enum ExchangeType {
