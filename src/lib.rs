@@ -153,6 +153,10 @@ impl Depth{
         (bid_different, ask_different)
     }
 
+    pub fn from_string(data: String) -> Self {
+        let raw:Self = serde_json::from_str(&data).unwrap();
+        raw
+    }
 }
 
 
@@ -173,6 +177,8 @@ pub enum ExchangeType {
 mod tests {
     use std::io::Write;
     use anyhow::Result;
+    use crate::Depth;
+
     #[test]
     fn manager_builder_works() {
         use crate::QuotationManager;
@@ -248,12 +254,12 @@ mod tests {
 
         let depths:Vec<Depth> = buffer1.split("\n").collect::<Vec<_>>().iter()
             .map(|&data|{
-                serde_json::from_str(&(data.to_string())).unwrap()
+                Depth::from_string(data.to_string())
             })
             .collect();
         let depth_levels:Vec<Depth> = buffer2.split("\n").collect::<Vec<_>>().iter()
             .map(|&data|{
-                serde_json::from_str(&(data.to_string())).unwrap()
+                Depth::from_string(data.to_string())
             })
             .collect();
 
