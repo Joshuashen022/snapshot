@@ -9,25 +9,25 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::debug;
 
 #[derive(Deserialize, Debug, Default)]
-pub struct StreamEventPerpetualC {
+pub struct StreamEventPerpetualCoin {
     pub stream: String,
-    pub data: EventPerpetualC,
+    pub data: EventPerpetualCoin,
 }
 
-impl StreamEventT for StreamEventPerpetualC {
-    type Event = EventPerpetualC;
+impl StreamEventT for StreamEventPerpetualCoin {
+    type Event = EventPerpetualCoin;
     fn event(&self) -> Self::Event {
         self.data.clone()
     }
 }
 
 #[derive(Deserialize, Debug)]
-pub struct StreamLevelEventPerpetualC {
+pub struct StreamLevelEventPerpetualCoin {
     pub stream: String,
-    pub data: LevelEventPerpetualC,
+    pub data: LevelEventPerpetualCoin,
 }
-impl StreamEventT for StreamLevelEventPerpetualC {
-    type Event = LevelEventPerpetualC;
+impl StreamEventT for StreamLevelEventPerpetualCoin {
+    type Event = LevelEventPerpetualCoin;
 
     fn event(&self) -> Self::Event {
         self.data.clone()
@@ -47,7 +47,7 @@ impl StreamEventT for StreamLevelEventPerpetualC {
 
 /// 增量深度信息
 #[derive(Deserialize, Debug, Default, Clone)]
-pub struct EventPerpetualC {
+pub struct EventPerpetualCoin {
     /// Event type
     #[serde(rename = "e")]
     pub ttype: String,
@@ -92,7 +92,7 @@ pub struct EventPerpetualC {
     pub asks: Vec<Quote>,
 }
 
-impl EventT for EventPerpetualC {
+impl EventT for EventPerpetualCoin {
     /// only for contract_U
     /// Rule: `U<= id <= u`
     /// [E.U,..,S.u,..,E.u]
@@ -145,7 +145,7 @@ impl EventT for EventPerpetualC {
 
 /// 有限档深度信息
 #[derive(Deserialize, Debug, Clone)]
-pub struct LevelEventPerpetualC {
+pub struct LevelEventPerpetualCoin {
     /// Event type
     #[serde(rename = "e")]
     pub ttype: String,
@@ -191,7 +191,7 @@ pub struct LevelEventPerpetualC {
 }
 
 #[derive(Deserialize)]
-pub struct BinanceSnapshotPerpetualC {
+pub struct BinanceSnapshotPerpetualCoin {
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: i64,
 
@@ -212,7 +212,7 @@ pub struct BinanceSnapshotPerpetualC {
     pub asks: Vec<Quote>,
 }
 
-impl SnapshotT for BinanceSnapshotPerpetualC {
+impl SnapshotT for BinanceSnapshotPerpetualCoin {
     fn id(&self) -> i64 {
         self.last_update_id
     }
@@ -226,7 +226,7 @@ impl SnapshotT for BinanceSnapshotPerpetualC {
     }
 }
 
-pub struct SharedPerpetualC {
+pub struct SharedPerpetualCoin {
     pub symbol: String,
     last_update_id: i64,
     create_time: i64,
@@ -236,15 +236,15 @@ pub struct SharedPerpetualC {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl SharedT<EventPerpetualC> for SharedPerpetualC {
-    type BinanceSnapshot = BinanceSnapshotPerpetualC;
+impl SharedT<EventPerpetualCoin> for SharedPerpetualCoin {
+    type BinanceSnapshot = BinanceSnapshotPerpetualCoin;
     /// return last_update_id
     /// or `u`
     fn id(&self) -> i64 {
         self.last_update_id
     }
 
-    fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualC) {
+    fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualCoin) {
         self.asks.clear();
         for ask in &snapshot.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);
@@ -261,7 +261,7 @@ impl SharedT<EventPerpetualC> for SharedPerpetualC {
     }
 
     /// Only used for "Event"
-    fn add_event(&mut self, event: EventPerpetualC) {
+    fn add_event(&mut self, event: EventPerpetualCoin) {
         for ask in event.asks {
             if ask.amount == 0.0 {
                 self.asks.remove(&OrderedFloat(ask.price));
@@ -316,9 +316,9 @@ impl SharedT<EventPerpetualC> for SharedPerpetualC {
     }
 }
 
-impl SharedPerpetualC {
+impl SharedPerpetualCoin {
     pub fn new() -> Self {
-        SharedPerpetualC {
+        SharedPerpetualCoin {
             symbol: String::new(),
             last_update_id: 0,
             create_time: 0,
@@ -330,7 +330,7 @@ impl SharedPerpetualC {
     }
 
     /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualC) {
+    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualCoin) {
         self.asks.clear();
         for ask in level_event.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);

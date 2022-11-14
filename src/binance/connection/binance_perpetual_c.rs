@@ -1,7 +1,7 @@
 use crate::binance::connection::connect::{socket_stream, try_get_connection};
 use crate::binance::format::binance_perpetual_c::{
-    BinanceSnapshotPerpetualC, EventPerpetualC, SharedPerpetualC, StreamEventPerpetualC,
-    StreamLevelEventPerpetualC,
+    BinanceSnapshotPerpetualCoin, EventPerpetualCoin, SharedPerpetualCoin, StreamEventPerpetualCoin,
+    StreamLevelEventPerpetualCoin,
 };
 use crate::binance::format::SharedT;
 use crate::Depth;
@@ -14,16 +14,16 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tracing::{debug, error, info, warn};
 
 #[derive(Clone)]
-pub struct BinanceSpotOrderBookPerpetualC {
+pub struct BinanceSpotOrderBookPerpetualCoin {
     status: Arc<Mutex<bool>>,
-    pub(crate) shared: Arc<RwLock<SharedPerpetualC>>,
+    pub(crate) shared: Arc<RwLock<SharedPerpetualCoin>>,
 }
 
-impl BinanceSpotOrderBookPerpetualC {
+impl BinanceSpotOrderBookPerpetualCoin {
     pub fn new() -> Self {
-        BinanceSpotOrderBookPerpetualC {
+        BinanceSpotOrderBookPerpetualCoin {
             status: Arc::new(Mutex::new(false)),
-            shared: Arc::new(RwLock::new(SharedPerpetualC::new())),
+            shared: Arc::new(RwLock::new(SharedPerpetualCoin::new())),
         }
     }
 
@@ -43,10 +43,10 @@ impl BinanceSpotOrderBookPerpetualC {
             info!("Start OrderBook thread");
             loop {
                 let res = try_get_connection::<
-                    EventPerpetualC,
-                    BinanceSnapshotPerpetualC,
-                    SharedPerpetualC,
-                    StreamEventPerpetualC,
+                    EventPerpetualCoin,
+                    BinanceSnapshotPerpetualCoin,
+                    SharedPerpetualCoin,
+                    StreamEventPerpetualCoin,
                 >(
                     sender.clone(),
                     rest_address.clone(),
@@ -124,7 +124,7 @@ impl BinanceSpotOrderBookPerpetualC {
                         }
                     };
 
-                    let level_event: StreamLevelEventPerpetualC = match serde_json::from_str(&text)
+                    let level_event: StreamLevelEventPerpetualCoin = match serde_json::from_str(&text)
                     {
                         Ok(e) => e,
                         Err(e) => {

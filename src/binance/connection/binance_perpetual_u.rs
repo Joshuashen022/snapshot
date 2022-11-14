@@ -1,7 +1,7 @@
 use crate::binance::connection::connect::{socket_stream, try_get_connection};
 use crate::binance::format::binance_perpetual_u::{
-    BinanceSnapshotPerpetualU, EventPerpetualU, SharedPerpetualU, StreamEventPerpetualU,
-    StreamLevelEventPerpetualU,
+    BinanceSnapshotPerpetualUSDT, EventPerpetualUSDT, SharedPerpetualUSDT, StreamEventPerpetualUSDT,
+    StreamLevelEventPerpetualUSDT,
 };
 use crate::binance::format::SharedT;
 use crate::Depth;
@@ -14,16 +14,16 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tracing::{debug, error, info, warn};
 
 #[derive(Clone)]
-pub struct BinanceSpotOrderBookPerpetualU {
+pub struct BinanceSpotOrderBookPerpetualUSDT {
     status: Arc<Mutex<bool>>,
-    pub(crate) shared: Arc<RwLock<SharedPerpetualU>>,
+    pub(crate) shared: Arc<RwLock<SharedPerpetualUSDT>>,
 }
 
-impl BinanceSpotOrderBookPerpetualU {
+impl BinanceSpotOrderBookPerpetualUSDT {
     pub fn new() -> Self {
-        BinanceSpotOrderBookPerpetualU {
+        BinanceSpotOrderBookPerpetualUSDT {
             status: Arc::new(Mutex::new(false)),
-            shared: Arc::new(RwLock::new(SharedPerpetualU::new())),
+            shared: Arc::new(RwLock::new(SharedPerpetualUSDT::new())),
         }
     }
 
@@ -43,10 +43,10 @@ impl BinanceSpotOrderBookPerpetualU {
             info!("Start OrderBook thread");
             loop {
                 let res = try_get_connection::<
-                    EventPerpetualU,
-                    BinanceSnapshotPerpetualU,
-                    SharedPerpetualU,
-                    StreamEventPerpetualU,
+                    EventPerpetualUSDT,
+                    BinanceSnapshotPerpetualUSDT,
+                    SharedPerpetualUSDT,
+                    StreamEventPerpetualUSDT,
                 >(
                     sender.clone(),
                     rest_address.clone(),
@@ -124,7 +124,7 @@ impl BinanceSpotOrderBookPerpetualU {
                         }
                     };
 
-                    let level_event: StreamLevelEventPerpetualU = match serde_json::from_str(&text)
+                    let level_event: StreamLevelEventPerpetualUSDT = match serde_json::from_str(&text)
                     {
                         Ok(e) => e,
                         Err(e) => {

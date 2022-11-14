@@ -9,25 +9,25 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::debug;
 
 #[derive(Deserialize, Debug)]
-pub struct StreamEventPerpetualU {
+pub struct StreamEventPerpetualUSDT {
     pub stream: String,
-    pub data: EventPerpetualU,
+    pub data: EventPerpetualUSDT,
 }
 
-impl StreamEventT for StreamEventPerpetualU {
-    type Event = EventPerpetualU;
+impl StreamEventT for StreamEventPerpetualUSDT {
+    type Event = EventPerpetualUSDT;
     fn event(&self) -> Self::Event {
         self.data.clone()
     }
 }
 
 #[derive(Deserialize, Debug)]
-pub struct StreamLevelEventPerpetualU {
+pub struct StreamLevelEventPerpetualUSDT {
     pub stream: String,
     pub data: LevelEventPerpetualU,
 }
 
-impl StreamEventT for StreamLevelEventPerpetualU {
+impl StreamEventT for StreamLevelEventPerpetualUSDT {
     type Event = LevelEventPerpetualU;
     fn event(&self) -> Self::Event {
         self.data.clone()
@@ -46,7 +46,7 @@ impl StreamEventT for StreamLevelEventPerpetualU {
 
 /// 增量深度信息
 #[derive(Deserialize, Debug, Clone)]
-pub struct EventPerpetualU {
+pub struct EventPerpetualUSDT {
     /// Event type
     #[serde(rename = "e")]
     pub ttype: String,
@@ -87,7 +87,7 @@ pub struct EventPerpetualU {
     pub asks: Vec<Quote>,
 }
 
-impl EventT for EventPerpetualU {
+impl EventT for EventPerpetualUSDT {
     /// only for contract_U
     /// Rule: `U<= id <= u`
     /// [E.U,..,S.u,..,E.u]
@@ -182,7 +182,7 @@ pub struct LevelEventPerpetualU {
 }
 
 #[derive(Deserialize)]
-pub struct BinanceSnapshotPerpetualU {
+pub struct BinanceSnapshotPerpetualUSDT {
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: i64,
 
@@ -199,7 +199,7 @@ pub struct BinanceSnapshotPerpetualU {
     pub asks: Vec<Quote>,
 }
 
-impl SnapshotT for BinanceSnapshotPerpetualU {
+impl SnapshotT for BinanceSnapshotPerpetualUSDT {
     fn id(&self) -> i64 {
         self.last_update_id
     }
@@ -213,7 +213,7 @@ impl SnapshotT for BinanceSnapshotPerpetualU {
     }
 }
 
-pub struct SharedPerpetualU {
+pub struct SharedPerpetualUSDT {
     pub symbol: String,
     last_update_id: i64,
     create_time: i64,
@@ -223,15 +223,15 @@ pub struct SharedPerpetualU {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl SharedT<EventPerpetualU> for SharedPerpetualU {
-    type BinanceSnapshot = BinanceSnapshotPerpetualU;
+impl SharedT<EventPerpetualUSDT> for SharedPerpetualUSDT {
+    type BinanceSnapshot = BinanceSnapshotPerpetualUSDT;
     /// return last_update_id
     /// or `u`
     fn id(&self) -> i64 {
         self.last_update_id
     }
 
-    fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualU) {
+    fn load_snapshot(&mut self, snapshot: &BinanceSnapshotPerpetualUSDT) {
         self.asks.clear();
         for ask in &snapshot.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);
@@ -248,7 +248,7 @@ impl SharedT<EventPerpetualU> for SharedPerpetualU {
     }
 
     /// Only used for "Event"
-    fn add_event(&mut self, event: EventPerpetualU) {
+    fn add_event(&mut self, event: EventPerpetualUSDT) {
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         for ask in event.asks {
             if ask.amount == 0.0 {
@@ -304,9 +304,9 @@ impl SharedT<EventPerpetualU> for SharedPerpetualU {
     }
 }
 
-impl SharedPerpetualU {
+impl SharedPerpetualUSDT {
     pub fn new() -> Self {
-        SharedPerpetualU {
+        SharedPerpetualUSDT {
             symbol: String::new(),
             last_update_id: 0,
             create_time: 0,

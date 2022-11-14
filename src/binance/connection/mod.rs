@@ -4,8 +4,8 @@ pub mod binance_spot;
 mod connect;
 
 use crate::binance::connection::{
-    binance_perpetual_c::BinanceSpotOrderBookPerpetualC,
-    binance_perpetual_u::BinanceSpotOrderBookPerpetualU, binance_spot::BinanceOrderBookSpot,
+    binance_perpetual_c::BinanceSpotOrderBookPerpetualCoin,
+    binance_perpetual_u::BinanceSpotOrderBookPerpetualUSDT, binance_spot::BinanceOrderBookSpot,
 };
 use crate::Depth;
 use crate::Quote;
@@ -89,8 +89,8 @@ impl BinanceOrderBookSnapshot {
 #[derive(Clone)]
 pub enum BinanceConnectionType {
     Spot(BinanceOrderBookSpot),
-    PrepetualUSDT(BinanceSpotOrderBookPerpetualU),
-    PrepetualCoin(BinanceSpotOrderBookPerpetualC),
+    PrepetualUSDT(BinanceSpotOrderBookPerpetualUSDT),
+    PrepetualCoin(BinanceSpotOrderBookPerpetualCoin),
 }
 
 impl BinanceConnectionType {
@@ -98,10 +98,10 @@ impl BinanceConnectionType {
         match types {
             BinanceOrderBookType::Spot => BinanceConnectionType::Spot(BinanceOrderBookSpot::new()),
             BinanceOrderBookType::PrepetualUSDT => {
-                BinanceConnectionType::PrepetualUSDT(BinanceSpotOrderBookPerpetualU::new())
+                BinanceConnectionType::PrepetualUSDT(BinanceSpotOrderBookPerpetualUSDT::new())
             }
             BinanceOrderBookType::PrepetualCoin => {
-                BinanceConnectionType::PrepetualCoin(BinanceSpotOrderBookPerpetualC::new())
+                BinanceConnectionType::PrepetualCoin(BinanceSpotOrderBookPerpetualCoin::new())
             }
         }
     }
