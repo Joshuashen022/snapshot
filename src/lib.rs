@@ -219,6 +219,7 @@ pub enum ExchangeType {
 mod tests {
     use std::io::Write;
     use anyhow::Result;
+    use crate::Depth;
 
     #[test]
     fn manager_builder_works() {
@@ -273,7 +274,7 @@ mod tests {
     }
 
     #[test]
-    fn read_and_compare()-> Result<()>{
+    fn read_and_compare2()-> Result<()>{
         use std::fs::OpenOptions;
         use std::io::Read;
         use crate::Depth;
@@ -355,6 +356,71 @@ mod tests {
             reader.write_all(raw.as_bytes()).unwrap_or(());
 
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_and_compare()-> Result<()>{
+
+        use std::fs::OpenOptions;
+        use std::io::Read;
+
+        let mut reader1 = OpenOptions::new()
+            .read(true).open("depth.cache")?;
+        let mut reader2 = OpenOptions::new()
+            .read(true).open("depth_level.cache")?;
+
+        let mut buffer1 = String::new();
+        let mut buffer2 = String::new();
+
+        reader1.read_to_string(&mut buffer1)?;
+        reader2.read_to_string(&mut buffer2)?;
+
+        buffer1.pop();
+        buffer2.pop();
+
+        let depths:Vec<Depth> = buffer1.split("\n").collect::<Vec<_>>().iter()
+            .map(|s|Depth::from_string(s.to_string()))
+            .collect();
+        let depth_levels:Vec<Depth> = buffer2.split("\n").collect::<Vec<_>>().iter()
+            .map(|s|Depth::from_string(s.to_string()))
+            .collect();
+        println!("depths {}, depth_levels {}", depths.len(), depth_levels.len());
+        let mut contains = false;
+        let mut satisfy_queue = Vec::new();
+        let mut counter = 0;
+        for depth in depths{
+            for depth_level in &depth_levels{
+                let 结果 = depth.if_contains(depth_level);
+                let level_a_len = depth_level.asks.len();
+                let level_b_len = depth_level.bids.len();
+                let (different_bids, different_asks ) = depth.find_different(&depth_level);
+
+                let depth_time = depth.ts;
+                let depth_id = depth.id;
+
+                let dl_time = depth_level.ts;
+                let dl_id = depth_level.id;
+                // println!(" Depth {}-{} Depth Level {}-{} {}", depth_time, depth_id, dl_time ,dl_id , 结果);
+
+                // println!("Time {} Id {} {}", depth_time - dl_time, depth_id - dl_id, 结果);
+                // println!("different bids {} asks {}", different_bids.len(), different_asks.len());
+                // println!("bids {} asks {}", level_b_len, level_a_len);
+                if 结果 {
+                    let result = format!(" Depth {}-{} Depth Level {}-{} {}", depth_time, depth_id, dl_time ,dl_id , 结果);
+                    satisfy_queue.push(result);
+                    contains = true;
+                    counter += 1;
+                }
+            }
+        }
+        println!("done {}", contains );
+        for res in satisfy_queue{
+            println!("done {}", res );
+        }
+
+        println!("{}", counter);
 
         Ok(())
     }
