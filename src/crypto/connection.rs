@@ -64,6 +64,11 @@ impl CryptoOrderBookSpot {
                     Ok(())
                 };
 
+                match result {
+                    Ok(_) =>(),
+                    Err(e) => error!("Error happen when running level_depth: {:?}", e),
+                }
+
             }
             Ok::<(), Error>(())
         });
