@@ -247,12 +247,12 @@ mod tests {
 
 
         let depths:Vec<Depth> = buffer1.split("\n").collect::<Vec<_>>().iter()
-            .map(|s|{
+            .map(|data|{
                 serde_json::from_str(&data).unwrap()
             })
             .collect();
         let depth_levels:Vec<Depth> = buffer2.split("\n").collect::<Vec<_>>().iter()
-            .map(|s|{
+            .map(|data|{
                 serde_json::from_str(&data).unwrap()
             })
             .collect();
@@ -270,8 +270,8 @@ mod tests {
             let mut different = Vec::new();
             for depth in &depths{
                 let 结果 = depth.if_contains(depth_level);
-                let depth_time = depth.time_stamp;
-                let depth_id = depth.last_update_id;
+                let depth_time = depth.ts;
+                let depth_id = depth.id;
                 // println!(" Depth {}-{} Depth Level {}-{} {}", depth_time, depth_id, dl_time ,dl_id , 结果);
 
                 // println!("Time {} Id {} {}", depth_time - dl_time, depth_id - dl_id, 结果);
@@ -292,7 +292,7 @@ mod tests {
             let length = matchs_depths.len();
             let mut res = format!("{} {} {} matches: ", dl_time, dl_id, matchs_depths.len());
             for m in matchs_depths {
-                res += &format!("{} ", m.last_update_id);
+                res += &format!("{} ", m.id);
             }
             if length == 0 {
                 for (bid, ask, depth_id, depth_time) in different {
