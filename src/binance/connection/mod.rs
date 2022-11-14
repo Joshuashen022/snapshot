@@ -91,17 +91,20 @@ impl BinanceOrderBookSnapshot {
         let asks :Vec<_> = self.asks.iter().map(|x|(x.price,x.amount)).collect();
         OrderBookStore{
             last_update_id: self.last_update_id,
-            time_stamp: self.send_time,
+            send_time: self.send_time,
+            receive_time: self.receive_time,
             bids,
             asks,
         }
     }
+
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct OrderBookStore{
     pub last_update_id: i64,
-    pub time_stamp: i64,
+    pub send_time: i64,
+    pub receive_time: i64,
     pub bids: Vec<(f64,f64)>,
     pub asks: Vec<(f64,f64)>,
 }

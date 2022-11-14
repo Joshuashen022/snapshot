@@ -13,6 +13,7 @@ pub use binance::connection::{
 use crypto::CryptoOrderBookSpot;
 
 use match_up::{match_up, Config, Connection, SymbolType};
+use crate::binance::connection::OrderBookStore;
 
 #[derive(Clone)]
 pub struct QuotationManager {
@@ -151,6 +152,46 @@ impl Depth{
         }
 
         (bid_different, ask_different)
+    }
+
+    /// Transform into data that could be serialized
+    pub fn transform_to_local(&self) -> OrderBookStore{
+        let bids :Vec<_> = self.bids.iter().map(|x|(x.price,x.amount)).collect();
+        let asks :Vec<_> = self.asks.iter().map(|x|(x.price,x.amount)).collect();
+        OrderBookStore{
+            last_update_id: self.id,
+            send_time: self.ts,
+            receive_time: self.lts,
+            bids,
+            asks,
+        }
+    }
+
+    pub fn transform_from_local(data: OrderBookStore) -> Self{
+        let bids :Vec<_> = data.bids.iter()
+            .map(|(price, amount)|
+                Quote{
+                    price: *price,
+                    amount: *amount
+                }
+            )
+            .collect();
+        let asks :Vec<_> = data.asks.iter()
+            .map(|(price, amount)|
+                Quote{
+                    price: *price,
+                    amount: *amount
+                }
+            )
+            .collect();
+
+        Depth{
+            ts: data.send_time,
+            lts: data.receive_time,
+            id: data.last_update_id,
+            bids,
+            asks,
+        }
     }
 
     pub fn from_string(data: String) -> Self {
