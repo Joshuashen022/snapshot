@@ -1,13 +1,12 @@
+use crate::crypto::format::LevelEventStream;
 use crate::crypto::format::Shared;
 use crate::Depth;
-use anyhow::{Result, Error};
+use anyhow::{Error, Result};
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::{sleep, Duration};
 use tracing::{error, info};
-use crate::crypto::format::LevelEventStream;
-
 
 #[derive(Clone)]
 pub struct CryptoOrderBookSpot {
@@ -32,9 +31,9 @@ impl CryptoOrderBookSpot {
         let _ = tokio::spawn(async move {
             info!("Start Level Buffer maintain thread");
             loop {
-                let result : Result<()> ={
-
-                    let level_event: LevelEventStream = reqwest::get(&level_address).await?.json().await?;
+                let result: Result<()> = {
+                    let level_event: LevelEventStream =
+                        reqwest::get(&level_address).await?.json().await?;
 
                     level_event.debug();
 
@@ -53,10 +52,9 @@ impl CryptoOrderBookSpot {
                 };
 
                 match result {
-                    Ok(_) =>(),
+                    Ok(_) => (),
                     Err(e) => error!("Error happen when running level_depth: {:?}", e),
                 }
-
             }
             Ok::<(), Error>(())
         });
@@ -64,13 +62,12 @@ impl CryptoOrderBookSpot {
         Ok(receiver)
     }
 
-    pub fn snapshot(&self) -> Option<Depth>{
+    pub fn snapshot(&self) -> Option<Depth> {
         if let Ok(_) = self.status.lock() {
             Some(self.shared.write().unwrap().get_snapshot())
         } else {
             error!("BinanceSpotOrderBookPerpetualU lock is busy");
             None
         }
-
     }
 }

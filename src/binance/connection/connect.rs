@@ -1,6 +1,7 @@
 use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Depth;
-use anyhow::{Result, anyhow};
+
+use anyhow::{anyhow, Result};
 use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 use std::collections::VecDeque;

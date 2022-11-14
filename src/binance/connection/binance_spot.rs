@@ -1,17 +1,16 @@
-use crate::binance::format::SharedT;
-use std::sync::{Arc, Mutex, RwLock};
-use anyhow::anyhow;
-use anyhow::{Error, Result};
-use futures_util::StreamExt;
-use tokio::sync::mpsc::{self, UnboundedReceiver};
-
 use crate::binance::connection::connect::{socket_stream, try_get_connection};
 use crate::binance::format::binance_spot::{
     BinanceSnapshotSpot, EventSpot, LevelEventSpot, SharedSpot,
 };
+use crate::binance::format::SharedT;
 use crate::Depth;
-use tracing::{debug, error, info, warn};
 
+use anyhow::anyhow;
+use anyhow::{Error, Result};
+use futures_util::StreamExt;
+use std::sync::{Arc, Mutex, RwLock};
+use tokio::sync::mpsc::{self, UnboundedReceiver};
+use tracing::{debug, error, info, warn};
 
 #[derive(Clone)]
 pub struct BinanceOrderBookSpot {

@@ -1,11 +1,11 @@
 use crate::binance::connection::BinanceOrderBookSnapshot;
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Quote;
 
-use std::collections::BTreeMap;
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;
+use std::collections::BTreeMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::debug;
 // use anyhow::{Result, anyhow};
 

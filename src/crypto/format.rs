@@ -1,11 +1,11 @@
+use crate::{Depth, Quote};
 use ordered_float::OrderedFloat;
+use serde::de::{SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use std::collections::BTreeMap;
 use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Deserializer};
-use serde::de::{SeqAccess, Visitor};
 use tracing::debug;
-use crate::{Depth, Quote};
 
 pub struct Shared {
     instrument: String,
@@ -38,23 +38,21 @@ impl Shared {
         let id = level_event.id;
         let mut send_time = 0;
         let data_len = data.len();
-        for Data{t, asks, bids} in data{
-
+        for Data { t, asks, bids } in data {
             for ask in asks {
                 let ask_count = ask.order_numbers as usize;
-                for _ in 0..ask_count{
+                for _ in 0..ask_count {
                     self.asks.insert(OrderedFloat(ask.price), ask.amount);
                 }
             }
 
             for bid in bids {
                 let bid_count = bid.order_numbers as usize;
-                for _ in 0..bid_count{
+                for _ in 0..bid_count {
                     self.bids.insert(OrderedFloat(bid.price), bid.amount);
                 }
             }
             send_time += t;
-
         }
         send_time /= data_len as i64;
 
@@ -89,14 +87,18 @@ impl Shared {
             })
             .collect();
 
-        Depth{
-            id, ts, lts, bids, asks
+        Depth {
+            id,
+            ts,
+            lts,
+            bids,
+            asks,
         }
     }
 }
 
 #[derive(Deserialize, Debug)]
-pub struct LevelEventStream{
+pub struct LevelEventStream {
     /// Usually constant value `-1`
     pub id: i64,
 
@@ -110,36 +112,37 @@ pub struct LevelEventStream{
 }
 
 impl LevelEventStream {
-    pub fn debug(&self){
+    pub fn debug(&self) {
         debug!(
             "receive level_event depth {}, data {}",
             self.result.depth,
             self.result.data.len(),
         );
 
-        for data in self.result.data.clone(){
-            debug!("bids {}, asks {}, time {}",
+        for data in self.result.data.clone() {
+            debug!(
+                "bids {}, asks {}, time {}",
                 data.bids.len(),
                 data.asks.len(),
                 data.t,
             )
-        };
+        }
     }
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct Event{
+pub struct Event {
     /// Usually constant value `20` or `50`
     pub depth: i64,
 
     pub data: Vec<Data>,
 
     /// Something like "BTC_USDT"
-    pub instrument_name: String
+    pub instrument_name: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct Data{
+pub struct Data {
     pub bids: Vec<Quotes>,
 
     pub asks: Vec<Quotes>,
@@ -149,7 +152,7 @@ pub struct Data{
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Quotes{
+pub struct Quotes {
     price: f64,
     amount: f64,
     order_numbers: i64,
@@ -157,8 +160,8 @@ pub struct Quotes{
 
 impl<'de> Deserialize<'de> for Quotes {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_tuple(3, QuotesVisitor)
     }
@@ -174,8 +177,8 @@ impl<'de> Visitor<'de> for QuotesVisitor {
     }
 
     fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
+    where
+        A: SeqAccess<'de>,
     {
         let mut price = None;
         let mut amount = None;

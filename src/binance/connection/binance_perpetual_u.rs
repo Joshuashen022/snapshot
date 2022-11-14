@@ -9,10 +9,9 @@ use crate::Depth;
 use anyhow::anyhow;
 use anyhow::{Error, Result};
 use futures_util::StreamExt;
+use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tracing::{debug, error, info, warn};
-use std::sync::{Arc, Mutex, RwLock};
-
 
 #[derive(Clone)]
 pub struct BinanceSpotOrderBookPerpetualU {

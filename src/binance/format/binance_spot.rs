@@ -1,13 +1,12 @@
 use crate::binance::connection::BinanceOrderBookSnapshot;
-use crate::binance::format::{SnapshotT, SharedT, StreamEventT, EventT};
+use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Quote;
 
-use std::collections::btree_map::BTreeMap;
-use std::time::{SystemTime, UNIX_EPOCH};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;
+use std::collections::btree_map::BTreeMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::debug;
-
 
 #[derive(Deserialize, Debug)]
 pub struct EventSpot {
