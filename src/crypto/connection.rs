@@ -40,7 +40,8 @@ impl CryptoOrderBookSpot {
                     }
 
                     info!("decoding level_event");
-
+                    let text = reqwest::get(&level_address).await?.text().await?;
+                    info!("get {}", text);
                     let level_event: LevelEventStream = reqwest::get(&level_address).await?.json().await?;
 
                     let level_event = level_event.result;
