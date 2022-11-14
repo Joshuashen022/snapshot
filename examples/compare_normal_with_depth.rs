@@ -34,7 +34,8 @@ fn main() {
             }
             let depth = depth.unwrap();
             let normal = normal.unwrap();
-
+            let depth_time = depth.send_time;
+            let depth_level_time = normal.send_time;
             let contains = depth.if_contains(&normal);
 
             println!("{} {}, contains? {}", depth_time, depth_level_time, contains);
