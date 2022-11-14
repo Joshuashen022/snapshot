@@ -37,10 +37,11 @@ pub struct LevelEventStream{
 pub struct Event{
     pub depth: i64,
     pub data: Data,
+    pub instrument_name: String
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Data{
-    pub asks: Vec<Vec<String>>,
     pub bids: Vec<Vec<String>>,
+    pub asks: Vec<Vec<String>>,
 }
