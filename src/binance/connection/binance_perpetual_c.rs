@@ -3,20 +3,14 @@ use crate::binance::format::binance_perpetual_c::{
     BinanceSnapshotPerpetualC, EventPerpetualC, SharedPerpetualC, StreamEventPerpetualC,
     StreamLevelEventPerpetualC,
 };
-use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
+use crate::binance::format::SharedT;
 use crate::Depth;
-use std::collections::VecDeque;
-
 use anyhow::anyhow;
 use anyhow::{Error, Result};
 use futures_util::StreamExt;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tracing::{debug, error, info, warn};
-use url::Url;
-// use tokio::select;
 use std::sync::{Arc, Mutex, RwLock};
-use tokio_tungstenite::tungstenite::Message;
-const MAX_BUFFER_EVENTS: usize = 5;
 
 #[derive(Clone)]
 pub struct BinanceSpotOrderBookPerpetualC {
@@ -196,22 +190,3 @@ impl BinanceSpotOrderBookPerpetualC {
     }
 }
 
-fn deserialize_message(message: Message) -> Option<EventPerpetualC> {
-    if !message.is_text() {
-        return None;
-    }
-
-    let text = match message.into_text() {
-        Ok(e) => e,
-        Err(_) => return None,
-    };
-
-    let s_event: StreamEventPerpetualC = match serde_json::from_str(&text) {
-        Ok(e) => e,
-        Err(_) => return None,
-    };
-
-    let event = s_event.data;
-
-    Some(event)
-}

@@ -1,6 +1,6 @@
 use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Depth;
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 use std::collections::VecDeque;
@@ -8,8 +8,8 @@ use std::sync::{Arc, Mutex, RwLock};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
-use tracing::{debug, error, info, warn};
-use tungstenite::{Message, WebSocket};
+use tracing::{error, info, warn};
+use tungstenite::Message;
 use url::Url;
 
 const MAX_BUFFER_EVENTS: usize = 5;
@@ -139,7 +139,7 @@ fn add_event_to_orderbook<
     }
 
     if event.ahead(snap_shot_id) {
-        return Ok(false);
+        return Err(anyhow!(" Event is a head of snapshot"));
     }
 
     Ok(false)
@@ -179,9 +179,10 @@ async fn initialize<
             add_event_to_orderbook::<Event, Snapshot, Shard>(event, shared_clone.clone(), &snapshot)
         {
             if add_success {
-                return Ok(true);
-            }
+                overbook_setup = true;
+            } // else: event behind snap_shot wait for next message
         } else {
+            // Add event to order book error, need a new https snapshot
             return Ok(false);
         };
     }
@@ -191,6 +192,7 @@ async fn initialize<
             let mut orderbook = shared.write().unwrap();
             orderbook.add_event(event);
         }
+        // default exit return Ok(true)
     } else {
         info!(" Try to wait new events for out snapshot");
 
@@ -204,13 +206,15 @@ async fn initialize<
                 &snapshot,
             ) {
                 if add_success {
-                    return Ok(true);
-                }
+                    // default exit return Ok(true)
+                    break;
+                } // else: event behind snap_shot wait for next message
             } else {
+                warn!("All event is not usable, need a new snapshot");
                 return Ok(false);
             };
         }
     }
 
-    Ok(false)
+    return Ok(true);
 }

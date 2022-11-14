@@ -186,6 +186,7 @@ fn validate_symbol_binance(symbol: &str) -> Result<SymbolType> {
     Ok(result)
 }
 
+#[allow(unused_assignments)]
 fn set_addr_for_binance(
     symbol_type: SymbolType,
     limit: Option<i32>,
@@ -250,12 +251,11 @@ fn set_addr_for_binance(
     (rest_address, depth_address, level_depth_address)
 }
 
+#[allow(unused_assignments)]
 fn set_addr_for_crypto(
     instrument: &str,
     limit: Option<i32>,
 ) -> (Option<String>, Option<String>, Option<String>) {
-    let mut rest_address: Option<String> = None;
-    let mut depth_address: Option<String> = None;
     let mut level_depth_address: Option<String> = None;
 
     if limit.is_some() {
@@ -274,7 +274,7 @@ fn set_addr_for_crypto(
         ));
     }
 
-    (rest_address, depth_address, level_depth_address)
+    (None, None, level_depth_address)
 }
 
 #[derive(Clone)]

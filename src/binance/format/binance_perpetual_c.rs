@@ -3,8 +3,6 @@ use crate::Quote;
 
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
-// use std::sync::{Arc, RwLock};
-use crate::binance::format::binance_spot::BinanceSnapshotSpot;
 use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;

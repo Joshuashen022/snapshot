@@ -1,26 +1,17 @@
-use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
-
-use std::collections::VecDeque;
+use crate::binance::format::SharedT;
 use std::sync::{Arc, Mutex, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
-// use crate::binance::connection::BinanceOrderBookSnapshot;
 use anyhow::anyhow;
 use anyhow::{Error, Result};
 use futures_util::StreamExt;
-use tokio::net::TcpStream;
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use tokio_tungstenite::{tungstenite, MaybeTlsStream, WebSocketStream};
-use tungstenite::{Message, WebSocket};
-use url::Url;
+use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use crate::binance::connection::connect::{socket_stream, try_get_connection};
 use crate::binance::format::binance_spot::{
     BinanceSnapshotSpot, EventSpot, LevelEventSpot, SharedSpot,
 };
-use crate::{Depth, OrderBookSnapshot};
+use crate::Depth;
 use tracing::{debug, error, info, warn};
 
-const MAX_BUFFER_EVENTS: usize = 5;
 
 #[derive(Clone)]
 pub struct BinanceOrderBookSpot {
@@ -184,28 +175,11 @@ impl BinanceOrderBookSpot {
         }
     }
 
+    #[allow(dead_code)]
     fn update_status(&mut self, value: bool) -> Result<()> {
         if let Ok(mut guard) = self.status.lock() {
             (*guard) = value;
         }
         Ok(())
     }
-}
-
-fn deserialize_message(message: Message) -> Option<EventSpot> {
-    if !message.is_text() {
-        return None;
-    }
-
-    let text = match message.into_text() {
-        Ok(e) => e,
-        Err(_) => return None,
-    };
-
-    let event: EventSpot = match serde_json::from_str(&text) {
-        Ok(e) => e,
-        Err(_) => return None,
-    };
-
-    Some(event)
 }

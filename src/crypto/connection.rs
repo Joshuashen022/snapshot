@@ -1,13 +1,11 @@
 use crate::crypto::format::Shared;
-use crate::{BinanceConnectionType, Depth};
+use crate::Depth;
 use anyhow::{Result, Error};
 use std::sync::{Arc, Mutex, RwLock};
-use futures_util::SinkExt;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::{sleep, Duration};
-use tracing::{debug, error, info, warn};
-use url::Url;
+use tracing::{error, info};
 use crate::crypto::format::LevelEventStream;
 
 
@@ -25,7 +23,7 @@ impl CryptoOrderBookSpot {
             shared: Arc::new(RwLock::new(Shared::new())),
         }
     }
-
+    #[allow(unreachable_code)]
     pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
 

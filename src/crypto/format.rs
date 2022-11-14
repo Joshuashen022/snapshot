@@ -4,9 +4,8 @@ use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Deserializer};
 use serde::de::{SeqAccess, Visitor};
-use tracing::{debug, Instrument};
-use crate::binance::format::binance_spot::{LevelEventSpot, SharedSpot};
-use crate::{BinanceOrderBookSnapshot, Depth, Quote};
+use tracing::debug;
+use crate::{Depth, Quote};
 
 pub struct Shared {
     instrument: String,
@@ -42,11 +41,17 @@ impl Shared {
         for Data{t, asks, bids} in data{
 
             for ask in asks {
-                self.asks.insert(OrderedFloat(ask.price), ask.amount);
+                let ask_count = ask.order_numbers as usize;
+                for _ in 0..ask_count{
+                    self.asks.insert(OrderedFloat(ask.price), ask.amount);
+                }
             }
 
             for bid in bids {
-                self.bids.insert(OrderedFloat(bid.price), bid.amount);
+                let bid_count = bid.order_numbers as usize;
+                for _ in 0..bid_count{
+                    self.bids.insert(OrderedFloat(bid.price), bid.amount);
+                }
             }
             send_time += t;
 
