@@ -293,14 +293,14 @@ impl Connection {
             Connection::Binance(connection) => {
                 connection.depth(rest_address, depth_address).unwrap()
             }
-            Connection::Crypto(connection) => panic!("Unsupported exchange"),
+            Connection::Crypto(_connection) => panic!("Unsupported exchange"),
         }
     }
 
     pub fn connect_depth_level(&self, level_address: String) -> UnboundedReceiver<Depth> {
         match self {
             Connection::Binance(connection) => connection.level_depth(level_address).unwrap(),
-            Connection::Crypto(connection) => panic!("Unsupported exchange"),
+            Connection::Crypto(connection) => connection.level_depth(level_address).unwrap(),
         }
     }
 
