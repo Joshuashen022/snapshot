@@ -42,6 +42,6 @@ pub struct Event{
 
 #[derive(Deserialize, Debug)]
 pub struct Data{
-    pub bids: Vec<Vec<String>>,
-    pub asks: Vec<Vec<String>>,
+    pub bids: Vec<[String;3]>,
+    pub asks: Vec<[String;3]>,
 }
