@@ -69,25 +69,25 @@ fn main() {
         });
 
         sleep(Duration::from_secs(3)).await;
-        // let message = manager1.latest_depth().unwrap();
-        // println!(
-        //     "snapshot1 id {}, ts {}, lts {} asks {} bids {}",
-        //     message.id,
-        //     message.ts,
-        //     message.lts,
-        //     message.asks().len(),
-        //     message.bids().len()
-        // );
-        //
-        // let message = manager2.latest_depth().unwrap();
-        // println!(
-        //     "snapshot2 id {}, ts {}, lts {} asks {} bids {}",
-        //     message.id,
-        //     message.ts,
-        //     message.lts,
-        //     message.asks().len(),
-        //     message.bids().len()
-        // );
+        let message = manager1.latest_depth().unwrap();
+        println!(
+            "snapshot1 id {}, ts {}, lts {} asks {} bids {}",
+            message.id,
+            message.ts,
+            message.lts,
+            message.asks().len(),
+            message.bids().len()
+        );
+
+        let message = manager2.latest_depth().unwrap();
+        println!(
+            "snapshot2 id {}, ts {}, lts {} asks {} bids {}",
+            message.id,
+            message.ts,
+            message.lts,
+            message.asks().len(),
+            message.bids().len()
+        );
 
         loop {
             println!();

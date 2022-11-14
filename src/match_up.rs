@@ -307,7 +307,7 @@ impl Connection {
     pub fn get_snapshot(&self) -> Option<Depth> {
         match self {
             Connection::Binance(connection) => connection.snapshot(),
-            Connection::Crypto(connection) => None,
+            Connection::Crypto(connection) => connection.snapshot(),
         }
     }
 }

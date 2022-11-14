@@ -13,6 +13,7 @@ use crate::crypto::format::LevelEventStream;
 
 #[derive(Clone)]
 pub struct CryptoOrderBookSpot {
+    /// Currently not using
     status: Arc<Mutex<bool>>,
     shared: Arc<RwLock<Shared>>,
 }
@@ -28,45 +29,27 @@ impl CryptoOrderBookSpot {
     pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
 
-        let status = self.status.clone();
-
         let (sender, receiver) = mpsc::unbounded_channel();
 
         let _ = tokio::spawn(async move {
             info!("Start Level Buffer maintain thread");
             loop {
                 let result : Result<()> ={
-                    if let Ok(mut guard) = status.lock() {
-                        (*guard) = false;
-                    }
 
                     let level_event: LevelEventStream = reqwest::get(&level_address).await?.json().await?;
 
-                    let level_event = level_event.result;
+                    level_event.debug();
 
-                    debug!(
-                        "receive level_event depth {}, data {}",
-                        level_event.depth,
-                        level_event.data.len(),
-                    );
-                    for data in level_event.data.clone(){
-                        debug!("bids {}, asks {}, time {}",
-                            data.bids.len(),
-                            data.asks.len(),
-                            data.t,
-                        )
-                    };
+                    if let Ok(mut guard) = shared.write() {
+                        (*guard).set_level_event(level_event);
 
-                    // if let Ok(mut guard) = shared.write() {
-                    //     (*guard).set_level_event(level_event);
-                    //
-                    //     let snapshot = (*guard).get_snapshot().depth();
-                    //     if let Err(_) = sender.send(snapshot) {
-                    //         error!("level_depth send Snapshot error");
-                    //     };
-                    // } else {
-                    //     error!("SharedSpot is busy");
-                    // }
+                        let snapshot = (*guard).get_snapshot();
+                        if let Err(_) = sender.send(snapshot) {
+                            error!("level_depth send Snapshot error");
+                        };
+                    } else {
+                        error!("SharedSpot is busy");
+                    }
                     sleep(Duration::from_millis(100)).await;
                     Ok(())
                 };
@@ -81,5 +64,15 @@ impl CryptoOrderBookSpot {
         });
 
         Ok(receiver)
+    }
+
+    pub fn snapshot(&self) -> Option<Depth>{
+        if let Ok(_) = self.status.lock() {
+            Some(self.shared.write().unwrap().get_snapshot())
+        } else {
+            error!("BinanceSpotOrderBookPerpetualU lock is busy");
+            None
+        }
+
     }
 }
