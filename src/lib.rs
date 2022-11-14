@@ -195,8 +195,9 @@ impl Depth{
     }
 
     pub fn from_string(data: String) -> Self {
-        let raw:Self = serde_json::from_str(&data).unwrap();
-        raw
+        let raw: OrderBookStore = serde_json::from_str(&data).unwrap();
+
+        Self::transform_from_local(raw)
     }
 }
 
