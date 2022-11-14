@@ -1,11 +1,11 @@
-pub mod binance_perpetual_c;
-pub mod binance_perpetual_u;
+pub mod binance_perpetual_coin;
+pub mod binance_perpetual_usdt;
 pub mod binance_spot;
 mod connect;
 
 use crate::binance::connection::{
-    binance_perpetual_c::BinanceSpotOrderBookPerpetualCoin,
-    binance_perpetual_u::BinanceSpotOrderBookPerpetualUSDT, binance_spot::BinanceOrderBookSpot,
+    binance_perpetual_coin::BinanceSpotOrderBookPerpetualCoin,
+    binance_perpetual_usdt::BinanceSpotOrderBookPerpetualUSDT, binance_spot::BinanceOrderBookSpot,
 };
 use crate::Depth;
 use crate::Quote;
