@@ -248,14 +248,12 @@ mod tests {
 
         let depths:Vec<Depth> = buffer1.split("\n").collect::<Vec<_>>().iter()
             .map(|&data|{
-                let data = format!("{}", data);
-                serde_json::from_str(&data.to_string()).unwrap()
+                serde_json::from_str(&(data.to_string())).unwrap()
             })
             .collect();
         let depth_levels:Vec<Depth> = buffer2.split("\n").collect::<Vec<_>>().iter()
             .map(|&data|{
-                let data = format!("{}", data);
-                serde_json::from_str(&data.to_string()).unwrap()
+                serde_json::from_str(&(data.to_string())).unwrap()
             })
             .collect();
 
