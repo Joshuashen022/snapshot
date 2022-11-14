@@ -172,7 +172,7 @@ pub enum ExchangeType {
 #[cfg(test)]
 mod tests {
     use std::io::Write;
-
+    use anyhow::Result;
     #[test]
     fn manager_builder_works() {
         use crate::QuotationManager;
@@ -226,21 +226,21 @@ mod tests {
     }
 
     #[test]
-    fn read_and_compare(){
+    fn read_and_compare()-> Result<()>{
         use std::fs::OpenOptions;
         use std::io::Read;
         use crate::Depth;
 
         let mut reader1 = OpenOptions::new()
-            .read(true).open("depth.cache")?;
+            .read(true).open("depth.cache").unwrap();
         let mut reader2 = OpenOptions::new()
-            .read(true).open("normal.cache")?;
+            .read(true).open("normal.cache").unwrap();
 
         let mut buffer1 = String::new();
         let mut buffer2 = String::new();
 
-        reader1.read_to_string(&mut buffer1)?;
-        reader2.read_to_string(&mut buffer2)?;
+        reader1.read_to_string(&mut buffer1).unwrap();
+        reader2.read_to_string(&mut buffer2).unwrap();
 
         buffer1.pop();
         buffer2.pop();
@@ -309,5 +309,6 @@ mod tests {
 
         }
 
+        Ok(())
     }
 }
