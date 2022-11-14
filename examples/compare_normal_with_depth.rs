@@ -16,12 +16,17 @@ fn main() {
 
         let symbol = spot_symbol;
         println!("using symbol {}", symbol);
+
         let manager1 = QuotationManager::with_snapshot(exchange, symbol, 1000);
+        let _ = manager1.subscribe_depth();
         println!("using manager1 config {:?}", manager1.config);
+
         let manager2 = QuotationManager::new(exchange, symbol);
         println!("using manager2 config {:?}", manager2.config);
+        let _ = manager2.subscribe_depth();
 
         sleep(Duration::from_secs(3)).await;
+        
         loop {
             println!();
             println!();
