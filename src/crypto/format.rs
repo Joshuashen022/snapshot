@@ -1,5 +1,7 @@
 use ordered_float::OrderedFloat;
 use std::collections::BTreeMap;
+use serde::Deserialize;
+use crate::Quote;
 
 pub struct Shared {
     pub instrument: String,
@@ -23,4 +25,22 @@ impl Shared {
             bids: BTreeMap::new(),
         }
     }
+}
+#[derive(Deserialize, Debug)]
+pub struct LevelEventStream{
+    pub code: i64,
+    pub method: String,
+    pub result: Event,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Event{
+    pub depth: i64,
+    pub data: Data,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Data{
+    pub asks: Vec<Vec<String>>,
+    pub bids: Vec<Vec<String>>,
 }

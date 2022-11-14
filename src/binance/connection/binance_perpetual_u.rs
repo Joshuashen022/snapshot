@@ -51,7 +51,6 @@ impl BinanceSpotOrderBookPerpetualU {
             let mut default_exit = 0;
             info!("Start OrderBook thread");
             loop {
-                //<EventPerpetualU, BinanceSnapshotPerpetualU, SharedPerpetualU, StreamEventPerpetualU>
                 let res = try_get_connection::<
                     EventPerpetualU,
                     BinanceSnapshotPerpetualU,
