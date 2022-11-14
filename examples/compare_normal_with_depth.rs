@@ -26,7 +26,7 @@ fn main() {
         let _ = manager2.subscribe_depth();
 
         sleep(Duration::from_secs(3)).await;
-        
+
         loop {
             println!();
             println!();
