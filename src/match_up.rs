@@ -314,7 +314,7 @@ impl Connection {
     pub fn get_snapshot(&self) -> Option<BinanceOrderBookSnapshot> {
         match self {
             Connection::Binance(connection) => connection.get_snapshot(),
-            Connection::Crypto(connection) => connection.get_snapshot(),
+            Connection::Crypto(_) => None,
         }
     }
 }
