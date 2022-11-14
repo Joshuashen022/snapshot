@@ -46,6 +46,7 @@ pub struct Event{
 pub struct Data{
     pub bids: Vec<Quotes>,
     pub asks: Vec<Quotes>,
+    pub t: i64,
 }
 
 #[derive(Debug, Copy, Clone)]
