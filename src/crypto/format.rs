@@ -54,7 +54,7 @@ pub struct Data{
 pub struct Quotes{
     price: f64,
     amount: f64,
-    order_numbers: u64,
+    order_numbers: i64,
 }
 
 impl<'de> Deserialize<'de> for Quotes {
@@ -102,7 +102,7 @@ impl<'de> Visitor<'de> for QuotesVisitor {
         }
 
         if let Some(val) = seq.next_element::<&str>()? {
-            match val.parse::<u64>() {
+            match val.parse::<i64>() {
                 Ok(num) => order_numbers = Some(num),
                 Err(_) => {
                     return Err(serde::de::Error::custom(
