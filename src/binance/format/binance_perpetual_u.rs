@@ -7,7 +7,6 @@ use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::debug;
-// use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug)]
 pub struct StreamEventPerpetualU {
@@ -103,7 +102,6 @@ impl EventT for EventPerpetualU {
         self.first_update_id <= snap_shot_id && snap_shot_id <= self.last_update_id
     }
 
-    //snapshot.last_update_id > event.last_update_id
     /// [E.U,..,E.u] S.u
     fn behind(&self, snap_shot_id: i64) -> bool {
         debug!(
@@ -116,7 +114,6 @@ impl EventT for EventPerpetualU {
         self.last_update_id < snap_shot_id
     }
 
-    //event.first_update_id > snapshot.last_update_id
     /// S.u [E.U,..,E.u]
     fn ahead(&self, snap_shot_id: i64) -> bool {
         debug!(

@@ -1,9 +1,7 @@
 extern crate core;
 
-use tokio::sync::mpsc::UnboundedReceiver;
-// use anyhow::{Result, Error, anyhow};
 use serde::Deserialize;
-// use tracing::error;
+use tokio::sync::mpsc::UnboundedReceiver;
 
 pub(crate) mod binance;
 pub(crate) mod crypto;
@@ -15,9 +13,6 @@ pub use binance::connection::{
 use crypto::CryptoOrderBookSpot;
 
 use match_up::{match_up, Config, Connection, SymbolType};
-
-// pub fn subscribe_depth_snapshot<T: Orderbook>(exchange: &str, symbol: &str, limit: i32)
-//                                               -> Result<UnboundedReceiver<T>>
 
 #[derive(Clone)]
 pub struct QuotationManager {
@@ -128,12 +123,6 @@ pub(crate) enum OrderBookSnapshot {
     Crypto,
 }
 
-// /// 行情类型: 现货、永续合约
-// pub enum OrderbookType {
-//     Spot,
-//     Perpetual,
-// }
-
 /// 交易所类型
 #[derive(Clone, Debug, Copy)]
 pub enum ExchangeType {
@@ -195,5 +184,3 @@ mod tests {
         let _ = QuotationManager::with_snapshot(wrong_exchange, pc_symbol, limit);
     }
 }
-
-//order book 2131063958416, Event 2131063956506-2131063962059(2131063956407)

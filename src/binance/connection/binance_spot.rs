@@ -74,7 +74,6 @@ impl BinanceOrderBookSpot {
         Ok(receiver)
     }
 
-    // TODO:: deal with error at outer_space
     pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
 
@@ -103,7 +102,6 @@ impl BinanceOrderBookSpot {
 
                 info!("Level Overbook initialize success, now keep listening ");
                 while let Ok(msg) = stream.next().await.unwrap() {
-                    //
                     if !msg.is_text() {
                         warn!("msg is empty");
                         continue;

@@ -10,13 +10,10 @@ use crate::binance::connection::{
 use crate::Depth;
 use crate::Quote;
 
-use serde::Deserialize;
-// use std::borrow::Cow;
 use anyhow::Result;
+use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tracing::error;
-// use std::thread::sleep;
-// use std::time::Duration;
 
 pub enum BinanceOrderBookType {
     Spot,
@@ -149,6 +146,4 @@ impl BinanceConnectionType {
             error!("set symbol error {:?}", e);
         }
     }
-
-    //pub fn snapshot(&self) -> Option<BinanceOrderBookSnapshot>{
 }

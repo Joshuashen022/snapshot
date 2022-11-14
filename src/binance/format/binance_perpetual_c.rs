@@ -7,7 +7,6 @@ use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::debug;
-// use anyhow::{Result, anyhow};
 
 #[derive(Deserialize, Debug, Default)]
 pub struct StreamEventPerpetualC {
@@ -120,7 +119,6 @@ impl EventT for EventPerpetualC {
         self.last_update_id < snap_shot_id
     }
 
-    //event.first_update_id > snapshot.last_update_id
     /// S.u [E.U,..,E.u]
     fn ahead(&self, snap_shot_id: i64) -> bool {
         debug!(
@@ -349,22 +347,6 @@ impl SharedPerpetualC {
         self.send_time = level_event.event_time;
         self.receive_time = time.as_millis() as i64;
     }
-
-    // With give event to update snapshot,
-    // if event doesn't satisfy return error
-    // pub fn update_snapshot(&mut self, event: EventPerpetualC) -> Result<()>  {
-    //     if event.first_update_id != self.last_update_id + 1 {
-    //         Err(anyhow!(
-    //             "Expect event u to be {}, found {}",
-    //             self.last_update_id + 1,
-    //             event.first_update_id
-    //         ))
-    //     } else{
-    //         self.add_event(event);
-    //         Ok(())
-    //     }
-    //
-    // }
 }
 
 #[test]
