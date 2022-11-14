@@ -110,6 +110,52 @@ pub struct Depth {
     pub bids: Vec<Quote>,
 }
 
+impl Depth{
+    /// Compare self with other Order Book
+    pub fn if_contains(&self, other: &Depth) -> bool {
+        let mut contains_bids = true;
+        let mut contains_asks = true;
+        for bid in &other.bids {
+            if !self.bids.contains(bid) {
+                contains_bids = false;
+                break;
+            }
+        }
+
+        for ask in &other.bids {
+            if !self.asks.contains(&ask) {
+                contains_asks = false;
+                break;
+            }
+        }
+
+        contains_bids && contains_asks
+    }
+
+    /// Find different `bids` and `asks`,
+    /// and return as `(bids, asks)`
+    pub fn find_different(&self, other: &Depth) -> (Vec<Quote>, Vec<Quote>) {
+        let mut bid_different = Vec::new();
+        let mut ask_different = Vec::new();
+
+        for bid in &other.bids {
+            if !self.bids.contains(bid) {
+                bid_different.push(*bid);
+            }
+        }
+
+        for ask in &other.bids {
+            if !self.asks.contains(&ask) {
+                ask_different.push(*ask);
+            }
+        }
+
+        (bid_different, ask_different)
+    }
+
+}
+
+
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Quote {
     pub price: f64,
@@ -125,6 +171,8 @@ pub enum ExchangeType {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Write;
+
     #[test]
     fn manager_builder_works() {
         use crate::QuotationManager;
@@ -175,5 +223,91 @@ mod tests {
         let limit = 1000;
 
         let _ = QuotationManager::with_snapshot(wrong_exchange, pc_symbol, limit);
+    }
+
+    #[test]
+    fn read_and_compare(){
+        use std::fs::OpenOptions;
+        use std::io::Read;
+        use crate::Depth;
+
+        let mut reader1 = OpenOptions::new()
+            .read(true).open("depth.cache")?;
+        let mut reader2 = OpenOptions::new()
+            .read(true).open("normal.cache")?;
+
+        let mut buffer1 = String::new();
+        let mut buffer2 = String::new();
+
+        reader1.read_to_string(&mut buffer1)?;
+        reader2.read_to_string(&mut buffer2)?;
+
+        buffer1.pop();
+        buffer2.pop();
+
+
+        let depths:Vec<Depth> = buffer1.split("\n").collect::<Vec<_>>().iter()
+            .map(|s|{
+                serde_json::from_str(&data).unwrap()
+            })
+            .collect();
+        let depth_levels:Vec<Depth> = buffer2.split("\n").collect::<Vec<_>>().iter()
+            .map(|s|{
+                serde_json::from_str(&data).unwrap()
+            })
+            .collect();
+
+        let mut file = OpenOptions::new();
+        let mut reader = file.create(true).write(true).open("results").unwrap();
+        let message = format!("depths {}, depth_levels {} \n", depths.len(), depth_levels.len());
+        reader.write_all(message.as_bytes()).unwrap_or(());
+
+        let mut res_queue = Vec::new();
+        for depth_level in &depth_levels{
+
+            let mut matchs_depths = Vec::new();
+            let mut differents_len = 200;
+            let mut different = Vec::new();
+            for depth in &depths{
+                let 结果 = depth.if_contains(depth_level);
+                let depth_time = depth.time_stamp;
+                let depth_id = depth.last_update_id;
+                // println!(" Depth {}-{} Depth Level {}-{} {}", depth_time, depth_id, dl_time ,dl_id , 结果);
+
+                // println!("Time {} Id {} {}", depth_time - dl_time, depth_id - dl_id, 结果);
+                // println!("different bids {} asks {}", different_bids.len(), different_asks.len());
+                // println!("bids {} asks {}", level_b_len, level_a_len);
+                if 结果 {
+                    matchs_depths.push(depth.clone());
+                } else {
+                    let (bid, ask) = depth.find_different(depth_level);
+                    if (bid.len() + ask.len()) < differents_len {
+                        differents_len = bid.len() + ask.len();
+                        different = vec![(bid, ask, depth_id, depth_time)];
+                    }
+                }
+            }
+            let dl_time = depth_level.ts;
+            let dl_id = depth_level.id;
+            let length = matchs_depths.len();
+            let mut res = format!("{} {} {} matches: ", dl_time, dl_id, matchs_depths.len());
+            for m in matchs_depths {
+                res += &format!("{} ", m.last_update_id);
+            }
+            if length == 0 {
+                for (bid, ask, depth_id, depth_time) in different {
+                    res += &format!("depth_id {} depth_time {}, bid {}, ask {}", depth_id, depth_time, bid.len(), ask.len());
+                }
+            }
+
+            res_queue.push(res);
+        }
+
+        for raw in res_queue {
+            let raw = format!("{}\n", raw);
+            reader.write_all(raw.as_bytes()).unwrap_or(());
+
+        }
+
     }
 }

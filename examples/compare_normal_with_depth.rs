@@ -39,6 +39,7 @@ fn main() {
                 );
 
                 let raw = serde_json::to_string(&message).unwrap();
+                let raw = format!("{}/n",raw);
                 reader.write_all(raw.as_bytes()).unwrap_or(());
             }
         });
@@ -62,6 +63,7 @@ fn main() {
                     message.bids.len()
                 );
                 let raw = serde_json::to_string(&message).unwrap();
+                let raw = format!("{}/n",raw);
                 reader.write_all(raw.as_bytes()).unwrap_or(());
             }
         });
