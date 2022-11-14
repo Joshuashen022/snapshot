@@ -28,6 +28,7 @@ impl Shared {
         }
     }
 }
+
 #[derive(Deserialize, Debug)]
 pub struct LevelEventStream{
     pub id: i64,
@@ -36,14 +37,14 @@ pub struct LevelEventStream{
     pub result: Event,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug， Clone)]
 pub struct Event{
     pub depth: i64,
-    pub data: Data,
+    pub data: Vec<Data>,
     pub instrument_name: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Data{
     pub bids: Vec<Quotes>,
     pub asks: Vec<Quotes>,

@@ -2,6 +2,7 @@ use crate::crypto::format::Shared;
 use crate::{BinanceConnectionType, Depth};
 use anyhow::{Result, Error};
 use std::sync::{Arc, Mutex, RwLock};
+use futures_util::SinkExt;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::{sleep, Duration};
@@ -47,11 +48,17 @@ impl CryptoOrderBookSpot {
                     let level_event = level_event.result;
 
                     debug!(
-                        "receive level_event depth {}, ask {} bis {}",
+                        "receive level_event depth {}, data {}",
                         level_event.depth,
-                        level_event.data.asks.len(),
-                        level_event.data.bids.len(),
+                        level_event.data.len(),
                     );
+                    for data in level_event.data.clone(){
+                        debug!("bids {}, asks {}, time {}",
+                            data.bids.len(),
+                            data.asks.len(),
+                            data.t,
+                        )
+                    };
 
                     // if let Ok(mut guard) = shared.write() {
                     //     (*guard).set_level_event(level_event);
