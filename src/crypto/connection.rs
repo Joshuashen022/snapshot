@@ -5,6 +5,7 @@ use anyhow::Result;
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::time::{sleep, Duration};
 use tokio_tungstenite::connect_async;
 use tracing::{error, info, warn};
 use url::Url;
@@ -40,6 +41,7 @@ impl CryptoOrderBookSpot {
                         Ok((connection, _)) => connection,
                         Err(e) => {
                             warn!("connection error {:?}", e);
+                            sleep(Duration::from_millis(100)).await;
                             continue
                         }
                     };

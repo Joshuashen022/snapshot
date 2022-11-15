@@ -6,8 +6,10 @@ use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::UnboundedSender;
+use tokio::time::sleep;
 use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
 use tracing::{error, info, warn};
 use tungstenite::Message;
@@ -45,6 +47,7 @@ pub async fn try_get_connection<
         Ok(stream) => stream,
         Err(e) => {
             error!("Error calling {}, {:?}", depth_address, e);
+            sleep(Duration::from_millis(100)).await;
             return Ok(false);
         }
     };
