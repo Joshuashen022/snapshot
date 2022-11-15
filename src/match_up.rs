@@ -263,13 +263,13 @@ fn set_addr_for_crypto(
         // is there is limit set it as "Level"
         let limit = limit.unwrap();
         level_depth_address = Some(format!(
-            "wss://stream.crypto.com/v2/market/get-book?instrument_name={}&depth={}",
+            "wss://uat-stream.3ona.co/v2/market/get-book?instrument_name={}&depth={}",
             instrument, limit
         ));
     } else {
         // Level Mode, only need `level_depth_address`
         level_depth_address = Some(format!(
-            "wss://stream.crypto.com/v2/market/get-book?instrument_name={}&depth=10",
+            "wss://uat-stream.3ona.co/v2/market/get-book?instrument_name={}&depth=20",
             instrument
         ));
     }
