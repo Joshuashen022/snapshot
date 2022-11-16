@@ -1,18 +1,17 @@
-extern crate core;
 
 use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 pub(crate) mod binance;
 pub(crate) mod crypto;
-mod match_up;
+mod config;
 
 pub use binance::connection::{
     BinanceConnectionType, BinanceOrderBookSnapshot, BinanceOrderBookType,
 };
 use crypto::CryptoOrderBookSpot;
 
-use match_up::{match_up, Config, Connection, SymbolType};
+use config::{match_up, Config, Connection, SymbolType};
 
 #[derive(Clone)]
 pub struct QuotationManager {
@@ -43,9 +42,9 @@ impl QuotationManager {
                 .clone()
                 .connect_depth(rest_address, depth_address)
         } else if config.is_normal() {
-            let level_address = config.level_depth.expect("level address is empty");
+            let _ = config.clone().level_depth.expect("level address is empty");
 
-            self.connection.clone().connect_depth_level(level_address)
+            self.connection.clone().connect_depth_level(config)
         } else {
             panic!("Unsupported Config {:?}", config);
         }

@@ -1,5 +1,7 @@
-mod connection;
-mod format;
+pub mod connection;
+pub mod format;
+
+
 
 pub use connection::CryptoOrderBookSpot;
-pub use format::Shared;
+pub use format::BookShared;

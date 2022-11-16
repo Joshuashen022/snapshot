@@ -297,10 +297,10 @@ impl Connection {
         }
     }
 
-    pub fn connect_depth_level(&self, level_address: String) -> UnboundedReceiver<Depth> {
+    pub fn connect_depth_level(&self, config: Config) -> UnboundedReceiver<Depth> {
         match self {
-            Connection::Binance(connection) => connection.level_depth(level_address).unwrap(),
-            Connection::Crypto(connection) => connection.level_depth(level_address).unwrap(),
+            Connection::Binance(connection) => connection.level_depth(config.level_depth.unwrap()).unwrap(),
+            Connection::Crypto(_connection) => unimplemented!(),
         }
     }
 
@@ -316,8 +316,8 @@ impl Connection {
 mod tests {
     #[test]
     fn match_up_input_test() {
-        use crate::match_up::match_up;
-        use crate::match_up::validate_symbol_binance;
+        use crate::config::match_up;
+        use crate::config::validate_symbol_binance;
 
         assert!(validate_symbol_binance("BTC_USTD_221230_SWAP").is_ok());
         assert!(validate_symbol_binance("BTC_USTD_SWAP").is_ok());
@@ -332,8 +332,8 @@ mod tests {
 
     #[test]
     fn valid_symbols() {
-        use crate::match_up::validate_symbol_binance;
-        use crate::match_up::SymbolType;
+        use crate::config::validate_symbol_binance;
+        use crate::config::SymbolType;
         let symbol = SymbolType::ContractCoin(String::from("btcusdt_221230"));
         assert_eq!(
             symbol,
@@ -350,7 +350,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol1() {
-        use crate::match_up::validate_symbol_binance;
+        use crate::config::validate_symbol_binance;
         let symbol = "BTC_USTD_221230_SWAP_";
         validate_symbol_binance(symbol).unwrap();
     }
@@ -358,7 +358,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol2() {
-        use crate::match_up::validate_symbol_binance;
+        use crate::config::validate_symbol_binance;
         let symbol = "BTC_USTD_221230_ABC";
         validate_symbol_binance(symbol).unwrap();
     }
@@ -366,7 +366,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol3() {
-        use crate::match_up::validate_symbol_binance;
+        use crate::config::validate_symbol_binance;
         let symbol = "BTC_USTD_221230SWAP";
         validate_symbol_binance(symbol).unwrap();
     }
@@ -374,7 +374,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol4() {
-        use crate::match_up::validate_symbol_binance;
+        use crate::config::validate_symbol_binance;
         let symbol = "BTC_USTDSWAP";
         validate_symbol_binance(symbol).unwrap();
     }
