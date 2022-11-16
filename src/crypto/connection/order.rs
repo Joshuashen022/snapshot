@@ -205,9 +205,11 @@ mod tests {
             let book = CryptoOrderBookSpot::new();
             let mut recv = book.level_depth(config).unwrap();
 
-            while let Some(depth) = recv.recv().await {
-                println!("{:?}", depth);
-            }
+            let depth  =  recv.recv().await;
+            assert!(depth.is_some());
+            // if let Some(depth) = recv.recv().await {
+            //     println!("{:?}", depth);
+            // }
         })
     }
 }
