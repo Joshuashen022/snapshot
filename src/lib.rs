@@ -1,4 +1,5 @@
-
+use std::fmt;
+use std::fmt::Debug;
 use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 
@@ -79,7 +80,7 @@ impl QuotationManager {
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 pub struct Depth {
     /// Send time from Exchange,
     /// if not have, use receive time
@@ -91,6 +92,19 @@ pub struct Depth {
     pub asks: Vec<Quote>,
     pub bids: Vec<Quote>,
 }
+
+impl Debug for Depth {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Depth")
+            .field("send_time", &self.ts)
+            .field("receive_time", &self.lts)
+            .field("asks", &self.asks.len())
+            .field("bids", &self.bids.len())
+            .field("id", &self.id)
+            .finish()
+    }
+}
+
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Quote {

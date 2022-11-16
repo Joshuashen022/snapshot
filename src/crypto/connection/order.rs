@@ -181,3 +181,33 @@ async fn is_live_and_keep_alive(stream:&mut CryptoWebSocket, message: Message) -
 
     Ok(false)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex, RwLock};
+    use tokio::runtime::Runtime;
+    use crate::config::{Config, SymbolType};
+    use crate::crypto::{BookShared, CryptoOrderBookSpot};
+    use crate::ExchangeType;
+    const LEVEL_DEPTH_URL: &str = "wss://stream.crypto.com/v2/market";
+
+    #[test]
+    fn crypto_order_book_function(){
+        let config = Config{
+            rest: None,
+            depth: None,
+            level_depth: Some(LEVEL_DEPTH_URL.to_string()),
+            symbol_type: SymbolType::Spot(String::new()) ,
+            exchange_type: ExchangeType::Crypto,
+        };
+
+        Runtime::new().unwrap().block_on(async {
+            let book = CryptoOrderBookSpot::new();
+            let mut recv = book.level_depth(config).unwrap();
+
+            while let Some(depth) = recv.recv().await {
+                println!("{:?}", depth);
+            }
+        })
+    }
+}
