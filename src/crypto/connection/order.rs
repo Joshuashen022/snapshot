@@ -38,6 +38,7 @@ impl CryptoOrderBookSpot {
     #[allow(unreachable_code)]
     pub fn level_depth(&self, config: Config) -> Result<UnboundedReceiver<Depth>> {
         let level_address = config.level_depth.unwrap();
+
         let shared = self.shared.clone();
 
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -47,8 +48,8 @@ impl CryptoOrderBookSpot {
             loop {
                 let result: Result<()> = {
 
-                    const LEVEL_DEPTH_URL: &str = "wss://stream.crypto.com/v2/market";
-                    let url = Url::parse(LEVEL_DEPTH_URL).expect("Bad URL");
+
+                    let url = Url::parse(&level_address).expect("Bad URL");
                     let mut stream = match connect_async(url).await {
                         Ok((connection, _)) => connection,
                         Err(e) => {
@@ -62,6 +63,7 @@ impl CryptoOrderBookSpot {
                     // Official suggestion
                     sleep(Duration::from_millis(1000)).await;
 
+                    // TODO::use a real channel not a default one
                     let channel = String::from("book.BTCUSD-PERP");
                     let message = Message::from(subscribe_message(channel.clone()));
                     match stream.send(message).await{
@@ -207,9 +209,6 @@ mod tests {
 
             let depth  =  recv.recv().await;
             assert!(depth.is_some());
-            // if let Some(depth) = recv.recv().await {
-            //     println!("{:?}", depth);
-            // }
         })
     }
 }

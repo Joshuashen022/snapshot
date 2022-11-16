@@ -78,6 +78,11 @@ impl Config {
             _ => false,
         }
     }
+
+    pub fn get_channel(&self) -> Result<String>{
+        
+        unimplemented!()
+    }
 }
 
 #[derive(Clone, Debug, PartialOrd, PartialEq)]
@@ -97,7 +102,7 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config {
 
     let symbol_type = match exchange_type {
         ExchangeType::Binance => validate_symbol_binance(symbol).unwrap(),
-        ExchangeType::Crypto => validate_symbol_crypto(symbol).unwrap(),
+        ExchangeType::Crypto => validate_symbol_crypto(symbol, limit).unwrap(),
     };
 
     let (rest_address, depth_address, level_depth_address) = match exchange_type {
@@ -121,8 +126,8 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config {
 }
 
 /// Inputs: BTC_USDT / BTC_USDT_SWAP(Unsupported) / BTC_USDT_221230_SWAP(Unsupported)
-/// Crypto output: BTC_USDT / BTC_USDT / BTC_USDT_221230
-fn validate_symbol_crypto(symbol: &str) -> Result<SymbolType> {
+/// Crypto output: BTC_USDT.50 / BTC_USDT.50 / BTC_USDT_221230.50
+fn validate_symbol_crypto(symbol: &str, limit: Option<i32>) -> Result<SymbolType> {
     let splits = symbol.split("_").collect::<Vec<_>>();
     if splits.len() > 4 || splits.len() < 2 {
         return Err(anyhow!("Unsupported Symbol {}", symbol));
@@ -132,7 +137,12 @@ fn validate_symbol_crypto(symbol: &str) -> Result<SymbolType> {
     let is_spot = !symbol.contains("SWAP");
     let is_contract_coin = { splits.len() == 4 && is_contract };
 
-    let symbol_inner = symbol.split("_SWAP").collect::<Vec<_>>()[0];
+    let symbol_inner = if limit.is_some(){
+        let limit = limit.unwrap().to_string().as_str();
+        symbol.split("_SWAP").collect::<Vec<_>>()[0] + "." + limit
+    } else {
+        symbol.split("_SWAP").collect::<Vec<_>>()[0] + ".50"
+    };
 
     let result = match (is_contract, is_contract_coin, is_spot) {
         // e.g. "BTC_USDT_221230 "
@@ -253,26 +263,11 @@ fn set_addr_for_binance(
 
 #[allow(unused_assignments)]
 fn set_addr_for_crypto(
-    instrument: &str,
-    limit: Option<i32>,
+    _instrument: &str,
+    _limit: Option<i32>,
 ) -> (Option<String>, Option<String>, Option<String>) {
-    let mut level_depth_address: Option<String> = None;
-
-    if limit.is_some() {
-        // Crypto is not supported for Depth model, use Level mode instead
-        // is there is limit set it as "Level"
-        let limit = limit.unwrap();
-        level_depth_address = Some(format!(
-            "wss://uat-stream.3ona.co/v2/market/get-book?instrument_name={}&depth={}",
-            instrument, limit
-        ));
-    } else {
-        // Level Mode, only need `level_depth_address`
-        level_depth_address = Some(format!(
-            "wss://uat-stream.3ona.co/v2/market/get-book?instrument_name={}&depth=20",
-            instrument
-        ));
-    }
+    let level_depth_address: Option<String> =
+        Some(format!("wss://stream.crypto.com/v2/market", ));
 
     (None, None, level_depth_address)
 }
