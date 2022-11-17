@@ -3,6 +3,7 @@ use crate::crypto::connection::CryptoWebSocket;
 use crate::crypto::format::{
     heartbeat_respond, subscribe_message, GeneralRespond, HeartbeatRequest, TradeEventStream,
 };
+use crate::crypto::connection::socket_stream;
 use crate::Tick;
 use anyhow::{anyhow, Error, Result};
 use futures_util::{SinkExt, StreamExt};
@@ -13,6 +14,7 @@ use tokio::time::{sleep, Duration};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use tracing::{debug, error, info, warn};
 use url::Url;
+
 
 #[derive(Clone)]
 pub struct CryptoTicker {
@@ -172,6 +174,8 @@ mod tests {
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Crypto,
         };
+
+        tracing_subscriber::fmt::init();
 
         Runtime::new().unwrap().block_on(async {
             let ticker = CryptoTicker::new();
