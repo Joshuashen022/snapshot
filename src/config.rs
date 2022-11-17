@@ -99,25 +99,12 @@ impl Config {
             _ => false,
         }
     }
-
-    pub fn get_symbol_contract_usdt(&self) -> Option<String>{
-        match &self.symbol_type {
-            SymbolType::ContractUSDT(symbol) => Some(symbol.clone()),
-            _ => None,
-        }
-    }
-
-    pub fn get_symbol_contract_coin(&self) -> Option<String>{
-        match &self.symbol_type {
-            SymbolType::ContractCoin(symbol) => Some(symbol.clone()),
-            _ => None,
-        }
-    }
-
-    pub fn get_symbol_spot(&self) -> Option<String>{
+    
+    pub fn get_symbol(&self) -> Option<String>{
         match &self.symbol_type {
             SymbolType::Spot(symbol) => Some(symbol.clone()),
-            _ => None,
+            SymbolType::ContractCoin(symbol) => Some(symbol.clone()),
+            SymbolType::ContractUSDT(symbol) => Some(symbol.clone()),
         }
     }
 
@@ -128,7 +115,7 @@ impl Config {
                 if !self.is_spot(){
                     Err(anyhow!("Channel is unsupported for {:?}", self.symbol_type))
                 } else{
-                    let symbol = self.get_symbol_spot().unwrap();
+                    let symbol = self.get_symbol().unwrap();
                     Ok(symbol)
                 }
             },
@@ -447,10 +434,10 @@ mod tests {
 
         assert!(crypto_config.is_crypto());
         assert!(crypto_config.is_spot());
-        assert!(crypto_config.get_symbol_spot().is_some());
+        assert!(crypto_config.get_symbol().is_some());
 
         assert_eq!(
-            crypto_config.get_symbol_spot().unwrap(),
+            crypto_config.get_symbol().unwrap(),
             String::from("BTC_USDT.50")
         );
 
@@ -462,7 +449,7 @@ mod tests {
 
         let crypto_config = match_up("crypto", "BTC_USDT", Some(10));
         assert_eq!(
-            crypto_config.get_symbol_spot().unwrap(),
+            crypto_config.get_symbol().unwrap(),
             String::from("BTC_USDT.10")
         );
     }
