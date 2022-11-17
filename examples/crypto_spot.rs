@@ -13,7 +13,7 @@ fn main() {
         let symbol = "BTC_USDT";
         println!("using symbol {}", symbol);
 
-        let manager1 = QuotationManager::with_snapshot(exchange, symbol, 50);
+        let manager1 = QuotationManager::with_snapshot(exchange, symbol, 10);
         println!("using manager1 config {:?}", manager1.config);
 
         let manager1_clone = manager1.clone();
