@@ -41,6 +41,7 @@ impl CryptoOrderBookSpot {
         let symbol = config.get_symbol_spot().expect("spotsymbol is empty");
 
         let shared = self.shared.clone();
+        let status = self.status.clone();
 
         let (sender, receiver) = mpsc::unbounded_channel();
 
@@ -48,7 +49,6 @@ impl CryptoOrderBookSpot {
             info!("Start Level Buffer maintain thread");
             loop {
                 let result: Result<()> = {
-
 
                     let url = Url::parse(&level_address).expect("Bad URL");
                     let mut stream = match connect_async(url).await {
@@ -74,6 +74,10 @@ impl CryptoOrderBookSpot {
                     };
 
                     info!("Subscribe to channel {} success", channel);
+
+                    if let Ok(mut guard) = status.lock(){
+                        (*guard) = true;
+                    }
 
                     while let Ok(message) = stream.next().await.unwrap() {
 
