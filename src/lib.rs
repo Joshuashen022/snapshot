@@ -43,9 +43,9 @@ impl QuotationManager {
                 .clone()
                 .connect_depth(rest_address, depth_address)
         } else if config.is_normal() {
-            let _ = config.clone().level_depth.expect("level address is empty");
 
             self.connection.clone().connect_depth_level(config)
+
         } else {
             panic!("Unsupported Config {:?}", config);
         }

@@ -37,7 +37,8 @@ impl CryptoOrderBookSpot {
     }
     #[allow(unreachable_code)]
     pub fn level_depth(&self, config: Config) -> Result<UnboundedReceiver<Depth>> {
-        let level_address = config.level_depth.unwrap();
+        let level_address = config.level_depth.expect("level address is empty");
+        let symbol = config.get_symbol_spot().expect("spotsymbol is empty");
 
         let shared = self.shared.clone();
 
@@ -63,9 +64,10 @@ impl CryptoOrderBookSpot {
                     // Official suggestion
                     sleep(Duration::from_millis(1000)).await;
 
-                    // TODO::use a real channel not a default one
-                    let channel = String::from("book.BTCUSD-PERP");
+                    let channel = format!("book.{}", &symbol);
+
                     let message = Message::from(subscribe_message(channel.clone()));
+
                     match stream.send(message).await{
                         Ok(()) => (),
                         Err(e) => println!("{:?}",e ),

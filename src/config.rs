@@ -79,9 +79,62 @@ impl Config {
         }
     }
 
+    pub fn is_contract_usdt(&self) -> bool {
+        match self.symbol_type {
+            SymbolType::ContractUSDT(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_spot(&self) -> bool {
+        match self.symbol_type {
+            SymbolType::Spot(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_contract_coin(&self) -> bool {
+        match self.symbol_type {
+            SymbolType::ContractCoin(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_symbol_contract_usdt(&self) -> Option<String>{
+        match &self.symbol_type {
+            SymbolType::ContractUSDT(symbol) => Some(symbol.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn get_symbol_contract_coin(&self) -> Option<String>{
+        match &self.symbol_type {
+            SymbolType::ContractCoin(symbol) => Some(symbol.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn get_symbol_spot(&self) -> Option<String>{
+        match &self.symbol_type {
+            SymbolType::Spot(symbol) => Some(symbol.clone()),
+            _ => None,
+        }
+    }
+
+    /// Specialized for crypto exchange
     pub fn get_channel(&self) -> Result<String>{
-        
-        unimplemented!()
+        match self.exchange_type{
+            ExchangeType::Crypto => {
+                if !self.is_spot(){
+                    Err(anyhow!("Channel is unsupported for {:?}", self.symbol_type))
+                } else{
+                    let symbol = self.get_symbol_spot().unwrap();
+                    Ok(symbol)
+                }
+            },
+            _ => Err(anyhow!("Channel is unsupported for {:?}", self.exchange_type)),
+        }
+
     }
 }
 
@@ -110,6 +163,7 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config {
         ExchangeType::Crypto => {
             let symbol = match symbol_type.clone() {
                 SymbolType::Spot(s) => s,
+                SymbolType::ContractUSDT(s) => s,
                 _ => panic!("Crypto is supported for {}", symbol),
             };
             set_addr_for_crypto(&symbol, limit)
@@ -125,33 +179,49 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config {
     }
 }
 
-/// Inputs: BTC_USDT / BTC_USDT_SWAP(Unsupported) / BTC_USDT_221230_SWAP(Unsupported)
-/// Crypto output: BTC_USDT.50 / BTC_USDT.50 / BTC_USDT_221230.50
+/// Inputs: BTC_USDT / BTC_USDT_SWAP(Unsupported) / BTC_USDT_221230_SWAP
+/// Crypto output: BTC_USDT.50 / BTCUSD-PERP.50 / (Unsupported)
 fn validate_symbol_crypto(symbol: &str, limit: Option<i32>) -> Result<SymbolType> {
     let splits = symbol.split("_").collect::<Vec<_>>();
     if splits.len() > 4 || splits.len() < 2 {
-        return Err(anyhow!("Unsupported Symbol {}", symbol));
+        return Err(anyhow!("Unsupported Symbol {} for crypto", symbol));
     }
 
     let is_contract = { symbol.ends_with("_SWAP") && splits.len() <= 4 };
     let is_spot = !symbol.contains("SWAP");
     let is_contract_coin = { splits.len() == 4 && is_contract };
 
+    fn usdt_usd(usdt: &str) -> &str{
+        if usdt == "USDT"{
+            &usdt[..3]
+        } else {
+            usdt
+        }
+    }
+
+    let symbol_in = {
+        let mut splits = splits;
+
+        if is_contract {
+            splits.pop();
+            format!("{}{}-PERP", splits[0], usdt_usd(splits[1]))
+        }else {
+            format!("{}_{}", splits[0], splits[1])
+        }
+    };
+
     let symbol_inner = if limit.is_some(){
-        let limit = limit.unwrap().to_string().as_str();
-        symbol.split("_SWAP").collect::<Vec<_>>()[0] + "." + limit
+        format!("{}.{}", symbol_in,  limit.unwrap())
     } else {
-        symbol.split("_SWAP").collect::<Vec<_>>()[0] + ".50"
+        format!("{}.50", symbol_in)
     };
 
     let result = match (is_contract, is_contract_coin, is_spot) {
-        // e.g. "BTC_USDT_221230 "
-        (true, true, false) => SymbolType::ContractCoin(symbol_inner.to_string()),
-        // e.g. "BTC_USDT"
+        // e.g. "BTCUSD-PERP.50"
         (true, false, false) => SymbolType::ContractUSDT(symbol_inner.to_string()),
-        // e.g. "BTC_USDT"
+        // e.g. "BTC_USDT.50"
         (false, false, true) => SymbolType::Spot(symbol_inner.to_string()),
-        _ => return Err(anyhow!("Unsupported Symbol {}", symbol)),
+        _ => return Err(anyhow!("Unsupported Symbol {} for crypto", symbol)),
     };
 
     Ok(result)
@@ -162,7 +232,7 @@ fn validate_symbol_crypto(symbol: &str, limit: Option<i32>) -> Result<SymbolType
 fn validate_symbol_binance(symbol: &str) -> Result<SymbolType> {
     let splits = symbol.split("_").collect::<Vec<_>>();
     if splits.len() > 4 || splits.len() < 2 {
-        return Err(anyhow!("Unsupported Symbol {}", symbol));
+        return Err(anyhow!("Unsupported Symbol {} for binance", symbol));
     }
 
     let is_contract = { symbol.ends_with("_SWAP") && splits.len() <= 4 };
@@ -190,7 +260,7 @@ fn validate_symbol_binance(symbol: &str) -> Result<SymbolType> {
         (true, false, false) => SymbolType::ContractUSDT(symbol_inner),
         // e.g. "bnbbtc"
         (false, false, true) => SymbolType::Spot(symbol_inner),
-        _ => return Err(anyhow!("Unsupported Symbol {}", symbol)),
+        _ => return Err(anyhow!("Unsupported Symbol {} for binance", symbol)),
     };
 
     Ok(result)
@@ -311,35 +381,90 @@ impl Connection {
 mod tests {
     #[test]
     fn match_up_input_test() {
-        use crate::config::match_up;
         use crate::config::validate_symbol_binance;
+        use crate::config::validate_symbol_crypto;
 
         assert!(validate_symbol_binance("BTC_USTD_221230_SWAP").is_ok());
         assert!(validate_symbol_binance("BTC_USTD_SWAP").is_ok());
         assert!(validate_symbol_binance("BTC_USTD").is_ok());
 
-        let _ = match_up("binance", "BTC_USTD_221230_SWAP", Some(1000));
-
-        let _ = match_up("binance", "BTC_USTD_SWAP", Some(1000));
-
-        let _ = match_up("binance", "BTC_USTD", Some(1000));
+        assert!(validate_symbol_crypto("BTC_USTD_221230_SWAP", None).is_err());
+        assert!(validate_symbol_crypto("BTC_USTD_SWAP", None).is_ok());
+        assert!(validate_symbol_crypto("BTC_USTD", None).is_ok());
     }
 
     #[test]
     fn valid_symbols() {
+        use crate::config::validate_symbol_crypto;
         use crate::config::validate_symbol_binance;
         use crate::config::SymbolType;
-        let symbol = SymbolType::ContractCoin(String::from("btcusdt_221230"));
+
         assert_eq!(
-            symbol,
+            SymbolType::ContractCoin(String::from("btcusdt_221230")),
             validate_symbol_binance("BTC_USDT_221230_SWAP").unwrap(),
         );
 
-        let symbol = SymbolType::ContractUSDT(String::from("btcusdt"));
-        assert_eq!(symbol, validate_symbol_binance("BTC_USDT_SWAP").unwrap(),);
+        assert_eq!(
+            SymbolType::ContractUSDT(String::from("btcusdt")),
+            validate_symbol_binance("BTC_USDT_SWAP").unwrap()
+        );
 
-        let symbol = SymbolType::Spot(String::from("btcusdt"));
-        assert_eq!(symbol, validate_symbol_binance("BTC_USDT").unwrap(),);
+        assert_eq!(
+            SymbolType::Spot(String::from("btcusdt")),
+            validate_symbol_binance("BTC_USDT").unwrap()
+        );
+
+
+
+
+        assert_eq!(
+            SymbolType::ContractUSDT(String::from("BTCUSD-PERP.50")),
+            validate_symbol_crypto("BTC_USDT_SWAP", None).unwrap()
+        );
+
+        assert_eq!(
+            SymbolType::Spot(String::from("BTC_USDT.50")),
+            validate_symbol_crypto("BTC_USDT", None).unwrap()
+        );
+
+        assert_eq!(
+            SymbolType::Spot(String::from("BTC_USDT.10")),
+            validate_symbol_crypto("BTC_USDT", Some(10)).unwrap()
+        );
+
+    }
+
+    #[test]
+    fn config_test() {
+        use crate::config::match_up;
+
+        let binance_config = match_up("binance", "BTC_USTD_221230_SWAP", Some(1000));
+
+        assert!(binance_config.is_binance());
+        assert!(binance_config.is_contract_coin());
+
+        let crypto_config = match_up("crypto", "BTC_USDT", None);
+
+        assert!(crypto_config.is_crypto());
+        assert!(crypto_config.is_spot());
+        assert!(crypto_config.get_symbol_spot().is_some());
+
+        assert_eq!(
+            crypto_config.get_symbol_spot().unwrap(),
+            String::from("BTC_USDT.50")
+        );
+
+        let crypto_config = match_up("crypto", "BTC_USDT_SWAP", None);
+        assert_eq!(
+            crypto_config.get_symbol_contract_usdt().unwrap(),
+            String::from("BTCUSD-PERP.50")
+        );
+
+        let crypto_config = match_up("crypto", "BTC_USDT", Some(10));
+        assert_eq!(
+            crypto_config.get_symbol_spot().unwrap(),
+            String::from("BTC_USDT.10")
+        );
     }
 
     #[test]
