@@ -47,10 +47,10 @@ pub struct TradeData {
     pub side: String,
 
     #[serde(rename = "p")]
-    pub price: f64,
+    pub price: String,
 
     #[serde(rename = "q")]
-    pub quantity: f64,
+    pub quantity: String,
 
     #[serde(rename = "t")]
     pub trade_time: i64,
@@ -72,8 +72,8 @@ impl TradeData {
             "SELL" => OrderDirection::Sell,
             _ => return Err(anyhow!("Unknown direction {}", self.side)),
         };
-        let amount = self.quantity;
-        let price = self.price;
+        let amount = self.quantity.parse::<f64>()?;
+        let price = self.price.parse::<f64>()?;
 
         Ok(Tick {
             lts,
