@@ -163,6 +163,10 @@ impl CryptoOrderBookSpot {
 ///
 /// Err() => error happen and solve it outside
 async fn is_live_and_keep_alive(stream:&mut CryptoWebSocket, message: Message) -> Result<bool>{
+    if !message.is_text(){
+        debug!("Receive message is empty");
+        return Ok(false)
+    }
 
     let text = message.clone().into_text()?;
 
