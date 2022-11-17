@@ -37,7 +37,7 @@ impl CryptoOrderBookSpot {
     }
     #[allow(unreachable_code)]
     pub fn level_depth(&self, config: Config) -> Result<UnboundedReceiver<Depth>> {
-        let level_address = config.level_depth.expect("level address is empty");
+        let level_address = config.level_depth.clone().expect("level address is empty");
         let symbol = config.get_symbol_spot().expect("spotsymbol is empty");
 
         let shared = self.shared.clone();
