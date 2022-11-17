@@ -1,4 +1,4 @@
-use crate::{Depth, OrderDirection, Quote, Tick};
+use crate::{Depth, OrderDirection, Quote, Ticker};
 use anyhow::{anyhow, Result};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;
@@ -61,8 +61,9 @@ pub struct TradeData {
     #[serde(rename = "i")]
     pub instrument_name: String,
 }
+
 impl TradeData {
-    fn tick(&self) -> Result<Tick> {
+    fn tick(&self) -> Result<Ticker> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         let lts = now.as_millis() as i64;
         let ts = self.trade_time;
@@ -75,7 +76,7 @@ impl TradeData {
         let amount = self.quantity.parse::<f64>()?;
         let price = self.price.parse::<f64>()?;
 
-        Ok(Tick {
+        Ok(Ticker {
             lts,
             ts,
             price,
@@ -87,7 +88,7 @@ impl TradeData {
 }
 
 impl TradeEvent {
-    pub fn add_timestamp_transform_to_ticks(&self) -> Option<Vec<Tick>> {
+    pub fn add_timestamp_transform_to_ticks(&self) -> Option<Vec<Ticker>> {
         let mut ticks = Vec::new();
         for data in &self.data {
             let tick_res = data.tick();

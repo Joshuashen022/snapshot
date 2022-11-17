@@ -1,7 +1,8 @@
 pub use crate::binance::connection::{
-    BinanceConnectionType, BinanceOrderBookSnapshot, BinanceOrderBookType,
+    BinanceDepthConnection, BinanceOrderBookSnapshot, BinanceOrderBookType,
+    BinanceTickerConnection
 };
-use crate::crypto::CryptoBookBookSpot;
+use crate::crypto::CryptoDepthConnector;
 use crate::{Depth, ExchangeType};
 /// exchange: "binance" / "crypto"
 /// symbol: "BTC_USDT" / "FTT_USDT"
@@ -55,6 +56,13 @@ pub struct Config {
     pub level_depth: Option<String>,
     pub symbol_type: SymbolType,
     pub exchange_type: ExchangeType,
+    pub method: Method
+}
+
+#[derive(Clone, Debug, Copy)]
+pub enum Method{
+    Ticker,
+    Book,
 }
 
 impl Config {
@@ -109,6 +117,20 @@ impl Config {
         }
     }
 
+    pub fn is_ticker(&self) -> bool{
+        match self.method{
+            Method::Ticker => true,
+            _ => false
+        }
+    }
+
+    pub fn is_book(&self) -> bool{
+        match self.method{
+            Method::Book => true,
+            _ => false
+        }
+    }
+
     /// Specialized for crypto exchange
     pub fn get_channel(&self) -> Result<String> {
         match self.exchange_type {
@@ -138,7 +160,7 @@ pub enum SymbolType {
 }
 
 /// Crypto contract should panic
-pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config {
+pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>, method: Method) -> Config {
     let exchange_type = match exchange {
         "binance" => ExchangeType::Binance,
         "crypto" => ExchangeType::Crypto,
@@ -168,6 +190,7 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>) -> Config {
         level_depth: level_depth_address,
         symbol_type,
         exchange_type,
+        method
     }
 }
 
@@ -334,38 +357,44 @@ fn set_addr_for_crypto(
 }
 
 #[derive(Clone)]
-pub enum Connection {
-    Binance(BinanceConnectionType),
-    Crypto(CryptoBookBookSpot),
+pub enum DepthConnection {
+    Binance(BinanceDepthConnection),
+    Crypto(CryptoDepthConnector),
 }
 
-impl Connection {
+#[derive(Clone)]
+pub enum TickerConnection{
+    Binance(BinanceTickerConnection),
+    C
+}
+
+impl DepthConnection {
     pub fn connect_depth(
         &self,
         rest_address: String,
         depth_address: String,
     ) -> UnboundedReceiver<Depth> {
         match self {
-            Connection::Binance(connection) => {
+            DepthConnection::Binance(connection) => {
                 connection.depth(rest_address, depth_address).unwrap()
             }
-            Connection::Crypto(_connection) => panic!("Unsupported exchange"),
+            DepthConnection::Crypto(_connection) => panic!("Unsupported exchange"),
         }
     }
 
     pub fn connect_depth_level(&self, config: Config) -> UnboundedReceiver<Depth> {
         match self {
-            Connection::Binance(connection) => {
+            DepthConnection::Binance(connection) => {
                 connection.level_depth(config.level_depth.unwrap()).unwrap()
             }
-            Connection::Crypto(connection) => connection.level_depth(config).unwrap(),
+            DepthConnection::Crypto(connection) => connection.level_depth(config).unwrap(),
         }
     }
 
     pub fn get_snapshot(&self) -> Option<Depth> {
         match self {
-            Connection::Binance(connection) => connection.snapshot(),
-            Connection::Crypto(connection) => connection.snapshot(),
+            DepthConnection::Binance(connection) => connection.snapshot(),
+            DepthConnection::Crypto(connection) => connection.snapshot(),
         }
     }
 }

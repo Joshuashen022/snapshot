@@ -17,15 +17,15 @@ use crate::crypto::format::{
 };
 
 #[derive(Clone)]
-pub struct CryptoBookBookSpot {
+pub struct CryptoDepthConnector {
     /// Currently not using
     status: Arc<Mutex<bool>>,
     shared: Arc<RwLock<BookShared>>,
 }
 
-impl CryptoBookBookSpot {
+impl CryptoDepthConnector {
     pub fn new() -> Self {
-        CryptoBookBookSpot {
+        CryptoDepthConnector {
             status: Arc::new(Mutex::new(false)),
             shared: Arc::new(RwLock::new(BookShared::new())),
         }
@@ -190,7 +190,7 @@ async fn is_live_and_keep_alive(stream: &mut CryptoWebSocket, message: Message) 
 #[cfg(test)]
 mod tests {
     use crate::config::{Config, SymbolType};
-    use crate::crypto::{BookShared, CryptoBookBookSpot};
+    use crate::crypto::{BookShared, CryptoDepthConnector};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
@@ -207,7 +207,7 @@ mod tests {
         };
 
         Runtime::new().unwrap().block_on(async {
-            let book = CryptoBookBookSpot::new();
+            let book = CryptoDepthConnector::new();
             let mut recv = book.level_depth(config).unwrap();
 
             let depth = recv.recv().await;

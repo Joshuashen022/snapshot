@@ -4,7 +4,7 @@ use crate::crypto::format::{
     heartbeat_respond, subscribe_message, GeneralRespond, HeartbeatRequest, TradeEventStream,
 };
 use crate::crypto::connection::socket_stream;
-use crate::Tick;
+use crate::Ticker;
 use anyhow::{anyhow, Error, Result};
 use futures_util::{SinkExt, StreamExt};
 use std::sync::{Arc, Mutex};
@@ -29,7 +29,7 @@ impl CryptoTicker {
     }
 
     #[allow(unreachable_code)]
-    pub fn connect(&self, config: Config) -> Result<UnboundedReceiver<Vec<Tick>>> {
+    pub fn connect(&self, config: Config) -> Result<UnboundedReceiver<Vec<Ticker>>> {
         let level_address = config.level_depth.clone().expect("level address is empty");
         let symbol = config.get_symbol().expect("spot symbol is empty");
 

@@ -85,23 +85,29 @@ impl BinanceOrderBookSnapshot {
         }
     }
 }
-
 #[derive(Clone)]
-pub enum BinanceConnectionType {
-    Spot(BinanceOrderBookSpot),
-    PrepetualUSDT(BinanceSpotOrderBookPerpetualUSDT),
-    PrepetualCoin(BinanceSpotOrderBookPerpetualCoin),
+pub enum BinanceTickerConnection{
+    Spot,
+    PerpetualUSDT,
+    PerpetualCoin,
 }
 
-impl BinanceConnectionType {
+#[derive(Clone)]
+pub enum BinanceDepthConnection {
+    Spot(BinanceOrderBookSpot),
+    PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT),
+    PerpetualCoin(BinanceSpotOrderBookPerpetualCoin),
+}
+
+impl BinanceDepthConnection {
     pub fn with_type(types: BinanceOrderBookType) -> Self {
         match types {
-            BinanceOrderBookType::Spot => BinanceConnectionType::Spot(BinanceOrderBookSpot::new()),
+            BinanceOrderBookType::Spot => BinanceDepthConnection::Spot(BinanceOrderBookSpot::new()),
             BinanceOrderBookType::PrepetualUSDT => {
-                BinanceConnectionType::PrepetualUSDT(BinanceSpotOrderBookPerpetualUSDT::new())
+                BinanceDepthConnection::PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT::new())
             }
             BinanceOrderBookType::PrepetualCoin => {
-                BinanceConnectionType::PrepetualCoin(BinanceSpotOrderBookPerpetualCoin::new())
+                BinanceDepthConnection::PerpetualCoin(BinanceSpotOrderBookPerpetualCoin::new())
             }
         }
     }
@@ -112,34 +118,34 @@ impl BinanceConnectionType {
         depth_address: String,
     ) -> Result<UnboundedReceiver<Depth>> {
         match self {
-            BinanceConnectionType::Spot(inner) => inner.depth(rest_address, depth_address),
-            BinanceConnectionType::PrepetualUSDT(inner) => inner.depth(rest_address, depth_address),
-            BinanceConnectionType::PrepetualCoin(inner) => inner.depth(rest_address, depth_address),
+            BinanceDepthConnection::Spot(inner) => inner.depth(rest_address, depth_address),
+            BinanceDepthConnection::PerpetualUSDT(inner) => inner.depth(rest_address, depth_address),
+            BinanceDepthConnection::PerpetualCoin(inner) => inner.depth(rest_address, depth_address),
         }
     }
 
     pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         match self {
-            BinanceConnectionType::Spot(inner) => inner.level_depth(level_address),
-            BinanceConnectionType::PrepetualUSDT(inner) => inner.level_depth(level_address),
-            BinanceConnectionType::PrepetualCoin(inner) => inner.level_depth(level_address),
+            BinanceDepthConnection::Spot(inner) => inner.level_depth(level_address),
+            BinanceDepthConnection::PerpetualUSDT(inner) => inner.level_depth(level_address),
+            BinanceDepthConnection::PerpetualCoin(inner) => inner.level_depth(level_address),
         }
     }
 
     pub fn snapshot(&self) -> Option<Depth> {
         match self {
-            BinanceConnectionType::Spot(inner) => inner.snapshot(),
-            BinanceConnectionType::PrepetualUSDT(inner) => inner.snapshot(),
-            BinanceConnectionType::PrepetualCoin(inner) => inner.snapshot(),
+            BinanceDepthConnection::Spot(inner) => inner.snapshot(),
+            BinanceDepthConnection::PerpetualUSDT(inner) => inner.snapshot(),
+            BinanceDepthConnection::PerpetualCoin(inner) => inner.snapshot(),
         }
     }
 
     #[allow(dead_code)]
     pub fn set_symbol(&mut self, symbol: String) {
         let res = match self {
-            BinanceConnectionType::Spot(inner) => inner.set_symbol(symbol),
-            BinanceConnectionType::PrepetualUSDT(inner) => inner.set_symbol(symbol),
-            BinanceConnectionType::PrepetualCoin(inner) => inner.set_symbol(symbol),
+            BinanceDepthConnection::Spot(inner) => inner.set_symbol(symbol),
+            BinanceDepthConnection::PerpetualUSDT(inner) => inner.set_symbol(symbol),
+            BinanceDepthConnection::PerpetualCoin(inner) => inner.set_symbol(symbol),
         };
 
         if let Err(e) = res {
