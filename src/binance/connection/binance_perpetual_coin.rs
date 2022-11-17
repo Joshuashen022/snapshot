@@ -1,7 +1,7 @@
 use crate::binance::connection::connect::{socket_stream, try_get_connection};
 use crate::binance::format::binance_perpetual_coin::{
-    BinanceSnapshotPerpetualCoin, EventPerpetualCoin, SharedPerpetualCoin, StreamEventPerpetualCoin,
-    StreamLevelEventPerpetualCoin,
+    BinanceSnapshotPerpetualCoin, EventPerpetualCoin, SharedPerpetualCoin,
+    StreamEventPerpetualCoin, StreamLevelEventPerpetualCoin,
 };
 use crate::binance::format::SharedT;
 use crate::Depth;
@@ -124,14 +124,14 @@ impl BinanceSpotOrderBookPerpetualCoin {
                         }
                     };
 
-                    let level_event: StreamLevelEventPerpetualCoin = match serde_json::from_str(&text)
-                    {
-                        Ok(e) => e,
-                        Err(e) => {
-                            warn!("Error {}, {:?}", e, msg);
-                            continue;
-                        }
-                    };
+                    let level_event: StreamLevelEventPerpetualCoin =
+                        match serde_json::from_str(&text) {
+                            Ok(e) => e,
+                            Err(e) => {
+                                warn!("Error {}, {:?}", e, msg);
+                                continue;
+                            }
+                        };
                     let level_event = level_event.data;
 
                     debug!(

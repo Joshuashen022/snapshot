@@ -1,5 +1,8 @@
-use crate::crypto::CryptoOrderBookSpot;
-use crate::{BinanceConnectionType, Depth, ExchangeType};
+pub use crate::binance::connection::{
+    BinanceConnectionType, BinanceOrderBookSnapshot, BinanceOrderBookType,
+};
+use crate::crypto::CryptoBookBookSpot;
+use crate::{Depth, ExchangeType};
 /// exchange: "binance" / "crypto"
 /// symbol: "BTC_USDT" / "FTT_USDT"
 ///
@@ -43,10 +46,8 @@ use crate::{BinanceConnectionType, Depth, ExchangeType};
 /// https://api.crypto.com/v2/public/get-book?instrument_name=BTC_USDT&depth=10
 /// https://api.crypto.com/v2/{method}
 /// https://uat-api.3ona.co/v2/{method} // Backup
-// use std::fmt::format;
 use anyhow::{anyhow, Result};
 use tokio::sync::mpsc::UnboundedReceiver;
-
 #[derive(Clone, Debug)]
 pub struct Config {
     pub rest: Option<String>,
@@ -99,8 +100,8 @@ impl Config {
             _ => false,
         }
     }
-    
-    pub fn get_symbol(&self) -> Option<String>{
+
+    pub fn get_symbol(&self) -> Option<String> {
         match &self.symbol_type {
             SymbolType::Spot(symbol) => Some(symbol.clone()),
             SymbolType::ContractCoin(symbol) => Some(symbol.clone()),
@@ -109,19 +110,23 @@ impl Config {
     }
 
     /// Specialized for crypto exchange
-    pub fn get_channel(&self) -> Result<String>{
-        match self.exchange_type{
+    pub fn get_channel(&self) -> Result<String> {
+        match self.exchange_type {
             ExchangeType::Crypto => {
-                if !self.is_spot(){
-                    Err(anyhow!("Channel is unsupported for {:?}", self.symbol_type))
-                } else{
-                    let symbol = self.get_symbol().unwrap();
-                    Ok(symbol)
+                if self.is_contract_coin() {
+                    Err(anyhow!(
+                        "Crypto Channel is unsupported for {:?}",
+                        self.symbol_type
+                    ))
+                } else {
+                    self.get_symbol().ok_or(anyhow!("empty symbol"))
                 }
-            },
-            _ => Err(anyhow!("Channel is unsupported for {:?}", self.exchange_type)),
+            }
+            _ => Err(anyhow!(
+                "Channel is unsupported for {:?}",
+                self.exchange_type
+            )),
         }
-
     }
 }
 
@@ -178,8 +183,8 @@ fn validate_symbol_crypto(symbol: &str, limit: Option<i32>) -> Result<SymbolType
     let is_spot = !symbol.contains("SWAP");
     let is_contract_coin = { splits.len() == 4 && is_contract };
 
-    fn usdt_usd(usdt: &str) -> &str{
-        if usdt == "USDT"{
+    fn usdt_usd(usdt: &str) -> &str {
+        if usdt == "USDT" {
             &usdt[..3]
         } else {
             usdt
@@ -192,13 +197,13 @@ fn validate_symbol_crypto(symbol: &str, limit: Option<i32>) -> Result<SymbolType
         if is_contract {
             splits.pop();
             format!("{}{}-PERP", splits[0], usdt_usd(splits[1]))
-        }else {
+        } else {
             format!("{}_{}", splits[0], splits[1])
         }
     };
 
-    let symbol_inner = if limit.is_some(){
-        format!("{}.{}", symbol_in,  limit.unwrap())
+    let symbol_inner = if limit.is_some() {
+        format!("{}.{}", symbol_in, limit.unwrap())
     } else {
         format!("{}.50", symbol_in)
     };
@@ -323,8 +328,7 @@ fn set_addr_for_crypto(
     _instrument: &str,
     _limit: Option<i32>,
 ) -> (Option<String>, Option<String>, Option<String>) {
-    let level_depth_address: Option<String> =
-        Some(format!("wss://stream.crypto.com/v2/market", ));
+    let level_depth_address: Option<String> = Some(format!("wss://stream.crypto.com/v2/market",));
 
     (None, None, level_depth_address)
 }
@@ -332,7 +336,7 @@ fn set_addr_for_crypto(
 #[derive(Clone)]
 pub enum Connection {
     Binance(BinanceConnectionType),
-    Crypto(CryptoOrderBookSpot),
+    Crypto(CryptoBookBookSpot),
 }
 
 impl Connection {
@@ -351,7 +355,9 @@ impl Connection {
 
     pub fn connect_depth_level(&self, config: Config) -> UnboundedReceiver<Depth> {
         match self {
-            Connection::Binance(connection) => connection.level_depth(config.level_depth.unwrap()).unwrap(),
+            Connection::Binance(connection) => {
+                connection.level_depth(config.level_depth.unwrap()).unwrap()
+            }
             Connection::Crypto(connection) => connection.level_depth(config).unwrap(),
         }
     }
@@ -366,10 +372,12 @@ impl Connection {
 
 #[cfg(test)]
 mod tests {
+    use crate::api::config::SymbolType;
+
     #[test]
     fn match_up_input_test() {
-        use crate::config::validate_symbol_binance;
-        use crate::config::validate_symbol_crypto;
+        use crate::api::config::validate_symbol_binance;
+        use crate::api::config::validate_symbol_crypto;
 
         assert!(validate_symbol_binance("BTC_USTD_221230_SWAP").is_ok());
         assert!(validate_symbol_binance("BTC_USTD_SWAP").is_ok());
@@ -382,9 +390,9 @@ mod tests {
 
     #[test]
     fn valid_symbols() {
-        use crate::config::validate_symbol_crypto;
-        use crate::config::validate_symbol_binance;
-        use crate::config::SymbolType;
+        use crate::api::config::validate_symbol_binance;
+        use crate::api::config::validate_symbol_crypto;
+        use crate::api::config::SymbolType;
 
         assert_eq!(
             SymbolType::ContractCoin(String::from("btcusdt_221230")),
@@ -401,9 +409,6 @@ mod tests {
             validate_symbol_binance("BTC_USDT").unwrap()
         );
 
-
-
-
         assert_eq!(
             SymbolType::ContractUSDT(String::from("BTCUSD-PERP.50")),
             validate_symbol_crypto("BTC_USDT_SWAP", None).unwrap()
@@ -418,12 +423,11 @@ mod tests {
             SymbolType::Spot(String::from("BTC_USDT.10")),
             validate_symbol_crypto("BTC_USDT", Some(10)).unwrap()
         );
-
     }
 
     #[test]
     fn config_test() {
-        use crate::config::match_up;
+        use crate::api::config::match_up;
 
         let binance_config = match_up("binance", "BTC_USTD_221230_SWAP", Some(1000));
 
@@ -443,7 +447,7 @@ mod tests {
 
         let crypto_config = match_up("crypto", "BTC_USDT_SWAP", None);
         assert_eq!(
-            crypto_config.get_symbol_contract_usdt().unwrap(),
+            crypto_config.get_symbol().unwrap(),
             String::from("BTCUSD-PERP.50")
         );
 
@@ -457,7 +461,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol1() {
-        use crate::config::validate_symbol_binance;
+        use crate::api::config::validate_symbol_binance;
         let symbol = "BTC_USTD_221230_SWAP_";
         validate_symbol_binance(symbol).unwrap();
     }
@@ -465,7 +469,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol2() {
-        use crate::config::validate_symbol_binance;
+        use crate::api::config::validate_symbol_binance;
         let symbol = "BTC_USTD_221230_ABC";
         validate_symbol_binance(symbol).unwrap();
     }
@@ -473,7 +477,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol3() {
-        use crate::config::validate_symbol_binance;
+        use crate::api::config::validate_symbol_binance;
         let symbol = "BTC_USTD_221230SWAP";
         validate_symbol_binance(symbol).unwrap();
     }
@@ -481,7 +485,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol4() {
-        use crate::config::validate_symbol_binance;
+        use crate::api::config::validate_symbol_binance;
         let symbol = "BTC_USTDSWAP";
         validate_symbol_binance(symbol).unwrap();
     }
