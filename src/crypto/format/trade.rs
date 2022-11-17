@@ -56,7 +56,7 @@ pub struct TradeData {
     pub trade_time: i64,
 
     #[serde(rename = "d")]
-    pub trade_id: u64,
+    pub trade_id: String,
 
     #[serde(rename = "i")]
     pub instrument_name: String,
@@ -66,7 +66,7 @@ impl TradeData {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         let lts = now.as_millis() as i64;
         let ts = self.trade_time;
-        let id = self.trade_id;
+        let id = self.trade_id.parse::<u64>()?;
         let direction = match self.side.as_str() {
             "BUY" => OrderDirection::Buy,
             "SELL" => OrderDirection::Sell,
