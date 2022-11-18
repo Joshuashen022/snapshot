@@ -18,16 +18,16 @@ pub struct EventTicker {
     #[serde(rename = "q")]
     pub amount: String,
     #[serde(rename = "b")]
-    pub buy_id: String,
+    pub buy_id: i64,
     #[serde(rename = "a")]
-    pub sell_id: String,
+    pub sell_id: i64,
     #[serde(rename = "T")]
     pub trade_time: i64,
     /// true => sell
     #[serde(rename = "m")]
     pub direction: bool,
     #[serde(rename = "M")]
-    pub other: i64,
+    pub other: bool,
 }
 
 impl EventTicker{
