@@ -39,7 +39,7 @@ impl BinanceSpotOrderBookPerpetualCoin {
         let sender = sender.clone();
         // Thread to maintain Order Book
         let _ = tokio::spawn(async move {
-            let mut default_exit = 0;
+
             info!("Start OrderBook thread");
             loop {
                 let res = try_get_connection::<

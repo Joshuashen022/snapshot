@@ -38,8 +38,8 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
     };
 
     Config {
-        rest: rest_address,
-        depth: depth_address,
+        rest_url: rest_address,
+        depth_url: depth_address,
         level_trade: level_depth_address,
         symbol_type,
         exchange_type,
@@ -144,12 +144,12 @@ mod tests {
     #[test]
     fn config_test() {
         let binance_config =
-            get_config_from("binance", "BTC_USTD_221230_SWAP", Some(1000), Method::Book);
+            get_config_from("binance", "BTC_USTD_221230_SWAP", Some(1000), Method::Depth);
 
         assert!(binance_config.is_binance());
         assert!(binance_config.is_contract_coin());
 
-        let crypto_config = get_config_from("crypto", "BTC_USDT", None, Method::Book);
+        let crypto_config = get_config_from("crypto", "BTC_USDT", None, Method::Depth);
 
         assert!(crypto_config.is_crypto());
         assert!(crypto_config.is_spot());
@@ -160,13 +160,13 @@ mod tests {
             String::from("BTC_USDT.50")
         );
 
-        let crypto_config = get_config_from("crypto", "BTC_USDT_SWAP", None, Method::Book);
+        let crypto_config = get_config_from("crypto", "BTC_USDT_SWAP", None, Method::Depth);
         assert_eq!(
             crypto_config.get_symbol().unwrap(),
             String::from("BTCUSD-PERP.50")
         );
 
-        let crypto_config = get_config_from("crypto", "BTC_USDT", Some(10), Method::Book);
+        let crypto_config = get_config_from("crypto", "BTC_USDT", Some(10), Method::Depth);
         assert_eq!(
             crypto_config.get_symbol().unwrap(),
             String::from("BTC_USDT.10")

@@ -1,10 +1,11 @@
 use crate::ExchangeType;
 use anyhow::{anyhow, Result};
 
+//TODO::change to 4 address, add Ticker_url
 #[derive(Clone, Debug)]
 pub struct Config {
-    pub rest: Option<String>,
-    pub depth: Option<String>,
+    pub rest_url: Option<String>,
+    pub depth_url: Option<String>,
     /// This parameter is both used at
     /// "Level depth" and "Trade"
     pub level_trade: Option<String>,
@@ -16,7 +17,7 @@ pub struct Config {
 #[derive(Clone, Debug, Copy)]
 pub enum Method {
     Ticker,
-    Book,
+    Depth,
 }
 
 #[derive(Clone, Debug, PartialOrd, PartialEq)]
@@ -35,11 +36,11 @@ impl Config {
     }
 
     pub fn is_depth(&self) -> bool {
-        self.depth.is_some() && self.rest.is_some() && self.level_trade.is_none()
+        self.depth_url.is_some() && self.rest_url.is_some() && self.level_trade.is_none()
     }
 
     pub fn is_normal(&self) -> bool {
-        self.level_trade.is_some() && self.depth.is_none() && self.rest.is_none()
+        self.level_trade.is_some() && self.depth_url.is_none() && self.rest_url.is_none()
     }
 
     pub fn is_binance(&self) -> bool {
@@ -94,7 +95,7 @@ impl Config {
 
     pub fn is_book(&self) -> bool {
         match self.method {
-            Method::Book => true,
+            Method::Depth => true,
             _ => false,
         }
     }

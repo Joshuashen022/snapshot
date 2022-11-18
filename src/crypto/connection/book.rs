@@ -137,12 +137,12 @@ mod tests {
     #[test]
     fn crypto_order_book_function() {
         let config = Config {
-            rest: None,
-            depth: None,
+            rest_url: None,
+            depth_url: None,
             level_trade: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::new()),
             exchange_type: ExchangeType::Crypto,
-            method: Method::Book,
+            method: Method::Depth,
         };
 
         Runtime::new().unwrap().block_on(async {

@@ -106,8 +106,8 @@ mod tests {
     #[test]
     fn binance_ticker_function() {
         let config = Config {
-            rest: None,
-            depth: None,
+            rest_url: None,
+            depth_url: None,
             level_trade: Some(TICKER_URL.to_string()),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Binance,

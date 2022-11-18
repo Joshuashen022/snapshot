@@ -108,8 +108,8 @@ mod tests {
     #[test]
     fn crypto_ticker_function() {
         let config = Config {
-            rest: None,
-            depth: None,
+            rest_url: None,
+            depth_url: None,
             level_trade: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Crypto,

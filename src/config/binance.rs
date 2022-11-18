@@ -16,17 +16,17 @@ pub fn set_addr_for_binance(
         // when limit is some, Method must be `Method::Trade`
         let limit = limit.unwrap();
         rest_address = match (&symbol_type, method) {
-            (SymbolType::Spot(inner), Method::Book) => Some(format!(
+            (SymbolType::Spot(inner), Method::Depth) => Some(format!(
                 "https://api.binance.com/api/v3/depth?symbol={}&limit={}",
                 inner.to_uppercase(),
                 limit
             )),
-            (SymbolType::ContractUSDT(inner), Method::Book) => Some(format!(
+            (SymbolType::ContractUSDT(inner), Method::Depth) => Some(format!(
                 "https://fapi.binance.com/fapi/v1/depth?symbol={}&limit={}",
                 inner.to_uppercase(),
                 limit
             )),
-            (SymbolType::ContractCoin(inner), Method::Book) => Some(format!(
+            (SymbolType::ContractCoin(inner), Method::Depth) => Some(format!(
                 "https://dapi.binance.com/dapi/v1/depth?symbol={}&limit={}",
                 inner.to_uppercase(),
                 limit
@@ -35,15 +35,15 @@ pub fn set_addr_for_binance(
         };
 
         depth_address = match (&symbol_type, method) {
-            (SymbolType::Spot(inner), Method::Book) => Some(format!(
+            (SymbolType::Spot(inner), Method::Depth) => Some(format!(
                 "wss://stream.binance.com:9443/ws/{}@depth@100ms",
                 inner
             )),
-            (SymbolType::ContractUSDT(inner), Method::Book) => Some(format!(
+            (SymbolType::ContractUSDT(inner), Method::Depth) => Some(format!(
                 "wss://fstream.binance.com/stream?streams={}@depth@100ms",
                 inner
             )),
-            (SymbolType::ContractCoin(inner), Method::Book) => Some(format!(
+            (SymbolType::ContractCoin(inner), Method::Depth) => Some(format!(
                 "wss://dstream.binance.com/stream?streams={}@depth@100ms",
                 inner
             )),
@@ -53,15 +53,15 @@ pub fn set_addr_for_binance(
         // Level Mode, only need `level_depth_address`
 
         level_depth_address = match (&symbol_type, method) {
-            (SymbolType::Spot(inner), Method::Book) => Some(format!(
+            (SymbolType::Spot(inner), Method::Depth) => Some(format!(
                 "wss://stream.binance.com:9443/ws/{}@depth20@100ms",
                 inner
             )),
-            (SymbolType::ContractUSDT(inner), Method::Book) => Some(format!(
+            (SymbolType::ContractUSDT(inner), Method::Depth) => Some(format!(
                 "wss://fstream.binance.com/stream?streams={}@depth20@100ms",
                 inner
             )),
-            (SymbolType::ContractCoin(inner), Method::Book) => Some(format!(
+            (SymbolType::ContractCoin(inner), Method::Depth) => Some(format!(
                 "wss://dstream.binance.com/stream?streams={}@depth20@100ms",
                 inner
             )),

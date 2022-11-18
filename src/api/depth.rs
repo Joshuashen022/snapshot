@@ -28,9 +28,9 @@ impl DepthManager {
     pub fn subscribe_depth(&self) -> UnboundedReceiver<Depth> {
         let config = self.config.clone();
         if config.is_depth() {
-            let rest_address = config.rest.expect("rest address is empty");
+            let rest_address = config.rest_url.expect("rest address is empty");
 
-            let depth_address = config.depth.expect("depth address is empty");
+            let depth_address = config.depth_url.expect("depth address is empty");
 
             self.connection
                 .clone()
@@ -48,7 +48,7 @@ impl DepthManager {
     }
 
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
-        let config = get_config_from(exchange, symbol, limit, Method::Book);
+        let config = get_config_from(exchange, symbol, limit, Method::Depth);
 
         let connection = match config.exchange_type {
             ExchangeType::Binance => {
