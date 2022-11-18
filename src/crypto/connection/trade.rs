@@ -158,7 +158,7 @@ async fn is_live_and_keep_alive(stream: &mut CryptoWebSocket, message: Message) 
 
 #[cfg(test)]
 mod tests {
-    use crate::config::{Config, SymbolType};
+    use crate::config::{Config, SymbolType, Method};
     use crate::crypto::connection::CryptoTicker;
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
@@ -173,6 +173,7 @@ mod tests {
             level_depth: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Crypto,
+            method: Method::Ticker
         };
 
         tracing_subscriber::fmt::init();

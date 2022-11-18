@@ -194,6 +194,8 @@ mod tests {
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
+    use crate::api::config::Method;
+
     const LEVEL_DEPTH_URL: &str = "wss://stream.crypto.com/v2/market";
 
     #[test]
@@ -204,6 +206,7 @@ mod tests {
             level_depth: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::new()),
             exchange_type: ExchangeType::Crypto,
+            method: Method::Book
         };
 
         Runtime::new().unwrap().block_on(async {

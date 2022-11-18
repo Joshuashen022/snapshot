@@ -4,8 +4,8 @@ use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 use crate::{Config, DepthConnection, match_up, SymbolType};
 use crate::crypto::CryptoDepth;
-use crate::api::config::Method;
-use crate::binance::connection::{BinanceSymbolType,BinanceDepth};
+use crate::config::Method;
+use crate::binance::connection::{BinanceSymbolType, BinanceDepth};
 
 #[derive(Clone)]
 pub struct DepthManager {

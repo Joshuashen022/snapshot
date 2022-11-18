@@ -1,14 +1,22 @@
-extern crate core;
 
 pub(crate) mod binance;
 pub(crate) mod crypto;
 
-use api::config;
+pub(crate) mod api;
+pub(crate) mod config;
 
-pub mod api;
-pub use api::{Depth, ExchangeType, DepthManager, Quote};
-pub use api::{OrderDirection, Ticker};
-pub use config::{match_up, Config, DepthConnection, SymbolType, TickerConnection};
+pub(crate) use config::{
+    DepthConnection, TickerConnection,
+    SymbolType, match_up
+};
+
+pub use api::{
+    DepthManager, TickerManager,
+    Depth, Ticker, Quote,
+    ExchangeType, OrderDirection
+};
+
+pub use config::Config;
 
 #[cfg(test)]
 mod tests {

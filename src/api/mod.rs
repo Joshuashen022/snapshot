@@ -1,4 +1,3 @@
-pub mod config;
 pub mod ticker;
 pub mod depth;
 

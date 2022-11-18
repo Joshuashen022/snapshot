@@ -1,7 +1,7 @@
 // TickerManager new subscribe
 use tokio::sync::mpsc::UnboundedReceiver;
 use crate::{Config, DepthConnection, ExchangeType, match_up, SymbolType, TickerConnection};
-use crate::api::config::Method;
+use crate::config::Method;
 use crate::binance::BinanceTicker;
 use crate::binance::connection::BinanceSymbolType;
 use crate::crypto::{CryptoDepth, CryptoTicker};
