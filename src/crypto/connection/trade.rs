@@ -78,7 +78,7 @@ impl CryptoTicker {
                                 }
                             }
                             Err(e) => {
-                                warn!("Decoding received message error {:?}", e);
+                                warn!("Decoding received message error {:?} {}", e, message);
                                 continue;
                             }
                         }
