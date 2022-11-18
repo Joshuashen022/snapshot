@@ -1,19 +1,11 @@
 pub mod book;
 pub mod trade;
+mod abstraction;
 
 use tokio::net::TcpStream;
-use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
-use url::Url;
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 pub type CryptoWebSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 pub use book::CryptoDepth;
 pub use trade::CryptoTicker;
 
-pub async fn socket_stream(address: &str) -> Result<CryptoWebSocket, String> {
-    let url = Url::parse(&address).expect("Bad URL");
-
-    match connect_async(url).await {
-        Ok((connection, _)) => Ok(connection),
-        Err(e) => Err(format!("{:?}", e)),
-    }
-}
