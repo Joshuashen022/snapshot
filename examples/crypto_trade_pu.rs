@@ -17,7 +17,7 @@ fn main() {
         // let pu_symbol = "BTC_USDT_SWAP";
         // let spot_symbol = "BTC_USDT";
 
-        println!("using symbol {}", symbol);
+        println!("using symbol \"BTC_USDT_SWAP\"");
         let manager1 = TickerManager::new("crypto", "BTC_USDT_SWAP");
         println!("using manager1 config {:?}", manager1.config);
         let manager1_clone = manager1.clone();

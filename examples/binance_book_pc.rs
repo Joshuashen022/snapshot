@@ -43,8 +43,8 @@ fn main() {
                     message.id,
                     message.ts,
                     message.lts,
-                    message.asks().len(),
-                    message.bids().len()
+                    message.asks.len(),
+                    message.bids.len()
                 );
             }
         });
@@ -61,8 +61,8 @@ fn main() {
                     message.id,
                     message.ts,
                     message.lts,
-                    message.asks().len(),
-                    message.bids().len()
+                    message.asks.len(),
+                    message.bids.len()
                 );
             }
         });
@@ -74,8 +74,8 @@ fn main() {
             message.id,
             message.ts,
             message.lts,
-            message.asks().len(),
-            message.bids().len()
+            message.asks.len(),
+            message.bids.len()
         );
 
         let message = manager2.latest_depth().unwrap();
@@ -84,8 +84,8 @@ fn main() {
             message.id,
             message.ts,
             message.lts,
-            message.asks().len(),
-            message.bids().len()
+            message.asks.len(),
+            message.bids.len()
         );
 
         loop {
