@@ -1,27 +1,25 @@
+use crate::binance::format::ticker::EventTicker;
+use crate::{Config, Ticker};
+use anyhow::{Error, Result};
+use futures_util::StreamExt;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use anyhow::{Error, Result};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::sleep;
 use tokio_tungstenite::connect_async;
-use tokio_tungstenite::tungstenite::Message;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 use url::Url;
-use futures_util::StreamExt;
-use crate::binance::format::ticker::EventTicker;
-use crate::{Config, Ticker};
-use crate::crypto::format::{subscribe_message, TradeEventStream};
 
 #[derive(Clone)]
 pub struct BinanceTicker {
     status: Arc<Mutex<bool>>,
 }
 
-impl BinanceTicker{
-    pub fn new() ->Self{
-        Self{
-            status: Arc::new(Mutex::new(false))
+impl BinanceTicker {
+    pub fn new() -> Self {
+        Self {
+            status: Arc::new(Mutex::new(false)),
         }
     }
 
@@ -46,7 +44,6 @@ impl BinanceTicker{
                     };
                     info!("Connect to {} success", &level_address);
 
-
                     if let Ok(mut guard) = status.lock() {
                         (*guard) = true;
                     }
@@ -66,9 +63,7 @@ impl BinanceTicker{
                         };
 
                         let response: EventTicker = match serde_json::from_str(&text) {
-                            Ok(response) => {
-                                response
-                            },
+                            Ok(response) => response,
                             Err(e) => {
                                 warn!("Error {}, {:?}", e, message);
                                 continue;
@@ -96,13 +91,12 @@ impl BinanceTicker{
 
         Ok(receiver)
     }
-
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::config::{Config, SymbolType, Method};
     use crate::binance::connection::ticker::BinanceTicker;
+    use crate::config::{Config, Method, SymbolType};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
@@ -117,13 +111,12 @@ mod tests {
             level_trade: Some(TICKER_URL.to_string()),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Binance,
-            method: Method::Ticker
+            method: Method::Ticker,
         };
 
         tracing_subscriber::fmt::init();
 
         Runtime::new().unwrap().block_on(async {
-
             let ticker = BinanceTicker::new();
             let mut recv = ticker.connect(config).unwrap();
 

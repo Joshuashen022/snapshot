@@ -1,6 +1,6 @@
 use crate::Depth;
 use anyhow::{anyhow, Error, Result};
-use futures_util::{Sink, SinkExt, StreamExt};
+use futures_util::{SinkExt, StreamExt};
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -12,7 +12,7 @@ use url::Url;
 use crate::config::Config;
 use crate::crypto::connection::CryptoWebSocket;
 use crate::crypto::format::{
-    heartbeat_respond, subscribe_message, BookEvent, BookEventStream, BookShared, GeneralRespond,
+    heartbeat_respond, subscribe_message, BookEventStream, BookShared, GeneralRespond,
     HeartbeatRequest, OrderRespond,
 };
 
@@ -136,15 +136,6 @@ impl CryptoDepth {
             None
         }
     }
-
-    pub fn get_depth(&self) -> Option<Depth> {
-        if let Ok(_) = self.status.lock() {
-            Some(self.shared.write().unwrap().get_snapshot())
-        } else {
-            error!("CryptoOrderBookSpot lock is busy");
-            None
-        }
-    }
 }
 
 /// Ok(true) => initialize complete
@@ -189,12 +180,12 @@ async fn is_live_and_keep_alive(stream: &mut CryptoWebSocket, message: Message) 
 
 #[cfg(test)]
 mod tests {
+    use crate::config::Method;
     use crate::config::{Config, SymbolType};
     use crate::crypto::{BookShared, CryptoDepth};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
-    use crate::config::Method;
 
     const LEVEL_DEPTH_URL: &str = "wss://stream.crypto.com/v2/market";
 
@@ -206,7 +197,7 @@ mod tests {
             level_trade: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::new()),
             exchange_type: ExchangeType::Crypto,
-            method: Method::Book
+            method: Method::Book,
         };
 
         Runtime::new().unwrap().block_on(async {

@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Result};
 use crate::config::{Method, SymbolType};
+use anyhow::{anyhow, Result};
 
 #[allow(unused_assignments)]
 pub fn set_addr_for_binance(
@@ -31,7 +31,7 @@ pub fn set_addr_for_binance(
                 inner.to_uppercase(),
                 limit
             )),
-            _ => panic!("Unsupported combination of {:?} with {:?}", limit, method)
+            _ => panic!("Unsupported combination of {:?} with {:?}", limit, method),
         };
 
         depth_address = match (&symbol_type, method) {
@@ -47,7 +47,7 @@ pub fn set_addr_for_binance(
                 "wss://dstream.binance.com/stream?streams={}@depth@100ms",
                 inner
             )),
-            _ => panic!("Unsupported combination of {:?} with {:?}", limit, method)
+            _ => panic!("Unsupported combination of {:?} with {:?}", limit, method),
         };
     } else {
         // Level Mode, only need `level_depth_address`
@@ -65,10 +65,9 @@ pub fn set_addr_for_binance(
                 "wss://dstream.binance.com/stream?streams={}@depth20@100ms",
                 inner
             )),
-            (SymbolType::Spot(inner), Method::Ticker) => Some(format!(
-                "wss://stream.binance.com:9443/ws/{}@trade",
-                inner
-            )),
+            (SymbolType::Spot(inner), Method::Ticker) => {
+                Some(format!("wss://stream.binance.com:9443/ws/{}@trade", inner))
+            }
             (SymbolType::ContractUSDT(inner), Method::Ticker) => Some(format!(
                 "wss://fstream.binance.com/stream?streams={}@trade",
                 inner
@@ -81,7 +80,6 @@ pub fn set_addr_for_binance(
     }
     (rest_address, depth_address, level_depth_address)
 }
-
 
 /// Inputs are BTC_USDT / BTC_USDT_SWAP / BTC_USDT_221230_SWAP,
 /// Binance output: btcusd_221230/ btcusdt/ bnbbtc (lower cases)

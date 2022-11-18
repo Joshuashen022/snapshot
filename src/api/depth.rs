@@ -1,11 +1,11 @@
+use crate::binance::connection::{BinanceDepth, BinanceSymbolType};
+use crate::config::Method;
+use crate::crypto::CryptoDepth;
+use crate::{get_config_from, Config, DepthConnection, SymbolType};
+use serde::Deserialize;
 use std::fmt;
 use std::fmt::Debug;
-use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
-use crate::{Config, DepthConnection, get_config_from, SymbolType};
-use crate::crypto::CryptoDepth;
-use crate::config::Method;
-use crate::binance::connection::{BinanceSymbolType, BinanceDepth};
 
 #[derive(Clone)]
 pub struct DepthManager {
@@ -48,7 +48,6 @@ impl DepthManager {
     }
 
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
-
         let config = get_config_from(exchange, symbol, limit, Method::Book);
 
         let connection = match config.exchange_type {

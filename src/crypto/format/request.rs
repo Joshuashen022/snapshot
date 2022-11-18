@@ -1,6 +1,5 @@
-use serde::{Deserialize, Deserializer, Serialize};
-use std::collections::BTreeMap;
-use std::fmt::{self, Debug};
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Deserialize, Serialize, Debug)]

@@ -1,4 +1,4 @@
-use crate::{Depth, OrderDirection, Quote, Ticker};
+use crate::{OrderDirection, Ticker};
 use anyhow::{anyhow, Result};
 use ordered_float::OrderedFloat;
 use serde::Deserialize;

@@ -17,4 +17,3 @@ pub async fn socket_stream(address: &str) -> Result<CryptoWebSocket, String> {
         Err(e) => Err(format!("{:?}", e)),
     }
 }
-

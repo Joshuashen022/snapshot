@@ -1,7 +1,7 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-use anyhow::{anyhow, Result};
+use crate::{OrderDirection, Ticker};
+use anyhow::Result;
 use serde::Deserialize;
-use crate::{OrderDirection, Quote, Ticker};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Deserialize, Debug)]
 pub struct EventTicker {
@@ -30,9 +30,9 @@ pub struct EventTicker {
     pub other: bool,
 }
 
-impl EventTicker{
+impl EventTicker {
     pub fn add_timestamp_transform_to_ticks(&self) -> Option<Vec<Ticker>> {
-        if let Ok(tick) = self.tick(){
+        if let Ok(tick) = self.tick() {
             Some(vec![tick])
         } else {
             None
@@ -44,7 +44,7 @@ impl EventTicker{
         let lts = now.as_millis() as i64;
         let ts = self.trade_time;
         let id = self.last_update_id as u64;
-        let direction = if self.direction{
+        let direction = if self.direction {
             OrderDirection::Sell
         } else {
             OrderDirection::Buy

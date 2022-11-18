@@ -1,8 +1,8 @@
-use tokio::sync::mpsc::UnboundedReceiver;
-use crate::config::Config;
 use crate::binance::BinanceDepth;
+use crate::config::Config;
 use crate::crypto::CryptoDepth;
 use crate::Depth;
+use tokio::sync::mpsc::UnboundedReceiver;
 
 #[derive(Clone)]
 pub enum DepthConnection {
@@ -11,7 +11,6 @@ pub enum DepthConnection {
 }
 
 impl DepthConnection {
-
     /// 增量深度信息模式，目前仅支持 Binance
     pub fn connect_depth(
         &self,

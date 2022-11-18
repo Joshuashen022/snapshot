@@ -24,7 +24,7 @@ pub async fn socket_stream(address: &str) -> Result<BinanceWebSocket, String> {
 
     match connect_async(url).await {
         Ok((connection, _)) => Ok(connection),
-        Err(e) => {Err(format!("{:?}", e))},
+        Err(e) => Err(format!("{:?}", e)),
     }
 }
 

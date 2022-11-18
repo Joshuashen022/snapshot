@@ -1,5 +1,5 @@
-pub mod ticker;
 pub mod depth;
+pub mod ticker;
 
-pub use ticker::{TickerManager,Ticker, OrderDirection};
-pub use depth::{DepthManager, Depth, ExchangeType, Quote};
+pub use depth::{Depth, DepthManager, ExchangeType, Quote};
+pub use ticker::{OrderDirection, Ticker, TickerManager};

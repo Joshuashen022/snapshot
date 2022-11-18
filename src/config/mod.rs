@@ -1,25 +1,16 @@
 mod binance;
+mod configuration;
 mod crypto;
 mod depth;
 mod ticker;
-mod configuration;
-
-use crate::binance::{BinanceDepth, BinanceTicker};
-use crate::crypto::{CryptoDepth, CryptoTicker};
-use crate::{Depth, ExchangeType};
-
-use anyhow::{anyhow, Result};
-use tokio::sync::mpsc::UnboundedReceiver;
+use crate::ExchangeType;
 pub use configuration::Config;
-pub use configuration::{SymbolType, Method};
+pub use configuration::{Method, SymbolType};
 pub use depth::DepthConnection;
 pub use ticker::TickerConnection;
 
-
 use binance::{set_addr_for_binance, validate_symbol_binance};
 use crypto::{set_addr_for_crypto, validate_symbol_crypto};
-
-
 
 /// Crypto contract should panic
 pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method: Method) -> Config {
@@ -52,7 +43,7 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
         level_trade: level_depth_address,
         symbol_type,
         exchange_type,
-        method
+        method,
     }
 }
 /// exchange: "binance" / "crypto"
@@ -100,16 +91,14 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
 /// https://uat-api.3ona.co/v2/{method} // Backup
 #[cfg(test)]
 mod tests {
-    use crate::config::SymbolType;
+    use crate::config::get_config_from;
     use crate::config::validate_symbol_binance;
     use crate::config::validate_symbol_crypto;
-    use crate::config::get_config_from;
     use crate::config::Method;
+    use crate::config::SymbolType;
 
     #[test]
     fn match_up_input_test() {
-
-
         assert!(validate_symbol_binance("BTC_USTD_221230_SWAP").is_ok());
         assert!(validate_symbol_binance("BTC_USTD_SWAP").is_ok());
         assert!(validate_symbol_binance("BTC_USTD").is_ok());
@@ -121,7 +110,6 @@ mod tests {
 
     #[test]
     fn valid_symbols() {
-
         assert_eq!(
             SymbolType::ContractCoin(String::from("btcusdt_221230")),
             validate_symbol_binance("BTC_USDT_221230_SWAP").unwrap(),
@@ -155,23 +143,13 @@ mod tests {
 
     #[test]
     fn config_test() {
-
-        let binance_config = get_config_from(
-            "binance",
-            "BTC_USTD_221230_SWAP",
-            Some(1000),
-            Method::Book,
-        );
+        let binance_config =
+            get_config_from("binance", "BTC_USTD_221230_SWAP", Some(1000), Method::Book);
 
         assert!(binance_config.is_binance());
         assert!(binance_config.is_contract_coin());
 
-        let crypto_config = get_config_from(
-            "crypto",
-            "BTC_USDT",
-            None,
-            Method::Book,
-        );
+        let crypto_config = get_config_from("crypto", "BTC_USDT", None, Method::Book);
 
         assert!(crypto_config.is_crypto());
         assert!(crypto_config.is_spot());
@@ -182,23 +160,13 @@ mod tests {
             String::from("BTC_USDT.50")
         );
 
-        let crypto_config = get_config_from(
-            "crypto",
-            "BTC_USDT_SWAP",
-            None,
-            Method::Book,
-        );
+        let crypto_config = get_config_from("crypto", "BTC_USDT_SWAP", None, Method::Book);
         assert_eq!(
             crypto_config.get_symbol().unwrap(),
             String::from("BTCUSD-PERP.50")
         );
 
-        let crypto_config = get_config_from(
-            "crypto",
-            "BTC_USDT",
-            Some(10),
-            Method::Book,
-        );
+        let crypto_config = get_config_from("crypto", "BTC_USDT", Some(10), Method::Book);
         assert_eq!(
             crypto_config.get_symbol().unwrap(),
             String::from("BTC_USDT.10")
@@ -211,5 +179,4 @@ mod tests {
         let symbol = "BTC_USTD_221230_SWAP_";
         validate_symbol_binance(symbol).unwrap();
     }
-
 }

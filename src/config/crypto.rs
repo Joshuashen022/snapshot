@@ -1,5 +1,5 @@
+use crate::config::SymbolType;
 use anyhow::{anyhow, Result};
-use crate::config::{SymbolType};
 
 #[allow(unused_assignments)]
 pub fn set_addr_for_crypto(
@@ -11,9 +11,8 @@ pub fn set_addr_for_crypto(
     (None, None, level_depth_address)
 }
 
-
 /// Inputs: BTC_USDT / BTC_USDT_SWAP / BTC_USDT_221230_SWAP
-/// Crypto output: BTC_USDT.50 / BTCUSD-PERP.50 / (Unsupported)
+/// Crypto output: BTC_USDT / BTCUSD-PERP / (Unsupported)
 pub fn validate_symbol_crypto(symbol: &str, limit: Option<i32>) -> Result<SymbolType> {
     let splits = symbol.split("_").collect::<Vec<_>>();
     if splits.len() > 4 || splits.len() < 2 {

@@ -1,20 +1,12 @@
-
 pub(crate) mod binance;
 pub(crate) mod crypto;
 
 pub(crate) mod api;
 pub(crate) mod config;
 
-pub(crate) use config::{
-    DepthConnection, TickerConnection,
-    SymbolType, get_config_from
-};
+pub(crate) use config::{get_config_from, DepthConnection, SymbolType, TickerConnection};
 
-pub use api::{
-    DepthManager, TickerManager,
-    Depth, Ticker, Quote,
-    ExchangeType, OrderDirection
-};
+pub use api::{Depth, DepthManager, ExchangeType, OrderDirection, Quote, Ticker, TickerManager};
 
 pub use config::Config;
 

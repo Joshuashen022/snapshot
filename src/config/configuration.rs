@@ -1,6 +1,5 @@
-use anyhow::{anyhow, Result};
 use crate::ExchangeType;
-use crate::config;
+use anyhow::{anyhow, Result};
 
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -11,12 +10,11 @@ pub struct Config {
     pub level_trade: Option<String>,
     pub symbol_type: SymbolType,
     pub exchange_type: ExchangeType,
-    pub method: Method
+    pub method: Method,
 }
 
-
 #[derive(Clone, Debug, Copy)]
-pub enum Method{
+pub enum Method {
     Ticker,
     Book,
 }
@@ -29,10 +27,9 @@ pub enum SymbolType {
 }
 
 impl Config {
-
     /// Currently we only support
     /// specific kinds of config combination
-    pub fn is_correct(&self) -> bool{
+    pub fn is_correct(&self) -> bool {
         // TODO::make this work
         true
     }
@@ -88,17 +85,17 @@ impl Config {
         }
     }
 
-    pub fn is_ticker(&self) -> bool{
-        match self.method{
+    pub fn is_ticker(&self) -> bool {
+        match self.method {
             Method::Ticker => true,
-            _ => false
+            _ => false,
         }
     }
 
-    pub fn is_book(&self) -> bool{
-        match self.method{
+    pub fn is_book(&self) -> bool {
+        match self.method {
             Method::Book => true,
-            _ => false
+            _ => false,
         }
     }
 
