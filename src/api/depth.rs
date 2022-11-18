@@ -2,7 +2,7 @@ use std::fmt;
 use std::fmt::Debug;
 use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
-use crate::{Config, DepthConnection, match_up, SymbolType};
+use crate::{Config, DepthConnection, get_config_from, SymbolType};
 use crate::crypto::CryptoDepth;
 use crate::config::Method;
 use crate::binance::connection::{BinanceSymbolType, BinanceDepth};
@@ -49,7 +49,7 @@ impl DepthManager {
 
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
 
-        let config = match_up(exchange, symbol, limit, Method::Book);
+        let config = get_config_from(exchange, symbol, limit, Method::Book);
 
         let connection = match config.exchange_type {
             ExchangeType::Binance => {

@@ -1,6 +1,5 @@
-// TickerManager new subscribe
 use tokio::sync::mpsc::UnboundedReceiver;
-use crate::{Config, DepthConnection, ExchangeType, match_up, SymbolType, TickerConnection};
+use crate::{Config, DepthConnection, ExchangeType, get_config_from, SymbolType, TickerConnection};
 use crate::config::Method;
 use crate::binance::BinanceTicker;
 use crate::binance::connection::BinanceSymbolType;
@@ -16,7 +15,7 @@ impl TickerManager{
 
         let limit = Some(50);
 
-        let config = match_up(exchange, symbol, limit, Method::Ticker);
+        let config = get_config_from(exchange, symbol, limit, Method::Ticker);
 
         let connection = match config.exchange_type {
             ExchangeType::Binance => {

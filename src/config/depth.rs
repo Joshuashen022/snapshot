@@ -10,8 +10,6 @@ pub enum DepthConnection {
     Crypto(CryptoDepth),
 }
 
-
-
 impl DepthConnection {
 
     /// 增量深度信息模式，目前仅支持 Binance

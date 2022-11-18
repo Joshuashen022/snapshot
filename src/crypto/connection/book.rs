@@ -194,7 +194,7 @@ mod tests {
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
-    use crate::api::config::Method;
+    use crate::config::Method;
 
     const LEVEL_DEPTH_URL: &str = "wss://stream.crypto.com/v2/market";
 

@@ -7,7 +7,7 @@ pub(crate) mod config;
 
 pub(crate) use config::{
     DepthConnection, TickerConnection,
-    SymbolType, match_up
+    SymbolType, get_config_from
 };
 
 pub use api::{

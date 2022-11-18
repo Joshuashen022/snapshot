@@ -22,7 +22,7 @@ use crypto::{set_addr_for_crypto, validate_symbol_crypto};
 
 
 /// Crypto contract should panic
-pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>, method: Method) -> Config {
+pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method: Method) -> Config {
     let exchange_type = match exchange {
         "binance" => ExchangeType::Binance,
         "crypto" => ExchangeType::Crypto,
@@ -103,11 +103,12 @@ pub fn match_up(exchange: &str, symbol: &str, limit: Option<i32>, method: Method
 /// https://uat-api.3ona.co/v2/{method} // Backup
 #[cfg(test)]
 mod tests {
-    use crate::api::config::SymbolType;
+    use crate::config::SymbolType;
     use crate::config::validate_symbol_binance;
     use crate::config::validate_symbol_crypto;
-    use crate::config::SymbolType;
-    use crate::config::match_up;
+    use crate::config::get_config_from;
+    use crate::config::Method;
+
     #[test]
     fn match_up_input_test() {
 
@@ -158,12 +159,22 @@ mod tests {
     #[test]
     fn config_test() {
 
-        let binance_config = match_up("binance", "BTC_USTD_221230_SWAP", Some(1000));
+        let binance_config = get_config_from(
+            "binance",
+            "BTC_USTD_221230_SWAP",
+            Some(1000),
+            Method::Book,
+        );
 
         assert!(binance_config.is_binance());
         assert!(binance_config.is_contract_coin());
 
-        let crypto_config = match_up("crypto", "BTC_USDT", None);
+        let crypto_config = get_config_from(
+            "crypto",
+            "BTC_USDT",
+            None,
+            Method::Book,
+        );
 
         assert!(crypto_config.is_crypto());
         assert!(crypto_config.is_spot());
@@ -174,13 +185,23 @@ mod tests {
             String::from("BTC_USDT.50")
         );
 
-        let crypto_config = match_up("crypto", "BTC_USDT_SWAP", None);
+        let crypto_config = get_config_from(
+            "crypto",
+            "BTC_USDT_SWAP",
+            None,
+            Method::Book,
+        );
         assert_eq!(
             crypto_config.get_symbol().unwrap(),
             String::from("BTCUSD-PERP.50")
         );
 
-        let crypto_config = match_up("crypto", "BTC_USDT", Some(10));
+        let crypto_config = get_config_from(
+            "crypto",
+            "BTC_USDT",
+            Some(10),
+            Method::Book,
+        );
         assert_eq!(
             crypto_config.get_symbol().unwrap(),
             String::from("BTC_USDT.10")
@@ -190,7 +211,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn in_valid_symbol() {
-        use crate::api::config::validate_symbol_binance;
         let symbol = "BTC_USTD_221230_SWAP_";
         validate_symbol_binance(symbol).unwrap();
     }

@@ -2,6 +2,7 @@ pub mod binance_perpetual_coin;
 pub mod binance_perpetual_usdt;
 pub mod binance_spot;
 mod connect;
+mod ticker;
 
 use crate::binance::connection::{
     binance_perpetual_coin::BinanceSpotOrderBookPerpetualCoin,
@@ -93,6 +94,7 @@ pub enum BinanceTicker {
 }
 
 impl BinanceTicker{
+    //TODO: Use `SymbolType` instead.
     pub fn new(types: BinanceSymbolType) -> Self{
         match types {
             BinanceSymbolType::Spot => BinanceTicker::Spot,
