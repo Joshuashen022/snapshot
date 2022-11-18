@@ -6,7 +6,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::sleep;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 use url::Url;
 use futures_util::StreamExt;
 use crate::binance::format::ticker::EventTicker;
@@ -53,14 +53,14 @@ impl BinanceTicker{
 
                     while let Ok(message) = stream.next().await.unwrap() {
                         if !message.is_text() {
-                            println!("message is empty");
+                            warn!("message is empty");
                             continue;
                         }
 
                         let text = match message.clone().into_text() {
                             Ok(e) => e,
                             Err(e) => {
-                                println!("message.into_text {:?}", e);
+                                warn!("message.into_text {:?}", e);
                                 continue;
                             }
                         };
@@ -70,7 +70,7 @@ impl BinanceTicker{
                                 response
                             },
                             Err(e) => {
-                                println!("Error {}, {:?}", e, message);
+                                warn!("Error {}, {:?}", e, message);
                                 continue;
                             }
                         };

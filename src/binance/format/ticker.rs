@@ -12,7 +12,7 @@ pub struct EventTicker {
     #[serde(rename = "s")]
     pub pair: String,
     #[serde(rename = "t")]
-    pub last_update_id: u64,
+    pub last_update_id: i64,
     #[serde(rename = "p")]
     pub price: String,
     #[serde(rename = "q")]
@@ -43,7 +43,7 @@ impl EventTicker{
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         let lts = now.as_millis() as i64;
         let ts = self.trade_time;
-        let id = self.last_update_id;
+        let id = self.last_update_id as u64;
         let direction = if self.direction{
             OrderDirection::Sell
         } else {
