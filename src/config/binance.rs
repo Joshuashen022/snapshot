@@ -1,10 +1,11 @@
 use anyhow::{anyhow, Result};
-use crate::config::SymbolType;
+use crate::config::{Method, SymbolType};
 
 #[allow(unused_assignments)]
 pub fn set_addr_for_binance(
     symbol_type: SymbolType,
     limit: Option<i32>,
+    method: Method,
 ) -> (Option<String>, Option<String>, Option<String>) {
     let mut rest_address: Option<String> = None;
     let mut depth_address: Option<String> = None;
@@ -12,53 +13,68 @@ pub fn set_addr_for_binance(
 
     if limit.is_some() {
         // Depth Mode, only need `rest_address` and `depth_address`
+        // when limit is some, Method must be `Method::Trade`
         let limit = limit.unwrap();
-        rest_address = match &symbol_type {
-            SymbolType::Spot(inner) => Some(format!(
+        rest_address = match (&symbol_type, method) {
+            (SymbolType::Spot(inner), Method::Book) => Some(format!(
                 "https://api.binance.com/api/v3/depth?symbol={}&limit={}",
                 inner.to_uppercase(),
                 limit
             )),
-            SymbolType::ContractUSDT(inner) => Some(format!(
+            (SymbolType::ContractUSDT(inner), Method::Book) => Some(format!(
                 "https://fapi.binance.com/fapi/v1/depth?symbol={}&limit={}",
                 inner.to_uppercase(),
                 limit
             )),
-            SymbolType::ContractCoin(inner) => Some(format!(
+            (SymbolType::ContractCoin(inner), Method::Book) => Some(format!(
                 "https://dapi.binance.com/dapi/v1/depth?symbol={}&limit={}",
                 inner.to_uppercase(),
                 limit
             )),
+            _ => panic!("Unsupported combination of {:?} with {:?}", limit, method)
         };
 
-        depth_address = match &symbol_type {
-            SymbolType::Spot(inner) => Some(format!(
+        depth_address = match (&symbol_type, method) {
+            (SymbolType::Spot(inner), Method::Book) => Some(format!(
                 "wss://stream.binance.com:9443/ws/{}@depth@100ms",
                 inner
             )),
-            SymbolType::ContractUSDT(inner) => Some(format!(
+            (SymbolType::ContractUSDT(inner), Method::Book) => Some(format!(
                 "wss://fstream.binance.com/stream?streams={}@depth@100ms",
                 inner
             )),
-            SymbolType::ContractCoin(inner) => Some(format!(
+            (SymbolType::ContractCoin(inner), Method::Book) => Some(format!(
                 "wss://dstream.binance.com/stream?streams={}@depth@100ms",
                 inner
             )),
+            _ => panic!("Unsupported combination of {:?} with {:?}", limit, method)
         };
     } else {
         // Level Mode, only need `level_depth_address`
 
-        level_depth_address = match &symbol_type {
-            SymbolType::Spot(inner) => Some(format!(
+        level_depth_address = match (&symbol_type, method) {
+            (SymbolType::Spot(inner), Method::Book) => Some(format!(
                 "wss://stream.binance.com:9443/ws/{}@depth20@100ms",
                 inner
             )),
-            SymbolType::ContractUSDT(inner) => Some(format!(
+            (SymbolType::ContractUSDT(inner), Method::Book) => Some(format!(
                 "wss://fstream.binance.com/stream?streams={}@depth20@100ms",
                 inner
             )),
-            SymbolType::ContractCoin(inner) => Some(format!(
+            (SymbolType::ContractCoin(inner), Method::Book) => Some(format!(
                 "wss://dstream.binance.com/stream?streams={}@depth20@100ms",
+                inner
+            )),
+            (SymbolType::Spot(inner), Method::Ticker) => Some(format!(
+                "wss://stream.binance.com:9443/ws/{}@trade",
+                inner
+            )),
+            (SymbolType::ContractUSDT(inner), Method::Ticker) => Some(format!(
+                "wss://fstream.binance.com/stream?streams={}@trade",
+                inner
+            )),
+            (SymbolType::ContractCoin(inner), Method::Ticker) => Some(format!(
+                "wss://dstream.binance.com/stream?streams={}@trade",
                 inner
             )),
         };

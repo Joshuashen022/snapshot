@@ -6,7 +6,9 @@ use crate::config;
 pub struct Config {
     pub rest: Option<String>,
     pub depth: Option<String>,
-    pub level_depth: Option<String>,
+    /// This parameter is both used at
+    /// "Level depth" and "Trade"
+    pub level_trade: Option<String>,
     pub symbol_type: SymbolType,
     pub exchange_type: ExchangeType,
     pub method: Method
@@ -27,12 +29,20 @@ pub enum SymbolType {
 }
 
 impl Config {
+
+    /// Currently we only support
+    /// specific kinds of config combination
+    pub fn is_correct(&self) -> bool{
+        // TODO::make this work
+        true
+    }
+
     pub fn is_depth(&self) -> bool {
-        self.depth.is_some() && self.rest.is_some() && self.level_depth.is_none()
+        self.depth.is_some() && self.rest.is_some() && self.level_trade.is_none()
     }
 
     pub fn is_normal(&self) -> bool {
-        self.level_depth.is_some() && self.depth.is_none() && self.rest.is_none()
+        self.level_trade.is_some() && self.depth.is_none() && self.rest.is_none()
     }
 
     pub fn is_binance(&self) -> bool {

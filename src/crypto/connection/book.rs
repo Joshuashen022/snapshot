@@ -32,7 +32,7 @@ impl CryptoDepth {
     }
     #[allow(unreachable_code)]
     pub fn level_depth(&self, config: Config) -> Result<UnboundedReceiver<Depth>> {
-        let level_address = config.level_depth.clone().expect("level address is empty");
+        let level_address = config.level_trade.clone().expect("level address is empty");
         let symbol = config.get_symbol().expect("spot symbol is empty");
 
         let shared = self.shared.clone();
@@ -203,7 +203,7 @@ mod tests {
         let config = Config {
             rest: None,
             depth: None,
-            level_depth: Some(LEVEL_DEPTH_URL.to_string()),
+            level_trade: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::new()),
             exchange_type: ExchangeType::Crypto,
             method: Method::Book

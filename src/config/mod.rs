@@ -35,7 +35,7 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
     };
 
     let (rest_address, depth_address, level_depth_address) = match exchange_type {
-        ExchangeType::Binance => set_addr_for_binance(symbol_type.clone(), limit),
+        ExchangeType::Binance => set_addr_for_binance(symbol_type.clone(), limit, method),
         ExchangeType::Crypto => {
             let symbol = match symbol_type.clone() {
                 SymbolType::Spot(s) => s,
@@ -49,15 +49,12 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
     Config {
         rest: rest_address,
         depth: depth_address,
-        level_depth: level_depth_address,
+        level_trade: level_depth_address,
         symbol_type,
         exchange_type,
         method
     }
 }
-
-
-
 /// exchange: "binance" / "crypto"
 /// symbol: "BTC_USDT" / "FTT_USDT"
 ///

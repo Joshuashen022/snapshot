@@ -1,8 +1,8 @@
 use tokio::runtime::Runtime;
 use tokio::time::{sleep, Duration};
 
-use snapshot::QuotationManager;
-use snapshot::Quote;
+use snapshot::DepthManager;
+
 /// const DEPTH_URL_PC: &str =      "wss://dstream.binance.com/stream?streams=btcusd_221230@depth@100ms";
 /// const DEPTH_URL_PU: &str =      "wss://fstream.binance.com/stream?streams=btcusdt@depth@100ms";
 /// const DEPTH_URL_SPOT: &str =    "wss://stream.binance.com:9443/ws/bnbbtc@depth@100ms";
@@ -24,14 +24,14 @@ fn main() {
 
     Runtime::new().unwrap().block_on(async {
         let exchange = "binance";
-        let pc_symbol = "BTC_USD_221230_SWAP";
-        let pu_symbol = "BTC_USD_SWAP";
-        let spot_symbol = "BTC_USD";
+        let pc_symbol = "BTC_USDT_221230_SWAP";
+        let pu_symbol = "BTC_USDT_SWAP";
+        let spot_symbol = "BTC_USDT";
         let _ = vec![pc_symbol, pu_symbol, spot_symbol];
 
         let symbol = pc_symbol;
         println!("using symbol {}", symbol);
-        let manager1 = QuotationManager::with_snapshot(exchange, symbol, 1000);
+        let manager1 = DepthManager::with_snapshot(exchange, symbol, 1000);
         println!("using manager1 config {:?}", manager1.config);
         let manager1_clone = manager1.clone();
         tokio::spawn(async move {
@@ -49,7 +49,7 @@ fn main() {
             }
         });
 
-        let manager2 = QuotationManager::new(exchange, symbol);
+        let manager2 = DepthManager::new(exchange, symbol);
         println!("using manager2 config {:?}", manager2.config);
         let manager2_clone = manager2.clone();
         tokio::spawn(async move {

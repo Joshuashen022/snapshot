@@ -30,7 +30,7 @@ impl DepthConnection {
     pub fn connect_depth_level(&self, config: Config) -> UnboundedReceiver<Depth> {
         match self {
             DepthConnection::Binance(connection) => {
-                connection.level_depth(config.level_depth.unwrap()).unwrap()
+                connection.level_depth(config.level_trade.unwrap()).unwrap()
             }
             DepthConnection::Crypto(connection) => connection.level_depth(config).unwrap(),
         }

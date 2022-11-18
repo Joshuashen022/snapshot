@@ -13,24 +13,15 @@ pub struct TickerManager {
 impl TickerManager{
     pub fn new(exchange: &str, symbol: &str) -> Self{
 
-        let limit = Some(50);
+        let config = get_config_from(exchange, symbol, None, Method::Ticker);
 
-        let config = get_config_from(exchange, symbol, limit, Method::Ticker);
+        assert!(config.is_correct(), "Unsupported config {:?}", config);
 
         let connection = match config.exchange_type {
-            ExchangeType::Binance => {
-                let types = match config.symbol_type {
-                    SymbolType::ContractCoin(_) => BinanceSymbolType::PerpetualCoin,
-                    SymbolType::ContractUSDT(_) => BinanceSymbolType::PerpetualUSDT,
-                    SymbolType::Spot(_) => BinanceSymbolType::Spot,
-                };
-                let connection_inner = BinanceTicker::new(types);
-                TickerConnection::Binance(connection_inner)
-            }
-            ExchangeType::Crypto => {
-                let connection_inner = CryptoTicker::new();
-                TickerConnection::Crypto(connection_inner)
-            }
+            ExchangeType::Binance =>
+                TickerConnection::Binance(BinanceTicker::new()),
+            ExchangeType::Crypto =>
+                TickerConnection::Crypto(CryptoTicker::new()),
         };
 
         Self { config, connection }
@@ -43,10 +34,10 @@ impl TickerManager{
             panic!("Wrong config {:?}", config);
         }
         match &self.connection{
-            TickerConnection::Binance(_connection) => panic!("Unsupported"),
-            TickerConnection::Crypto(connection) => {
-                connection.connect(config).unwrap()
-            }
+            TickerConnection::Binance(connection) =>
+                connection.connect(config).unwrap(),
+            TickerConnection::Crypto(connection) =>
+                connection.connect(config).unwrap(),
         }
 
     }

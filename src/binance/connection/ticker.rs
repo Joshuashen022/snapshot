@@ -27,7 +27,7 @@ impl BinanceTicker{
 
     #[allow(unreachable_code)]
     pub fn connect(&self, config: Config) -> Result<UnboundedReceiver<Vec<Ticker>>> {
-        let level_address = config.level_depth.clone().expect("level address is empty");
+        let level_address = config.level_trade.clone().expect("level address is empty");
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
 
@@ -114,7 +114,7 @@ mod tests {
         let config = Config {
             rest: None,
             depth: None,
-            level_depth: Some(TICKER_URL.to_string()),
+            level_trade: Some(TICKER_URL.to_string()),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Binance,
             method: Method::Ticker

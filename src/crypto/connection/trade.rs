@@ -30,7 +30,7 @@ impl CryptoTicker {
 
     #[allow(unreachable_code)]
     pub fn connect(&self, config: Config) -> Result<UnboundedReceiver<Vec<Ticker>>> {
-        let level_address = config.level_depth.clone().expect("level address is empty");
+        let level_address = config.level_trade.clone().expect("level address is empty");
         let symbol = config.get_symbol().expect("spot symbol is empty");
 
         let status = self.status.clone();
@@ -170,7 +170,7 @@ mod tests {
         let config = Config {
             rest: None,
             depth: None,
-            level_depth: Some(LEVEL_DEPTH_URL.to_string()),
+            level_trade: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Crypto,
             method: Method::Ticker

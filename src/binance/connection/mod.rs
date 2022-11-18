@@ -1,8 +1,11 @@
 pub mod binance_perpetual_coin;
 pub mod binance_perpetual_usdt;
 pub mod binance_spot;
+
 mod connect;
 mod ticker;
+
+pub use ticker::BinanceTicker;
 
 use crate::binance::connection::{
     binance_perpetual_coin::BinanceSpotOrderBookPerpetualCoin,
@@ -83,27 +86,6 @@ impl BinanceOrderBookSnapshot {
             id: self.last_update_id,
             bids: self.bids.clone(),
             asks: self.asks.clone(),
-        }
-    }
-}
-#[derive(Clone)]
-pub enum BinanceTicker {
-    Spot,
-    PerpetualUSDT,
-    PerpetualCoin,
-}
-
-impl BinanceTicker{
-    //TODO: Use `SymbolType` instead.
-    pub fn new(types: BinanceSymbolType) -> Self{
-        match types {
-            BinanceSymbolType::Spot => BinanceTicker::Spot,
-            BinanceSymbolType::PerpetualUSDT => {
-                BinanceTicker::PerpetualUSDT
-            }
-            BinanceSymbolType::PerpetualCoin => {
-                BinanceTicker::PerpetualCoin
-            }
         }
     }
 }
