@@ -46,7 +46,7 @@ pub fn validate_symbol_crypto(symbol: &str, limit: Option<i32>) -> Result<Symbol
     let symbol_inner = if limit.is_some() {
         format!("{}.{}", symbol_in, limit.unwrap())
     } else {
-        format!("{}.50", symbol_in)
+        format!("{}", symbol_in)
     };
 
     let result = match (is_contract, is_contract_coin, is_spot) {
