@@ -1,8 +1,5 @@
-pub use crate::binance::connection::{
-    BinanceDepthConnection, BinanceOrderBookSnapshot, BinanceOrderBookType,
-    BinanceTickerConnection
-};
-use crate::crypto::CryptoDepthConnector;
+use crate::binance::{BinanceDepth, BinanceTicker};
+use crate::crypto::{CryptoDepth, CryptoTicker};
 use crate::{Depth, ExchangeType};
 /// exchange: "binance" / "crypto"
 /// symbol: "BTC_USDT" / "FTT_USDT"
@@ -358,14 +355,14 @@ fn set_addr_for_crypto(
 
 #[derive(Clone)]
 pub enum DepthConnection {
-    Binance(BinanceDepthConnection),
-    Crypto(CryptoDepthConnector),
+    Binance(BinanceDepth),
+    Crypto(CryptoDepth),
 }
 
 #[derive(Clone)]
 pub enum TickerConnection{
-    Binance(BinanceTickerConnection),
-    C
+    Binance(BinanceTicker),
+    Crypto(CryptoTicker)
 }
 
 impl DepthConnection {

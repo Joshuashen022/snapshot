@@ -15,10 +15,10 @@ use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tracing::error;
 
-pub enum BinanceOrderBookType {
+pub enum BinanceSymbolType {
     Spot,
-    PrepetualUSDT,
-    PrepetualCoin,
+    PerpetualUSDT,
+    PerpetualCoin,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -86,28 +86,42 @@ impl BinanceOrderBookSnapshot {
     }
 }
 #[derive(Clone)]
-pub enum BinanceTickerConnection{
+pub enum BinanceTicker {
     Spot,
     PerpetualUSDT,
     PerpetualCoin,
 }
 
+impl BinanceTicker{
+    pub fn new(types: BinanceSymbolType) -> Self{
+        match types {
+            BinanceSymbolType::Spot => BinanceTicker::Spot,
+            BinanceSymbolType::PerpetualUSDT => {
+                BinanceTicker::PerpetualUSDT
+            }
+            BinanceSymbolType::PerpetualCoin => {
+                BinanceTicker::PerpetualCoin
+            }
+        }
+    }
+}
+
 #[derive(Clone)]
-pub enum BinanceDepthConnection {
+pub enum BinanceDepth {
     Spot(BinanceOrderBookSpot),
     PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT),
     PerpetualCoin(BinanceSpotOrderBookPerpetualCoin),
 }
 
-impl BinanceDepthConnection {
-    pub fn with_type(types: BinanceOrderBookType) -> Self {
+impl BinanceDepth {
+    pub fn with_type(types: BinanceSymbolType) -> Self {
         match types {
-            BinanceOrderBookType::Spot => BinanceDepthConnection::Spot(BinanceOrderBookSpot::new()),
-            BinanceOrderBookType::PrepetualUSDT => {
-                BinanceDepthConnection::PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT::new())
+            BinanceSymbolType::Spot => BinanceDepth::Spot(BinanceOrderBookSpot::new()),
+            BinanceSymbolType::PerpetualUSDT => {
+                BinanceDepth::PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT::new())
             }
-            BinanceOrderBookType::PrepetualCoin => {
-                BinanceDepthConnection::PerpetualCoin(BinanceSpotOrderBookPerpetualCoin::new())
+            BinanceSymbolType::PerpetualCoin => {
+                BinanceDepth::PerpetualCoin(BinanceSpotOrderBookPerpetualCoin::new())
             }
         }
     }
@@ -118,34 +132,34 @@ impl BinanceDepthConnection {
         depth_address: String,
     ) -> Result<UnboundedReceiver<Depth>> {
         match self {
-            BinanceDepthConnection::Spot(inner) => inner.depth(rest_address, depth_address),
-            BinanceDepthConnection::PerpetualUSDT(inner) => inner.depth(rest_address, depth_address),
-            BinanceDepthConnection::PerpetualCoin(inner) => inner.depth(rest_address, depth_address),
+            BinanceDepth::Spot(inner) => inner.depth(rest_address, depth_address),
+            BinanceDepth::PerpetualUSDT(inner) => inner.depth(rest_address, depth_address),
+            BinanceDepth::PerpetualCoin(inner) => inner.depth(rest_address, depth_address),
         }
     }
 
     pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         match self {
-            BinanceDepthConnection::Spot(inner) => inner.level_depth(level_address),
-            BinanceDepthConnection::PerpetualUSDT(inner) => inner.level_depth(level_address),
-            BinanceDepthConnection::PerpetualCoin(inner) => inner.level_depth(level_address),
+            BinanceDepth::Spot(inner) => inner.level_depth(level_address),
+            BinanceDepth::PerpetualUSDT(inner) => inner.level_depth(level_address),
+            BinanceDepth::PerpetualCoin(inner) => inner.level_depth(level_address),
         }
     }
 
     pub fn snapshot(&self) -> Option<Depth> {
         match self {
-            BinanceDepthConnection::Spot(inner) => inner.snapshot(),
-            BinanceDepthConnection::PerpetualUSDT(inner) => inner.snapshot(),
-            BinanceDepthConnection::PerpetualCoin(inner) => inner.snapshot(),
+            BinanceDepth::Spot(inner) => inner.snapshot(),
+            BinanceDepth::PerpetualUSDT(inner) => inner.snapshot(),
+            BinanceDepth::PerpetualCoin(inner) => inner.snapshot(),
         }
     }
 
     #[allow(dead_code)]
     pub fn set_symbol(&mut self, symbol: String) {
         let res = match self {
-            BinanceDepthConnection::Spot(inner) => inner.set_symbol(symbol),
-            BinanceDepthConnection::PerpetualUSDT(inner) => inner.set_symbol(symbol),
-            BinanceDepthConnection::PerpetualCoin(inner) => inner.set_symbol(symbol),
+            BinanceDepth::Spot(inner) => inner.set_symbol(symbol),
+            BinanceDepth::PerpetualUSDT(inner) => inner.set_symbol(symbol),
+            BinanceDepth::PerpetualCoin(inner) => inner.set_symbol(symbol),
         };
 
         if let Err(e) = res {

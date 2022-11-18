@@ -3,9 +3,9 @@ use std::fmt::Debug;
 use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 use crate::{Config, DepthConnection, match_up, SymbolType};
-use crate::api::config::{BinanceDepthConnection, BinanceOrderBookType};
-use crate::crypto::CryptoDepthConnector;
+use crate::crypto::CryptoDepth;
 use crate::api::config::Method;
+use crate::binance::connection::{BinanceSymbolType,BinanceDepth};
 
 #[derive(Clone)]
 pub struct DepthManager {
@@ -54,15 +54,15 @@ impl DepthManager {
         let connection = match config.exchange_type {
             ExchangeType::Binance => {
                 let types = match config.symbol_type {
-                    SymbolType::ContractCoin(_) => BinanceOrderBookType::PrepetualCoin,
-                    SymbolType::ContractUSDT(_) => BinanceOrderBookType::PrepetualUSDT,
-                    SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+                    SymbolType::ContractCoin(_) => BinanceSymbolType::PerpetualCoin,
+                    SymbolType::ContractUSDT(_) => BinanceSymbolType::PerpetualUSDT,
+                    SymbolType::Spot(_) => BinanceSymbolType::Spot,
                 };
-                let connection_inner = BinanceDepthConnection::with_type(types);
+                let connection_inner = BinanceDepth::with_type(types);
                 DepthConnection::Binance(connection_inner)
             }
             ExchangeType::Crypto => {
-                let connection_inner = CryptoDepthConnector::new();
+                let connection_inner = CryptoDepth::new();
                 DepthConnection::Crypto(connection_inner)
             }
         };

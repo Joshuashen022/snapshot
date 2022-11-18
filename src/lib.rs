@@ -8,7 +8,7 @@ use api::config;
 pub mod api;
 pub use api::{Depth, ExchangeType, DepthManager, Quote};
 pub use api::{OrderDirection, Ticker};
-pub use config::{match_up, Config, DepthConnection, SymbolType};
+pub use config::{match_up, Config, DepthConnection, SymbolType, TickerConnection};
 
 #[cfg(test)]
 mod tests {

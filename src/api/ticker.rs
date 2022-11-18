@@ -1,35 +1,36 @@
 // TickerManager new subscribe
-
-use core::panicking::panic;
 use tokio::sync::mpsc::UnboundedReceiver;
-use crate::{Config, DepthConnection, ExchangeType, match_up, SymbolType};
-use crate::api::config::{BinanceDepthConnection, BinanceOrderBookType, Method};
-use crate::crypto::CryptoDepthConnector;
-
+use crate::{Config, DepthConnection, ExchangeType, match_up, SymbolType, TickerConnection};
+use crate::api::config::Method;
+use crate::binance::BinanceTicker;
+use crate::binance::connection::BinanceSymbolType;
+use crate::crypto::{CryptoDepth, CryptoTicker};
 #[derive(Clone)]
 pub struct TickerManager {
     pub config: Config,
-    connection: DepthConnection,
+    connection: TickerConnection,
 }
 
 impl TickerManager{
-    pub fn new() -> Self{
+    pub fn new(exchange: &str, symbol: &str) -> Self{
+
+        let limit = Some(50);
 
         let config = match_up(exchange, symbol, limit, Method::Ticker);
 
         let connection = match config.exchange_type {
             ExchangeType::Binance => {
                 let types = match config.symbol_type {
-                    SymbolType::ContractCoin(_) => BinanceOrderBookType::PrepetualCoin,
-                    SymbolType::ContractUSDT(_) => BinanceOrderBookType::PrepetualUSDT,
-                    SymbolType::Spot(_) => BinanceOrderBookType::Spot,
+                    SymbolType::ContractCoin(_) => BinanceSymbolType::PerpetualCoin,
+                    SymbolType::ContractUSDT(_) => BinanceSymbolType::PerpetualUSDT,
+                    SymbolType::Spot(_) => BinanceSymbolType::Spot,
                 };
-                let connection_inner = BinanceDepthConnection::with_type(types);
-                DepthConnection::Binance(connection_inner)
+                let connection_inner = BinanceTicker::new(types);
+                TickerConnection::Binance(connection_inner)
             }
             ExchangeType::Crypto => {
-                let connection_inner = CryptoDepthConnector::new();
-                DepthConnection::Crypto(connection_inner)
+                let connection_inner = CryptoTicker::new();
+                TickerConnection::Crypto(connection_inner)
             }
         };
 
@@ -37,25 +38,18 @@ impl TickerManager{
     }
 
     /// Get snapshot stream
-    pub fn subscribe(&self) -> UnboundedReceiver<Ticker> {
+    pub fn subscribe(&self) -> UnboundedReceiver<Vec<Ticker>> {
         let config = self.config.clone();
         if !config.is_ticker(){
             panic!("Wrong config {:?}", config);
         }
-
-        if config.is_depth() {
-            let rest_address = config.rest.expect("rest address is empty");
-
-            let depth_address = config.depth.expect("depth address is empty");
-
-            self.connection
-                .clone()
-                .connect_depth(rest_address, depth_address)
-        } else if config.is_normal() {
-            self.connection.clone().connect_depth_level(config)
-        } else {
-            panic!("Unsupported Config {:?}", config);
+        match &self.connection{
+            TickerConnection::Binance(_connection) => panic!("Unsupported"),
+            TickerConnection::Crypto(connection) => {
+                connection.connect(config).unwrap()
+            }
         }
+
     }
 }
 

@@ -6,7 +6,7 @@ use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use url::Url;
 
 pub type CryptoWebSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
-pub use book::CryptoDepthConnector;
+pub use book::CryptoDepth;
 pub use trade::CryptoTicker;
 
 pub async fn socket_stream(address: &str) -> Result<CryptoWebSocket, String> {
