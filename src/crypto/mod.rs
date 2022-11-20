@@ -3,4 +3,4 @@ pub mod format;
 
 pub use connection::CryptoDepth;
 pub use connection::CryptoTicker;
-pub use format::BookShared;
+pub use format::DepthShared;

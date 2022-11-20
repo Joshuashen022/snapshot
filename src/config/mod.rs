@@ -4,7 +4,7 @@ mod crypto;
 mod depth;
 mod ticker;
 use crate::ExchangeType;
-pub use configuration::Config;
+pub use configuration::{DepthConfig, TickerConfig};
 pub use configuration::{Method, SymbolType};
 pub use depth::DepthConnection;
 pub use ticker::TickerConnection;
@@ -13,7 +13,7 @@ use binance::{set_addr_for_binance, validate_symbol_binance};
 use crypto::{set_addr_for_crypto, validate_symbol_crypto};
 
 /// Crypto contract should panic
-pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method: Method) -> Config {
+pub fn get_depth_config_from(exchange: &str, symbol: &str, limit: Option<i32>) -> DepthConfig {
     let exchange_type = match exchange {
         "binance" => ExchangeType::Binance,
         "crypto" => ExchangeType::Crypto,
@@ -26,7 +26,7 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
     };
 
     let (rest_address, depth_address, level_depth_address) = match exchange_type {
-        ExchangeType::Binance => set_addr_for_binance(symbol_type.clone(), limit, method),
+        ExchangeType::Binance => set_addr_for_binance(symbol_type.clone(), limit, Method::Depth),
         ExchangeType::Crypto => {
             let symbol = match symbol_type.clone() {
                 SymbolType::Spot(s) => s,
@@ -37,15 +37,47 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
         }
     };
 
-    Config {
+    DepthConfig {
         rest_url: rest_address,
         depth_url: depth_address,
-        level_trade: level_depth_address,
+        level_depth_url: level_depth_address,
         symbol_type,
         exchange_type,
-        method,
     }
 }
+
+pub fn get_ticker_config_from(exchange: &str, symbol: &str, limit: Option<i32>) -> TickerConfig {
+    let exchange_type = match exchange {
+        "binance" => ExchangeType::Binance,
+        "crypto" => ExchangeType::Crypto,
+        _ => panic!("Unsupported Exchange {}", exchange),
+    };
+
+    let symbol_type = match exchange_type {
+        ExchangeType::Binance => validate_symbol_binance(symbol).unwrap(),
+        ExchangeType::Crypto => validate_symbol_crypto(symbol, limit).unwrap(),
+    };
+
+    let (_, _, ticker_url) = match exchange_type {
+        ExchangeType::Binance => set_addr_for_binance(symbol_type.clone(), limit, Method::Ticker),
+        ExchangeType::Crypto => {
+            let symbol = match symbol_type.clone() {
+                SymbolType::Spot(s) => s,
+                SymbolType::ContractUSDT(s) => s,
+                _ => panic!("Crypto is supported for {}", symbol),
+            };
+            set_addr_for_crypto(&symbol, limit)
+        }
+    };
+
+    TickerConfig {
+        ticker_url: ticker_url.unwrap(),
+        symbol_type,
+        exchange_type,
+    }
+}
+
+
 /// exchange: "binance" / "crypto"
 /// symbol: "BTC_USDT" / "FTT_USDT"
 ///
@@ -91,7 +123,7 @@ pub fn get_config_from(exchange: &str, symbol: &str, limit: Option<i32>, method:
 /// https://uat-api.3ona.co/v2/{method} // Backup
 #[cfg(test)]
 mod tests {
-    use crate::config::get_config_from;
+    use crate::config::get_depth_config_from;
     use crate::config::validate_symbol_binance;
     use crate::config::validate_symbol_crypto;
     use crate::config::Method;
@@ -144,31 +176,30 @@ mod tests {
     #[test]
     fn config_test() {
         let binance_config =
-            get_config_from("binance", "BTC_USTD_221230_SWAP", Some(1000), Method::Depth);
+            get_depth_config_from("binance", "BTC_USTD_221230_SWAP", Some(1000));
 
         assert!(binance_config.is_binance());
         assert!(binance_config.is_contract_coin());
 
-        let crypto_config = get_config_from("crypto", "BTC_USDT", None, Method::Depth);
+        let crypto_config = get_depth_config_from("crypto", "BTC_USDT", None);
 
         assert!(crypto_config.is_crypto());
         assert!(crypto_config.is_spot());
-        assert!(crypto_config.get_symbol().is_some());
 
         assert_eq!(
-            crypto_config.get_symbol().unwrap(),
+            crypto_config.get_symbol(),
             String::from("BTC_USDT.50")
         );
 
-        let crypto_config = get_config_from("crypto", "BTC_USDT_SWAP", None, Method::Depth);
+        let crypto_config = get_depth_config_from("crypto", "BTC_USDT_SWAP", None);
         assert_eq!(
-            crypto_config.get_symbol().unwrap(),
+            crypto_config.get_symbol(),
             String::from("BTCUSD-PERP.50")
         );
 
-        let crypto_config = get_config_from("crypto", "BTC_USDT", Some(10), Method::Depth);
+        let crypto_config = get_depth_config_from("crypto", "BTC_USDT", Some(10));
         assert_eq!(
-            crypto_config.get_symbol().unwrap(),
+            crypto_config.get_symbol(),
             String::from("BTC_USDT.10")
         );
     }

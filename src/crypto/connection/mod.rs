@@ -1,11 +1,11 @@
-pub mod book;
-pub mod trade;
+pub mod depth;
+pub mod ticker;
 mod abstraction;
 
 use tokio::net::TcpStream;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 pub type CryptoWebSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
-pub use book::CryptoDepth;
-pub use trade::CryptoTicker;
+pub use depth::CryptoDepth;
+pub use ticker::CryptoTicker;
 

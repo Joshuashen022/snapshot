@@ -1,39 +1,32 @@
-use crate::Depth;
+use crate::config::TickerConfig;
+use crate::crypto::format::TickerEventStream;
+use crate::Ticker;
 use anyhow::{Error, Result};
 use futures_util::StreamExt;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::{sleep, Duration};
+
 use tracing::{error, info, warn};
 
-use crate::config::Config;
-use crate::crypto::format::{
-    BookEventStream, BookShared, OrderRespond,
-};
-
 use super::abstraction::{is_live_and_keep_alive, crypto_initialize};
-
 #[derive(Clone)]
-pub struct CryptoDepth {
-    /// Currently not using
+pub struct CryptoTicker {
     status: Arc<Mutex<bool>>,
-    shared: Arc<RwLock<BookShared>>,
 }
 
-impl CryptoDepth {
+impl CryptoTicker {
     pub fn new() -> Self {
-        CryptoDepth {
+        CryptoTicker {
             status: Arc::new(Mutex::new(false)),
-            shared: Arc::new(RwLock::new(BookShared::new())),
         }
     }
-    #[allow(unreachable_code)]
-    pub fn level_depth(&self, config: Config) -> Result<UnboundedReceiver<Depth>> {
-        let level_address = config.level_trade.clone().expect("level address is empty");
-        let symbol = config.get_symbol().expect("spot symbol is empty");
 
-        let shared = self.shared.clone();
+    pub fn connect(&self, config: TickerConfig) -> Result<UnboundedReceiver<Vec<Ticker>>> {
+        let level_address = config.ticker_url.clone();
+        let symbol = config.get_symbol();
+
         let status = self.status.clone();
 
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -42,8 +35,7 @@ impl CryptoDepth {
             info!("Start Level Buffer maintain thread");
             loop {
                 let result: Result<()> = {
-                    let channel = format!("book.{}", &symbol);
-
+                    let channel = format!("trade.{}", &symbol);
                     let mut stream = match crypto_initialize(&level_address, channel).await {
                         Ok(connection) => connection,
                         Err(e) => {
@@ -58,21 +50,21 @@ impl CryptoDepth {
                     }
 
                     while let Ok(message) = stream.next().await.unwrap() {
-                        match is_live_and_keep_alive::<OrderRespond>(&mut stream, message.clone()).await {
+                        match is_live_and_keep_alive::<TickerEventStream>(&mut stream, message.clone()).await {
                             Ok(is_alive) => {
                                 if !is_alive {
                                     continue;
                                 }
                             }
                             Err(e) => {
-                                warn!("Decoding received message error {:?}", e);
+                                warn!("Decoding received message error {:?} {}", e, message);
                                 continue;
                             }
                         }
 
                         let text = message.clone().into_text().unwrap();
 
-                        let level_event: BookEventStream = match serde_json::from_str(&text) {
+                        let level_event: TickerEventStream = match serde_json::from_str(&text) {
                             Ok(event) => event,
                             Err(e) => {
                                 println!("Error {}, {:?}", e, text);
@@ -80,15 +72,12 @@ impl CryptoDepth {
                             }
                         };
 
-                        if let Ok(mut guard) = shared.write() {
-                            (*guard).set_level_event(level_event);
-
-                            let snapshot = (*guard).get_snapshot();
-                            if let Err(_) = sender.send(snapshot) {
-                                error!("level_depth send Snapshot error");
+                        if let Some(ticks) = level_event.result.add_timestamp_transform_to_ticks() {
+                            if let Err(_) = sender.send(ticks) {
+                                error!("Crypto Ticker send Snapshot error");
                             };
                         } else {
-                            error!("SharedSpot is busy");
+                            warn!("Crypto Received empty ticks")
                         }
                     }
                     Ok(())
@@ -99,55 +88,37 @@ impl CryptoDepth {
                     Err(e) => error!("Error happen when running level_depth: {:?}", e),
                 }
             }
-            Ok::<(), Error>(())
         });
 
         Ok(receiver)
     }
-
-    pub fn snapshot(&self) -> Option<Depth> {
-        let mut current_status = false;
-
-        if let Ok(status_guard) = self.status.lock() {
-            current_status = (*status_guard).clone();
-        } else {
-            error!("CryptoOrderBookSpot lock is busy");
-        }
-
-        if current_status {
-            Some(self.shared.write().unwrap().get_snapshot())
-        } else {
-            None
-        }
-    }
 }
-
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Method;
-    use crate::config::{Config, SymbolType};
-    use crate::crypto::{BookShared, CryptoDepth};
+    use crate::config::{DepthConfig, Method, SymbolType};
+    use crate::crypto::connection::CryptoTicker;
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
-
     const LEVEL_DEPTH_URL: &str = "wss://stream.crypto.com/v2/market";
 
     #[test]
-    fn crypto_order_book_function() {
-        let config = Config {
+    fn crypto_ticker_function() {
+        let config = DepthConfig {
             rest_url: None,
             depth_url: None,
-            level_trade: Some(LEVEL_DEPTH_URL.to_string()),
-            symbol_type: SymbolType::Spot(String::new()),
+            level_depth_url: Some(LEVEL_DEPTH_URL.to_string()),
+            symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Crypto,
-            method: Method::Depth,
+            method: Method::Ticker,
         };
 
+        tracing_subscriber::fmt::init();
+
         Runtime::new().unwrap().block_on(async {
-            let book = CryptoDepth::new();
-            let mut recv = book.level_depth(config).unwrap();
+            let ticker = CryptoTicker::new();
+            let mut recv = ticker.connect(config).unwrap();
 
             let depth = recv.recv().await;
             assert!(depth.is_some());

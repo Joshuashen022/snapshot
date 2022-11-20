@@ -59,21 +59,14 @@ impl BinanceSpotOrderBookPerpetualCoin {
                 match res {
                     Ok(success) => {
                         if !success {
-                            if default_exit > 20 {
-                                error!("Using default break");
-                                break;
-                            }
-                            default_exit += 1;
+                            error!("Try get connection failed retrying")
                         } else {
-                            error!("This should not be happening");
-                            break;
+                            unreachable!()
                         }
                     }
-                    Err(e) => error!("Error happen when running code: {:?}", e),
+                    Err(e) => error!("Error happen when try get connection {:?}", e),
                 }
             }
-            error!("OrderBook thread stopped");
-            Ok::<(), Error>(())
         });
 
         Ok(receiver)

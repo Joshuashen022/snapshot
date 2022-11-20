@@ -8,8 +8,8 @@ use serde::de::DeserializeOwned;
 use std::fmt::Debug;
 use std::time::Duration;
 use tokio::time::sleep;
-pub use super::book::CryptoDepth;
-pub use super::trade::CryptoTicker;
+pub use super::depth::CryptoDepth;
+pub use super::ticker::CryptoTicker;
 use crate::crypto::format::{GeneralRespond, heartbeat_respond, HeartbeatRequest, subscribe_message};
 use crate::crypto::connection::CryptoWebSocket;
 

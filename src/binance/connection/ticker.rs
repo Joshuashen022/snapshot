@@ -1,5 +1,5 @@
 use crate::binance::format::ticker::EventTicker;
-use crate::{Config, Ticker};
+use crate::{TickerConfig, Ticker};
 use anyhow::{Error, Result};
 use futures_util::StreamExt;
 use std::sync::{Arc, Mutex};
@@ -24,8 +24,8 @@ impl BinanceTicker {
     }
 
     #[allow(unreachable_code)]
-    pub fn connect(&self, config: Config) -> Result<UnboundedReceiver<Vec<Ticker>>> {
-        let level_address = config.level_trade.clone().expect("level address is empty");
+    pub fn connect(&self, config: TickerConfig) -> Result<UnboundedReceiver<Vec<Ticker>>> {
+        let level_address = config.ticker_url.clone();
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();
 
@@ -96,7 +96,7 @@ impl BinanceTicker {
 #[cfg(test)]
 mod tests {
     use crate::binance::connection::ticker::BinanceTicker;
-    use crate::config::{Config, Method, SymbolType};
+    use crate::config::{DepthConfig, Method, SymbolType};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
@@ -105,10 +105,10 @@ mod tests {
 
     #[test]
     fn binance_ticker_function() {
-        let config = Config {
+        let config = DepthConfig {
             rest_url: None,
             depth_url: None,
-            level_trade: Some(TICKER_URL.to_string()),
+            level_depth_url: Some(TICKER_URL.to_string()),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Binance,
             method: Method::Ticker,

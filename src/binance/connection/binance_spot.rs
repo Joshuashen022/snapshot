@@ -38,7 +38,6 @@ impl BinanceOrderBookSpot {
         let sender = sender.clone();
         // Thread to maintain Order Book
         let _ = tokio::spawn(async move {
-            let mut default_exit = 0;
             info!("Start OrderBook thread");
             loop {
                 let res =
@@ -54,21 +53,14 @@ impl BinanceOrderBookSpot {
                 match res {
                     Ok(success) => {
                         if !success {
-                            if default_exit > 20 {
-                                error!("Using default break");
-                                break;
-                            }
-                            default_exit += 1;
+                            error!("Try get connection failed retrying")
                         } else {
-                            error!("This should not be happening");
-                            break;
+                            unreachable!()
                         }
                     }
-                    Err(e) => error!("Error happen when running code: {:?}", e),
+                    Err(e) => error!("Error happen when try get connection {:?}", e),
                 }
             }
-            error!("BinanceOrderBookSpot thread stopped Unexpectedly");
-            Ok::<(), Error>(())
         });
 
         Ok(receiver)

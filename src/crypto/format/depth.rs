@@ -1,4 +1,4 @@
-use crate::crypto::format::BookEventStream;
+use crate::crypto::format::DepthEventStream;
 use crate::{Depth, Quote};
 use ordered_float::OrderedFloat;
 use serde::de::{SeqAccess, Visitor};
@@ -8,7 +8,7 @@ use std::fmt;
 use std::fmt::Debug;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub struct BookShared {
+pub struct DepthShared {
     instrument: String,
     last_update_id: i64,
     send_time: i64,
@@ -17,9 +17,9 @@ pub struct BookShared {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl BookShared {
+impl DepthShared {
     pub fn new() -> Self {
-        BookShared {
+        DepthShared {
             instrument: String::new(),
             last_update_id: 0,
             send_time: 0,
@@ -30,7 +30,7 @@ impl BookShared {
     }
 
     /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: BookEventStream) {
+    pub fn set_level_event(&mut self, level_event: DepthEventStream) {
         self.asks.clear();
         self.bids.clear();
 
@@ -40,7 +40,7 @@ impl BookShared {
         let mut send_time = 0;
         let data_len = data.len();
 
-        for BookData {
+        for DepthData {
             asks,
             bids,
             publish_time,
@@ -106,7 +106,7 @@ impl BookShared {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct BookEvent {
+pub struct DepthEvent {
     pub channel: String,
 
     pub subscription: String,
@@ -114,14 +114,14 @@ pub struct BookEvent {
     /// Something like "BTC_USDT"
     pub instrument_name: String,
 
-    pub data: Vec<BookData>,
+    pub data: Vec<DepthData>,
 
     /// Usually constant value `20` or `50`
     pub depth: i64,
 }
 
 #[derive(Deserialize, Clone)]
-pub struct BookData {
+pub struct DepthData {
     /// Some timestamp server tells us
     #[serde(rename = "t")]
     pub publish_time: i64,
@@ -222,7 +222,7 @@ impl<'de> Visitor<'de> for QuotesVisitor {
     }
 }
 
-impl Debug for BookData {
+impl Debug for DepthData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Data")
             .field("publish_time", &self.publish_time)

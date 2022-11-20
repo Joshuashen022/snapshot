@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[allow(dead_code)]
-pub struct TradeShared {
+pub struct TickerShared {
     instrument: String,
     last_update_id: i64,
     send_time: i64,
@@ -16,9 +16,9 @@ pub struct TradeShared {
 }
 
 #[allow(dead_code)]
-impl TradeShared {
+impl TickerShared {
     pub fn new() -> Self {
-        TradeShared {
+        TickerShared {
             instrument: String::new(),
             last_update_id: 0,
             send_time: 0,
@@ -30,7 +30,7 @@ impl TradeShared {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct TradeEvent {
+pub struct TickerEvent {
     pub channel: String,
 
     pub subscription: String,
@@ -38,11 +38,11 @@ pub struct TradeEvent {
     /// Something like "BTC_USDT"
     pub instrument_name: String,
 
-    pub data: Vec<TradeData>,
+    pub data: Vec<TickerData>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct TradeData {
+pub struct TickerData {
     #[serde(rename = "s")]
     pub side: String,
 
@@ -62,7 +62,7 @@ pub struct TradeData {
     pub instrument_name: String,
 }
 
-impl TradeData {
+impl TickerData {
     fn tick(&self) -> Result<Ticker> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         let lts = now.as_millis() as i64;
@@ -87,7 +87,7 @@ impl TradeData {
     }
 }
 
-impl TradeEvent {
+impl TickerEvent {
     pub fn add_timestamp_transform_to_ticks(&self) -> Option<Vec<Ticker>> {
         let mut ticks = Vec::new();
         for data in &self.data {

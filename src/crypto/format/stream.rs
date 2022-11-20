@@ -1,9 +1,9 @@
-use crate::crypto::format::book::BookEvent;
-use crate::crypto::format::trade::TradeEvent;
+use crate::crypto::format::depth::DepthEvent;
+use crate::crypto::format::ticker::TickerEvent;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
-pub struct BookEventStream {
+pub struct DepthEventStream {
     /// Usually constant value `-1`
     pub id: i64,
 
@@ -13,11 +13,11 @@ pub struct BookEventStream {
     /// Usually constant value `0`
     pub code: i64,
 
-    pub result: BookEvent,
+    pub result: DepthEvent,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct TradeEventStream {
+pub struct TickerEventStream {
     /// Usually constant value `-1`
     pub id: i64,
 
@@ -27,5 +27,5 @@ pub struct TradeEventStream {
     /// Usually constant value `0`
     pub code: i64,
 
-    pub result: TradeEvent,
+    pub result: TickerEvent,
 }

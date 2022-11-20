@@ -4,11 +4,14 @@ pub(crate) mod crypto;
 pub(crate) mod api;
 pub(crate) mod config;
 
-pub(crate) use config::{get_config_from, DepthConnection, SymbolType, TickerConnection};
+pub(crate) use config::{
+    get_depth_config_from, get_ticker_config_from,
+    DepthConnection, SymbolType, TickerConnection
+};
 
 pub use api::{Depth, DepthManager, ExchangeType, OrderDirection, Quote, Ticker, TickerManager};
 
-pub use config::Config;
+pub use config::{DepthConfig, TickerConfig};
 
 #[cfg(test)]
 mod tests {
