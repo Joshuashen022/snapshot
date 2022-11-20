@@ -53,10 +53,10 @@ pub struct TickerData {
     pub quantity: String,
 
     #[serde(rename = "t")]
-    pub trade_time: i64,
+    pub ticker_time: i64,
 
     #[serde(rename = "d")]
-    pub trade_id: String,
+    pub ticker_id: String,
 
     #[serde(rename = "i")]
     pub instrument_name: String,
@@ -66,8 +66,8 @@ impl TickerData {
     fn tick(&self) -> Result<Ticker> {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         let lts = now.as_millis() as i64;
-        let ts = self.trade_time;
-        let id = self.trade_id.parse::<u64>()?;
+        let ts = self.ticker_time;
+        let id = self.ticker_id.parse::<u64>()?;
         let direction = match self.side.as_str() {
             "BUY" => OrderDirection::Buy,
             "SELL" => OrderDirection::Sell,
