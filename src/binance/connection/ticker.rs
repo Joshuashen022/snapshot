@@ -96,7 +96,7 @@ impl BinanceTicker {
 #[cfg(test)]
 mod tests {
     use crate::binance::connection::ticker::BinanceTicker;
-    use crate::config::{DepthConfig, Method, SymbolType};
+    use crate::config::{TickerConfig, Method, SymbolType};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
@@ -105,13 +105,10 @@ mod tests {
 
     #[test]
     fn binance_ticker_function() {
-        let config = DepthConfig {
-            rest_url: None,
-            depth_url: None,
-            level_depth_url: Some(TICKER_URL.to_string()),
+        let config = TickerConfig {
+            ticker_url: TICKER_URL.to_string(),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Binance,
-            method: Method::Ticker,
         };
 
         tracing_subscriber::fmt::init();

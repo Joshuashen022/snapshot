@@ -96,7 +96,7 @@ impl CryptoTicker {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::{DepthConfig, Method, SymbolType};
+    use crate::config::{TickerConfig, Method, SymbolType};
     use crate::crypto::connection::CryptoTicker;
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
@@ -105,13 +105,10 @@ mod tests {
 
     #[test]
     fn crypto_ticker_function() {
-        let config = DepthConfig {
-            rest_url: None,
-            depth_url: None,
-            level_depth_url: Some(LEVEL_DEPTH_URL.to_string()),
+        let config = TickerConfig {
+            ticker_url: LEVEL_DEPTH_URL.to_string(),
             symbol_type: SymbolType::Spot(String::from("BTCUSD-PERP")),
             exchange_type: ExchangeType::Crypto,
-            method: Method::Ticker,
         };
 
         tracing_subscriber::fmt::init();

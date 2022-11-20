@@ -183,3 +183,36 @@ impl BinanceSpotOrderBookPerpetualCoin {
         }
     }
 }
+#[cfg(test)]
+mod tests {
+    use crate::config::{DepthConfig, Method, SymbolType};
+    use crate::binance::connection::BinanceSpotOrderBookPerpetualCoin;
+    use crate::ExchangeType;
+    use std::sync::{Arc, Mutex, RwLock};
+    use tokio::runtime::Runtime;
+    const DEPTH_URL: &str = "wss://dstream.binance.com/stream?streams=btcusdt_221230@depth@100m";
+    const REST: &str = "https://dapi.binance.com/dapi/v1/depth?symbol=BTCUSDT_221230&limit=1000";
+    #[test]
+    fn binance_perpetual_coin_function() {
+        let config = DepthConfig {
+            rest_url: Some(DEPTH_URL.to_string()),
+            depth_url: Some(REST.to_string()),
+            level_depth_url: None,
+            symbol_type: SymbolType::ContractCoin(String::from("BTCUSD-PERP")),
+            exchange_type: ExchangeType::Binance,
+        };
+
+        tracing_subscriber::fmt::init();
+
+        Runtime::new().unwrap().block_on(async {
+            let ticker = BinanceSpotOrderBookPerpetualCoin::new();
+            let mut recv = ticker.depth(
+                REST.to_string(),
+                DEPTH_URL.to_string(),
+            ).unwrap();
+
+            let depth = recv.recv().await;
+            assert!(depth.is_some());
+        })
+    }
+}

@@ -141,7 +141,6 @@ mod tests {
             level_depth_url: Some(LEVEL_DEPTH_URL.to_string()),
             symbol_type: SymbolType::Spot(String::new()),
             exchange_type: ExchangeType::Crypto,
-            method: Method::Depth,
         };
 
         Runtime::new().unwrap().block_on(async {
