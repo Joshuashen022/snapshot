@@ -24,11 +24,14 @@ pub enum SymbolType {
 }
 
 impl DepthConfig {
-    /// Currently we only support
-    /// specific kinds of config combination
+    /// Binance Spot ContractUSDT ContractCoin, Crypto Spot ContractUSDT
     pub fn is_correct(&self) -> bool {
-        // TODO::make this work
-        true
+        match (&self.symbol_type, &self.exchange_type){
+            (_, ExchangeType::Binance) => true,
+            (SymbolType::Spot(_), ExchangeType::Crypto) => true,
+            (SymbolType::ContractUSDT(_), ExchangeType::Crypto) => true,
+            _ => false
+        }
     }
 
     pub fn is_depth(&self) -> bool {
@@ -111,11 +114,14 @@ pub struct TickerConfig{
 }
 
 impl TickerConfig{
-    /// Currently we only support
-    /// specific kinds of config combination
+    /// Binance Spot, Crypto Spot ContractUSDT
     pub fn is_correct(&self) -> bool {
-        // TODO::make this work
-        true
+        match (&self.symbol_type, &self.exchange_type){
+            (SymbolType::Spot(_), ExchangeType::Binance) => true,
+            (SymbolType::Spot(_), ExchangeType::Crypto) => true,
+            (SymbolType::ContractUSDT(_), ExchangeType::Crypto) => true,
+            _ => false
+        }
     }
 
     pub fn is_binance(&self) -> bool {

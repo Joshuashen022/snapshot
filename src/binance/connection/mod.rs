@@ -13,17 +13,13 @@ use crate::binance::connection::{
 };
 use crate::Depth;
 use crate::Quote;
+use crate::SymbolType;
 
 use anyhow::Result;
 use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tracing::error;
 
-pub enum BinanceSymbolType {
-    Spot,
-    PerpetualUSDT,
-    PerpetualCoin,
-}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderBookSnapshot {
@@ -98,13 +94,13 @@ pub enum BinanceDepth {
 }
 
 impl BinanceDepth {
-    pub fn with_type(types: BinanceSymbolType) -> Self {
+    pub fn with_type(types: SymbolType) -> Self {
         match types {
-            BinanceSymbolType::Spot => BinanceDepth::Spot(BinanceOrderBookSpot::new()),
-            BinanceSymbolType::PerpetualUSDT => {
+            SymbolType::Spot(_) => BinanceDepth::Spot(BinanceOrderBookSpot::new()),
+            SymbolType::ContractUSDT(_) => {
                 BinanceDepth::PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT::new())
             }
-            BinanceSymbolType::PerpetualCoin => {
+            SymbolType::ContractCoin(_) => {
                 BinanceDepth::PerpetualCoin(BinanceSpotOrderBookPerpetualCoin::new())
             }
         }

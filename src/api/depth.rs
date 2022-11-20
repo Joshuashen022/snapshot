@@ -1,6 +1,6 @@
-use crate::binance::connection::{BinanceDepth, BinanceSymbolType};
+use crate::binance::connection::BinanceDepth;
 use crate::crypto::CryptoDepth;
-use crate::{get_depth_config_from, DepthConfig, DepthConnection, SymbolType};
+use crate::{get_depth_config_from, DepthConfig, DepthConnection};
 use serde::Deserialize;
 use std::fmt;
 use std::fmt::Debug;
@@ -49,13 +49,11 @@ impl DepthManager {
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
         let config = get_depth_config_from(exchange, symbol, limit);
 
+        assert!(config.is_correct(),"Unsupported config {:?}", config);
+
         let connection = match config.exchange_type {
             ExchangeType::Binance => {
-                let types = match config.symbol_type {
-                    SymbolType::ContractCoin(_) => BinanceSymbolType::PerpetualCoin,
-                    SymbolType::ContractUSDT(_) => BinanceSymbolType::PerpetualUSDT,
-                    SymbolType::Spot(_) => BinanceSymbolType::Spot,
-                };
+                let types = config.symbol_type.clone();
                 let connection_inner = BinanceDepth::with_type(types);
                 DepthConnection::Binance(connection_inner)
             }
