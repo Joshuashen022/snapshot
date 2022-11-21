@@ -89,7 +89,6 @@ pub async fn try_get_connection<
                     let _ = stream.send(Message::Pong(inner.clone())).await;
                 }
             };
-
         }
 
         let event = deserialize_event::<StreamEvent>(message.clone());

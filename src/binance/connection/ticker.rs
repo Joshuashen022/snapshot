@@ -1,14 +1,15 @@
 use crate::binance::format::ticker::EventTicker;
 use crate::{TickerConfig, Ticker};
 use anyhow::{Error, Result};
-use futures_util::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time::sleep;
 use tokio_tungstenite::connect_async;
-use tracing::{error, info, warn};
+use tokio_tungstenite::tungstenite::Message;
+use tracing::{debug, error, info, warn};
 use url::Url;
 
 #[derive(Clone)]
@@ -49,6 +50,17 @@ impl BinanceTicker {
                     }
 
                     while let Ok(message) = stream.next().await.unwrap() {
+                        if message.is_ping(){
+                            debug!("Receiving ping message");
+                            let inner = message.clone().into_data();
+                            match stream.send(Message::Pong(inner.clone())).await{
+                                Ok(_) => continue,
+                                Err(e) => {
+                                    warn!("Send pong error {:?}", e);
+                                    let _ = stream.send(Message::Pong(inner.clone())).await;
+                                }
+                            };
+                        }
                         if !message.is_text() {
                             warn!("message is empty");
                             continue;
