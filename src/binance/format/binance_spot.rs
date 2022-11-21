@@ -143,8 +143,11 @@ pub struct SharedSpot {
     bids: BTreeMap<OrderedFloat<f64>, f64>,
 }
 
-impl SharedSpot {
-    pub fn new() -> Self {
+impl SharedT<EventSpot> for SharedSpot {
+    type BinanceSnapshot = BinanceSnapshotSpot;
+    type LevelEvent = LevelEventSpot;
+
+    fn new() -> Self {
         SharedSpot {
             symbol: String::new(),
             last_update_id: 0,
@@ -156,27 +159,6 @@ impl SharedSpot {
         }
     }
 
-    /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventSpot) {
-        self.asks.clear();
-        for ask in level_event.asks {
-            self.asks.insert(OrderedFloat(ask.price), ask.amount);
-        }
-
-        self.bids.clear();
-        for bid in level_event.bids {
-            self.bids.insert(OrderedFloat(bid.price), bid.amount);
-        }
-
-        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-        self.last_update_id = level_event.last_update_id;
-        self.send_time = time.as_millis() as i64;
-        self.receive_time = time.as_millis() as i64;
-    }
-}
-
-impl SharedT<EventSpot> for SharedSpot {
-    type BinanceSnapshot = BinanceSnapshotSpot;
     /// return last_update_id
     fn id(&self) -> i64 {
         self.last_update_id
@@ -217,6 +199,23 @@ impl SharedT<EventSpot> for SharedSpot {
         let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
         self.last_update_id = event.last_update_id;
         self.send_time = event.ts;
+        self.receive_time = time.as_millis() as i64;
+    }
+
+    fn set_level_event(&mut self, level_event: LevelEventSpot) {
+        self.asks.clear();
+        for ask in level_event.asks {
+            self.asks.insert(OrderedFloat(ask.price), ask.amount);
+        }
+
+        self.bids.clear();
+        for bid in level_event.bids {
+            self.bids.insert(OrderedFloat(bid.price), bid.amount);
+        }
+
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        self.last_update_id = level_event.last_update_id;
+        self.send_time = time.as_millis() as i64;
         self.receive_time = time.as_millis() as i64;
     }
 

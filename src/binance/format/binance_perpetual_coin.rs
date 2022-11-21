@@ -238,6 +238,20 @@ pub struct SharedPerpetualCoin {
 
 impl SharedT<EventPerpetualCoin> for SharedPerpetualCoin {
     type BinanceSnapshot = BinanceSnapshotPerpetualCoin;
+    type LevelEvent = LevelEventPerpetualCoin;
+
+    fn new() -> Self {
+        SharedPerpetualCoin {
+            symbol: String::new(),
+            last_update_id: 0,
+            create_time: 0,
+            send_time: 0,
+            receive_time: 0,
+            asks: BTreeMap::new(),
+            bids: BTreeMap::new(),
+        }
+    }
+
     /// return last_update_id
     /// or `u`
     fn id(&self) -> i64 {
@@ -284,6 +298,25 @@ impl SharedT<EventPerpetualCoin> for SharedPerpetualCoin {
         self.receive_time = time.as_millis() as i64;
     }
 
+    /// Only used for "LevelEvent"
+    fn set_level_event(&mut self, level_event: LevelEventPerpetualCoin) {
+        self.asks.clear();
+        for ask in level_event.asks {
+            self.asks.insert(OrderedFloat(ask.price), ask.amount);
+        }
+
+        self.bids.clear();
+        for bid in level_event.bids {
+            self.bids.insert(OrderedFloat(bid.price), bid.amount);
+        }
+
+        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        self.last_update_id = level_event.last_update_id;
+        self.create_time = level_event.create_time;
+        self.send_time = level_event.event_time;
+        self.receive_time = time.as_millis() as i64;
+    }
+
     fn get_snapshot(&self) -> BinanceOrderBookSnapshot {
         let asks = self
             .asks
@@ -316,38 +349,7 @@ impl SharedT<EventPerpetualCoin> for SharedPerpetualCoin {
     }
 }
 
-impl SharedPerpetualCoin {
-    pub fn new() -> Self {
-        SharedPerpetualCoin {
-            symbol: String::new(),
-            last_update_id: 0,
-            create_time: 0,
-            send_time: 0,
-            receive_time: 0,
-            asks: BTreeMap::new(),
-            bids: BTreeMap::new(),
-        }
-    }
-
-    /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualCoin) {
-        self.asks.clear();
-        for ask in level_event.asks {
-            self.asks.insert(OrderedFloat(ask.price), ask.amount);
-        }
-
-        self.bids.clear();
-        for bid in level_event.bids {
-            self.bids.insert(OrderedFloat(bid.price), bid.amount);
-        }
-
-        let time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-        self.last_update_id = level_event.last_update_id;
-        self.create_time = level_event.create_time;
-        self.send_time = level_event.event_time;
-        self.receive_time = time.as_millis() as i64;
-    }
-}
+impl SharedPerpetualCoin {}
 
 #[test]
 fn depth_row() {

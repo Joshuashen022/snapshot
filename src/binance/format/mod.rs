@@ -69,6 +69,10 @@ impl<'de> Visitor<'de> for QuoteVisitor {
 
 pub trait SharedT<Event> {
     type BinanceSnapshot;
+    type LevelEvent;
+
+    fn new() -> Self;
+
     /// return last_update_id
     fn id(&self) -> i64;
 
@@ -76,6 +80,8 @@ pub trait SharedT<Event> {
 
     /// Only used for "Event"
     fn add_event(&mut self, event: Event);
+
+    fn set_level_event(&mut self, level_event: Self::LevelEvent);
 
     fn get_snapshot(&self) -> BinanceOrderBookSnapshot;
 }

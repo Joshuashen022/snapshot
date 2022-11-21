@@ -2,6 +2,7 @@ pub mod binance_perpetual_coin;
 pub mod binance_perpetual_usdt;
 pub mod binance_spot;
 
+mod binance_snapshot;
 mod connect;
 mod ticker;
 
