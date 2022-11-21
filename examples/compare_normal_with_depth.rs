@@ -28,14 +28,6 @@ fn main(){
             let mut wtr = Writer::from_path("depth.cache").unwrap();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!(
-                    "manager1 id {}, ts {}, lts {} asks {} bids {}",
-                    message.id,
-                    message.ts,
-                    message.lts,
-                    message.asks.len(),
-                    message.bids.len()
-                );
                 let message = message.transform_to_local();
                 wtr.serialize(message.csv()).unwrap();
                 wtr.flush().unwrap();
@@ -51,14 +43,6 @@ fn main(){
             let mut wtr = Writer::from_path("normal.cache").unwrap();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
-                println!(
-                    "manager2 id {}, ts {}, lts {} asks {} bids {}",
-                    message.id,
-                    message.ts,
-                    message.lts,
-                    message.asks.len(),
-                    message.bids.len()
-                );
                 let message = message.transform_to_local();
                 wtr.serialize(message.csv()).unwrap();
                 wtr.flush().unwrap();
