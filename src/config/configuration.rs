@@ -26,11 +26,11 @@ pub enum SymbolType {
 impl DepthConfig {
     /// Binance Spot ContractUSDT ContractCoin, Crypto Spot ContractUSDT
     pub fn is_correct(&self) -> bool {
-        match (&self.symbol_type, &self.exchange_type){
+        match (&self.symbol_type, &self.exchange_type) {
             (_, ExchangeType::Binance) => true,
             (SymbolType::Spot(_), ExchangeType::Crypto) => true,
             (SymbolType::ContractUSDT(_), ExchangeType::Crypto) => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -107,20 +107,20 @@ impl DepthConfig {
 }
 
 #[derive(Clone, Debug)]
-pub struct TickerConfig{
+pub struct TickerConfig {
     pub ticker_url: String,
     pub symbol_type: SymbolType,
     pub exchange_type: ExchangeType,
 }
 
-impl TickerConfig{
+impl TickerConfig {
     /// Binance Spot, Crypto Spot ContractUSDT
     pub fn is_correct(&self) -> bool {
-        match (&self.symbol_type, &self.exchange_type){
+        match (&self.symbol_type, &self.exchange_type) {
             (SymbolType::Spot(_), ExchangeType::Binance) => true,
             (SymbolType::Spot(_), ExchangeType::Crypto) => true,
             (SymbolType::ContractUSDT(_), ExchangeType::Crypto) => true,
-            _ => false
+            _ => false,
         }
     }
 

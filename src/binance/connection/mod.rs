@@ -20,7 +20,6 @@ use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tracing::error;
 
-
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderBookSnapshot {
     pub symbol: String,

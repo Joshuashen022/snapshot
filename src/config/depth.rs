@@ -28,9 +28,9 @@ impl DepthConnection {
     /// 有限档深度信息模式，支持 Crypto 以及 Binance
     pub fn connect_depth_level(&self, config: DepthConfig) -> UnboundedReceiver<Depth> {
         match self {
-            DepthConnection::Binance(connection) => {
-                connection.level_depth(config.level_depth_url.unwrap()).unwrap()
-            }
+            DepthConnection::Binance(connection) => connection
+                .level_depth(config.level_depth_url.unwrap())
+                .unwrap(),
             DepthConnection::Crypto(connection) => connection.level_depth(config).unwrap(),
         }
     }

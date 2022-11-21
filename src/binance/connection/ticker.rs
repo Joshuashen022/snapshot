@@ -1,5 +1,5 @@
 use crate::binance::format::ticker::EventTicker;
-use crate::{TickerConfig, Ticker};
+use crate::{Ticker, TickerConfig};
 use anyhow::{Error, Result};
 use futures_util::{SinkExt, StreamExt};
 use std::sync::{Arc, Mutex};
@@ -50,10 +50,10 @@ impl BinanceTicker {
                     }
 
                     while let Ok(message) = stream.next().await.unwrap() {
-                        if message.is_ping(){
+                        if message.is_ping() {
                             debug!("Receiving ping message");
                             let inner = message.clone().into_data();
-                            match stream.send(Message::Pong(inner.clone())).await{
+                            match stream.send(Message::Pong(inner.clone())).await {
                                 Ok(_) => continue,
                                 Err(e) => {
                                     warn!("Send pong error {:?}", e);
@@ -108,7 +108,7 @@ impl BinanceTicker {
 #[cfg(test)]
 mod tests {
     use crate::binance::connection::ticker::BinanceTicker;
-    use crate::config::{TickerConfig, Method, SymbolType};
+    use crate::config::{Method, SymbolType, TickerConfig};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;

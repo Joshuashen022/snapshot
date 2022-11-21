@@ -49,7 +49,7 @@ impl DepthManager {
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
         let config = get_depth_config_from(exchange, symbol, limit);
 
-        assert!(config.is_correct(),"Unsupported config {:?}", config);
+        assert!(config.is_correct(), "Unsupported config {:?}", config);
 
         let connection = match config.exchange_type {
             ExchangeType::Binance => {

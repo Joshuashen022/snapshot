@@ -79,10 +79,10 @@ pub async fn try_get_connection<
     info!(" Overbook initialize success, now keep listening ");
 
     while let Ok(message) = stream.next().await.unwrap() {
-        if message.is_ping(){
+        if message.is_ping() {
             debug!("Receiving ping message");
             let inner = message.clone().into_data();
-            match stream.send(Message::Pong(inner.clone())).await{
+            match stream.send(Message::Pong(inner.clone())).await {
                 Ok(_) => continue,
                 Err(e) => {
                     warn!("Send pong error {:?}", e);
@@ -128,6 +128,46 @@ fn deserialize_event<StreamEvent: DeserializeOwned>(message: Message) -> Option<
     let event: StreamEvent = match serde_json::from_str(&text) {
         Ok(e) => e,
         Err(_) => return None,
+    };
+
+    Some(event)
+}
+
+pub async fn deserialize_event_with_stream<StreamEvent: DeserializeOwned>(
+    message: Message,
+    stream: &mut BinanceWebSocket,
+) -> Option<StreamEvent> {
+    if message.is_ping() {
+        debug!("Receiving ping message");
+        let inner = message.clone().into_data();
+        match stream.send(Message::Pong(inner.clone())).await {
+            Ok(_) => return None,
+            Err(e) => {
+                warn!("Send pong error {:?}", e);
+                let _ = stream.send(Message::Pong(inner.clone())).await;
+            }
+        };
+    }
+
+    if !message.is_text() {
+        warn!("message is empty");
+        return None;
+    }
+
+    let text = match message.clone().into_text() {
+        Ok(e) => e,
+        Err(e) => {
+            warn!("message into text error {:?}", e);
+            return None;
+        }
+    };
+
+    let event: StreamEvent = match serde_json::from_str(&text) {
+        Ok(e) => e,
+        Err(e) => {
+            warn!("Error {}, {:?}", e, message);
+            return None;
+        }
     };
 
     Some(event)

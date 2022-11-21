@@ -77,7 +77,6 @@ pub fn get_ticker_config_from(exchange: &str, symbol: &str, limit: Option<i32>) 
     }
 }
 
-
 /// exchange: "binance" / "crypto"
 /// symbol: "BTC_USDT" / "FTT_USDT"
 ///
@@ -175,8 +174,7 @@ mod tests {
 
     #[test]
     fn config_test() {
-        let binance_config =
-            get_depth_config_from("binance", "BTC_USTD_221230_SWAP", Some(1000));
+        let binance_config = get_depth_config_from("binance", "BTC_USTD_221230_SWAP", Some(1000));
 
         assert!(binance_config.is_binance());
         assert!(binance_config.is_contract_coin());
@@ -186,22 +184,13 @@ mod tests {
         assert!(crypto_config.is_crypto());
         assert!(crypto_config.is_spot());
 
-        assert_eq!(
-            crypto_config.get_symbol(),
-            String::from("BTC_USDT.50")
-        );
+        assert_eq!(crypto_config.get_symbol(), String::from("BTC_USDT.50"));
 
         let crypto_config = get_depth_config_from("crypto", "BTC_USDT_SWAP", None);
-        assert_eq!(
-            crypto_config.get_symbol(),
-            String::from("BTCUSD-PERP.50")
-        );
+        assert_eq!(crypto_config.get_symbol(), String::from("BTCUSD-PERP.50"));
 
         let crypto_config = get_depth_config_from("crypto", "BTC_USDT", Some(10));
-        assert_eq!(
-            crypto_config.get_symbol(),
-            String::from("BTC_USDT.10")
-        );
+        assert_eq!(crypto_config.get_symbol(), String::from("BTC_USDT.10"));
     }
 
     #[test]

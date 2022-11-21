@@ -1,4 +1,4 @@
-use crate::binance::connection::connect::{socket_stream, try_get_connection};
+use crate::binance::connection::connect::{deserialize_event_with_stream, socket_stream, try_get_connection};
 use crate::binance::format::binance_perpetual_usdt::{
     BinanceSnapshotPerpetualUSDT, EventPerpetualUSDT, SharedPerpetualUSDT,
     StreamEventPerpetualUSDT, StreamLevelEventPerpetualUSDT,
@@ -59,7 +59,7 @@ impl BinanceSpotOrderBookPerpetualUSDT {
                 match res {
                     Ok(false) => error!("Try get connection failed retrying"),
                     Err(e) => error!("Error happen when try get connection {:?}", e),
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 }
             }
         });
@@ -98,38 +98,15 @@ impl BinanceSpotOrderBookPerpetualUSDT {
                 info!("Level Overbook initialize success, now keep listening ");
 
                 while let Ok(message) = stream.next().await.unwrap() {
-                    if message.is_ping(){
-                        debug!("Receiving ping message");
-                        let inner = message.clone().into_data();
-                        match stream.send(Message::Pong(inner.clone())).await{
-                            Ok(_) => continue,
-                            Err(e) => {
-                                warn!("Send pong error {:?}", e);
-                                let _ = stream.send(Message::Pong(inner.clone())).await;
-                            }
-                        };
-                    }
-                    if !message.is_text() {
-                        warn!("msg is empty");
-                        continue;
-                    }
-
-                    let text = match message.clone().into_text() {
-                        Ok(e) => e,
-                        Err(e) => {
-                            warn!("msg.into_text {:?}", e);
-                            continue;
-                        }
+                    let level_event = match deserialize_event_with_stream::<StreamLevelEventPerpetualUSDT>(
+                        message.clone(),
+                        &mut stream,
+                    )
+                        .await
+                    {
+                        Some(event) => event,
+                        None => continue,
                     };
-
-                    let level_event: StreamLevelEventPerpetualUSDT =
-                        match serde_json::from_str(&text) {
-                            Ok(e) => e,
-                            Err(e) => {
-                                warn!("Error {},{:?}", e, message);
-                                continue;
-                            }
-                        };
                     let level_event = level_event.data;
 
                     debug!(

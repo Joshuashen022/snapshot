@@ -1,9 +1,8 @@
-
+mod depth;
 mod request;
 mod respond;
 mod stream;
 mod ticker;
-mod depth;
 
 pub use depth::DepthData;
 pub use depth::DepthEvent;

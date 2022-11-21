@@ -1,20 +1,21 @@
+pub use super::depth::CryptoDepth;
+pub use super::ticker::CryptoTicker;
+use crate::crypto::connection::CryptoWebSocket;
+use crate::crypto::format::{
+    heartbeat_respond, subscribe_message, GeneralRespond, HeartbeatRequest,
+};
 use anyhow::{anyhow, Result};
 use futures_util::SinkExt;
-use tokio_tungstenite::connect_async;
-use tokio_tungstenite::tungstenite::Message;
-use tracing::debug;
-use url::Url;
 use serde::de::DeserializeOwned;
 use std::fmt::Debug;
 use std::time::Duration;
 use tokio::time::sleep;
-pub use super::depth::CryptoDepth;
-pub use super::ticker::CryptoTicker;
-use crate::crypto::format::{GeneralRespond, heartbeat_respond, HeartbeatRequest, subscribe_message};
-use crate::crypto::connection::CryptoWebSocket;
+use tokio_tungstenite::connect_async;
+use tokio_tungstenite::tungstenite::Message;
+use tracing::debug;
+use url::Url;
 
-pub async fn crypto_initialize(address: &str, channel: String) -> Result<CryptoWebSocket>{
-
+pub async fn crypto_initialize(address: &str, channel: String) -> Result<CryptoWebSocket> {
     let mut stream = socket_stream(&address).await?;
     debug!("Connect to level_address success");
 
@@ -30,7 +31,6 @@ pub async fn crypto_initialize(address: &str, channel: String) -> Result<CryptoW
     Ok(stream)
 }
 
-
 async fn socket_stream(address: &str) -> Result<CryptoWebSocket> {
     let url = Url::parse(&address).expect("Bad URL");
 
@@ -40,7 +40,6 @@ async fn socket_stream(address: &str) -> Result<CryptoWebSocket> {
     }
 }
 
-
 /// Ok(true) => initialize complete
 /// and this message is `StreamEvent`
 ///
@@ -48,12 +47,9 @@ async fn socket_stream(address: &str) -> Result<CryptoWebSocket> {
 /// or other non-`StreamEvent`message
 ///
 /// Err() => error happen and solve it outside
-pub async fn is_live_and_keep_alive<
-    Respond: DeserializeOwned + Debug
->
-(
+pub async fn is_live_and_keep_alive<Respond: DeserializeOwned + Debug>(
     stream: &mut CryptoWebSocket,
-    message: Message
+    message: Message,
 ) -> Result<bool> {
     if !message.is_text() {
         debug!("Receive message is empty");

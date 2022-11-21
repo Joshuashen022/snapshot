@@ -8,11 +8,9 @@ use tokio::time::{sleep, Duration};
 use tracing::{error, info, warn};
 
 use crate::config::DepthConfig;
-use crate::crypto::format::{
-    DepthEventStream, DepthShared, OrderRespond,
-};
+use crate::crypto::format::{DepthEventStream, DepthShared, OrderRespond};
 
-use super::abstraction::{is_live_and_keep_alive, crypto_initialize};
+use super::abstraction::{crypto_initialize, is_live_and_keep_alive};
 
 #[derive(Clone)]
 pub struct CryptoDepth {
@@ -30,7 +28,10 @@ impl CryptoDepth {
     }
 
     pub fn level_depth(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
-        let level_address = config.level_depth_url.clone().expect("level address is empty");
+        let level_address = config
+            .level_depth_url
+            .clone()
+            .expect("level address is empty");
         let symbol = config.get_symbol();
 
         let shared = self.shared.clone();
@@ -58,7 +59,9 @@ impl CryptoDepth {
                     }
 
                     while let Ok(message) = stream.next().await.unwrap() {
-                        match is_live_and_keep_alive::<OrderRespond>(&mut stream, message.clone()).await {
+                        match is_live_and_keep_alive::<OrderRespond>(&mut stream, message.clone())
+                            .await
+                        {
                             Ok(is_alive) => {
                                 if !is_alive {
                                     continue;
@@ -121,12 +124,11 @@ impl CryptoDepth {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::config::Method;
     use crate::config::{DepthConfig, SymbolType};
-    use crate::crypto::{DepthShared, CryptoDepth};
+    use crate::crypto::{CryptoDepth, DepthShared};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;

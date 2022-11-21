@@ -1,4 +1,4 @@
-use crate::binance::connection::connect::{socket_stream, try_get_connection};
+use crate::binance::connection::connect::{deserialize_event_with_stream, socket_stream, try_get_connection};
 use crate::binance::format::binance_perpetual_coin::{
     BinanceSnapshotPerpetualCoin, EventPerpetualCoin, SharedPerpetualCoin,
     StreamEventPerpetualCoin, StreamLevelEventPerpetualCoin,
@@ -40,7 +40,6 @@ impl BinanceSpotOrderBookPerpetualCoin {
         let sender = sender.clone();
         // Thread to maintain Order Book
         let _ = tokio::spawn(async move {
-
             info!("Start OrderBook thread");
             loop {
                 let res = try_get_connection::<
@@ -60,7 +59,7 @@ impl BinanceSpotOrderBookPerpetualCoin {
                 match res {
                     Ok(false) => error!("Try get connection failed retrying"),
                     Err(e) => error!("Error happen when try get connection {:?}", e),
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 }
             }
         });
@@ -99,38 +98,15 @@ impl BinanceSpotOrderBookPerpetualCoin {
                 info!("Level Overbook initialize success, now keep listening ");
 
                 while let Ok(message) = stream.next().await.unwrap() {
-                    if message.is_ping(){
-                        debug!("Receiving ping message");
-                        let inner = message.clone().into_data();
-                        match stream.send(Message::Pong(inner.clone())).await{
-                            Ok(_) => continue,
-                            Err(e) => {
-                                warn!("Send pong error {:?}", e);
-                                let _ = stream.send(Message::Pong(inner.clone())).await;
-                            }
-                        };
-                    }
-                    if !message.is_text() {
-                        warn!("msg.is_text() is empty");
-                        continue;
-                    }
-
-                    let text = match message.clone().into_text() {
-                        Ok(e) => e,
-                        Err(e) => {
-                            warn!("msg.into_text {:?}", e);
-                            continue;
-                        }
+                    let level_event = match deserialize_event_with_stream::<StreamLevelEventPerpetualCoin>(
+                        message.clone(),
+                        &mut stream,
+                    )
+                        .await
+                    {
+                        Some(event) => event,
+                        None => continue,
                     };
-
-                    let level_event: StreamLevelEventPerpetualCoin =
-                        match serde_json::from_str(&text) {
-                            Ok(e) => e,
-                            Err(e) => {
-                                warn!("Error {}, {:?}", e, message);
-                                continue;
-                            }
-                        };
                     let level_event = level_event.data;
 
                     debug!(
@@ -191,8 +167,8 @@ impl BinanceSpotOrderBookPerpetualCoin {
 }
 #[cfg(test)]
 mod tests {
-    use crate::config::{DepthConfig, Method, SymbolType};
     use crate::binance::connection::BinanceSpotOrderBookPerpetualCoin;
+    use crate::config::{DepthConfig, Method, SymbolType};
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};
     use tokio::runtime::Runtime;
@@ -212,10 +188,9 @@ mod tests {
 
         Runtime::new().unwrap().block_on(async {
             let ticker = BinanceSpotOrderBookPerpetualCoin::new();
-            let mut recv = ticker.depth(
-                REST.to_string(),
-                DEPTH_URL.to_string(),
-            ).unwrap();
+            let mut recv = ticker
+                .depth(REST.to_string(), DEPTH_URL.to_string())
+                .unwrap();
 
             let depth = recv.recv().await;
             assert!(depth.is_some());

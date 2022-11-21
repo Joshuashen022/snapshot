@@ -10,7 +10,7 @@ use tokio::time::{sleep, Duration};
 
 use tracing::{error, info, warn};
 
-use super::abstraction::{is_live_and_keep_alive, crypto_initialize};
+use super::abstraction::{crypto_initialize, is_live_and_keep_alive};
 #[derive(Clone)]
 pub struct CryptoTicker {
     status: Arc<Mutex<bool>>,
@@ -50,7 +50,12 @@ impl CryptoTicker {
                     }
 
                     while let Ok(message) = stream.next().await.unwrap() {
-                        match is_live_and_keep_alive::<TickerEventStream>(&mut stream, message.clone()).await {
+                        match is_live_and_keep_alive::<TickerEventStream>(
+                            &mut stream,
+                            message.clone(),
+                        )
+                        .await
+                        {
                             Ok(is_alive) => {
                                 if !is_alive {
                                     continue;
@@ -96,7 +101,7 @@ impl CryptoTicker {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::{TickerConfig, Method, SymbolType};
+    use crate::config::{Method, SymbolType, TickerConfig};
     use crate::crypto::connection::CryptoTicker;
     use crate::ExchangeType;
     use std::sync::{Arc, Mutex, RwLock};

@@ -1,6 +1,6 @@
 use crate::binance::BinanceTicker;
 use crate::crypto::CryptoTicker;
-use crate::{get_ticker_config_from, TickerConfig, ExchangeType, TickerConnection};
+use crate::{get_ticker_config_from, ExchangeType, TickerConfig, TickerConnection};
 use tokio::sync::mpsc::UnboundedReceiver;
 #[derive(Clone)]
 pub struct TickerManager {
