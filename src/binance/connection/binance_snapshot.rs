@@ -4,32 +4,38 @@ use crate::binance::connection::connect::{
 use crate::binance::format::binance_spot::{
     BinanceSnapshotSpot, EventSpot, LevelEventSpot, SharedSpot,
 };
-use futures_util::StreamExt;
 use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Depth;
 use anyhow::Result;
 use futures_util::future::Shared;
+use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 use std::marker::Send;
 use std::sync::{Arc, Mutex, RwLock};
+use std::fmt::Debug;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tracing::{debug, error, info};
 #[derive(Clone)]
-pub struct BinanceOrderBookSpot<Shared> {
+pub struct BinanceOrderBook<Shared> {
     status: Arc<Mutex<bool>>,
     shared: Arc<RwLock<Shared>>,
 }
 
 impl<Event, Snapshot, Shared, StreamEvent, StreamLevelEvent>
-    BinanceSnapshotT<Event, Snapshot, Shared, StreamEvent, StreamLevelEvent> for BinanceOrderBookSpot<Shared>
+    BinanceSnapshotT<Event, Snapshot, Shared, StreamEvent, StreamLevelEvent>
+    for BinanceOrderBook<Shared>
 where
     Event: DeserializeOwned + EventT + Send + Sync,
     Snapshot: SnapshotT + DeserializeOwned + Send + Sync,
-    Shared: SharedT<Event, BinanceSnapshot = Snapshot, LevelEvent = StreamLevelEvent> + Send + Sync + 'static,
+    Shared: SharedT<Event, BinanceSnapshot = Snapshot, LevelEvent = StreamLevelEvent>
+        + Send
+        + Sync
+        + 'static,
     StreamEvent: StreamEventT + DeserializeOwned + StreamEventT<Event = Event> + Send + Sync,
-    StreamLevelEvent: StreamEventT + DeserializeOwned + StreamEventT<Event = Event> + Send + Sync,
+    StreamLevelEvent:
+        StreamEventT + DeserializeOwned + StreamEventT<Event = Event> + Send + Sync + Debug,
 {
     fn depth(
         &self,
@@ -123,7 +129,19 @@ where
     }
 
     fn snapshot(&self) -> Option<Depth> {
-        todo!()
+        let mut current_status = false;
+
+        if let Ok(status_guard) = self.status.lock() {
+            current_status = (*status_guard).clone();
+        } else {
+            error!("BinanceSpotOrderBook lock is busy");
+        }
+
+        if current_status {
+            Some(self.shared.write().unwrap().get_snapshot().depth())
+        } else {
+            None
+        }
     }
 }
 pub trait BinanceSnapshotT<Event, Snapshot, Shared, StreamEvent, StreamLevelEvent>
