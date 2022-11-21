@@ -109,6 +109,27 @@ pub struct OrderBookStore{
     pub asks: Vec<(f64,f64)>,
 }
 
+impl OrderBookStore{
+    pub fn csv(&self) -> OrderBookStoreCSV{
+        OrderBookStoreCSV{
+            last_update_id: self.last_update_id,
+            send_time: self.send_time,
+            receive_time: self.receive_time,
+            asks: format!("{:?}", self.asks),
+            bids: format!("{:?}", self.bids),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct OrderBookStoreCSV{
+    pub last_update_id: i64,
+    pub send_time: i64,
+    pub receive_time: i64,
+    pub bids: String,
+    pub asks: String,
+}
+
 #[derive(Clone)]
 pub enum BinanceConnectionType {
     Spot(BinanceOrderBookSpot),

@@ -37,7 +37,7 @@ fn main(){
                     message.bids.len()
                 );
                 let message = message.transform_to_local();
-                wtr.serialize(message).unwrap();
+                wtr.serialize(message.csv()).unwrap();
                 wtr.flush().unwrap();
             }
         });
@@ -60,7 +60,7 @@ fn main(){
                     message.bids.len()
                 );
                 let message = message.transform_to_local();
-                wtr.serialize(message).unwrap();
+                wtr.serialize(message.csv()).unwrap();
                 wtr.flush().unwrap();
             }
         });
