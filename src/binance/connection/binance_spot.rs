@@ -7,9 +7,10 @@ use crate::{BinanceOrderBookSnapshot, Depth};
 
 use anyhow::anyhow;
 use anyhow::{Error, Result};
-use futures_util::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
+use tokio_tungstenite::tungstenite::Message;
 use tracing::{debug, error, info, warn};
 
 #[derive(Clone)]
@@ -101,13 +102,26 @@ impl BinanceOrderBookSpot {
                 }
 
                 info!("Level Overbook initialize success, now keep listening ");
-                while let Ok(msg) = stream.next().await.unwrap() {
-                    if !msg.is_text() {
+                while let Ok(message) = stream.next().await.unwrap() {
+                    if message.is_ping(){
+                        debug!("Receiving ping message");
+                        let inner = message.clone().into_data();
+                        match stream.send(Message::Pong(inner.clone())).await{
+                            Ok(_) => continue,
+                            Err(e) => {
+                                warn!("Send pong error {:?}", e);
+                                let _ = stream.send(Message::Pong(inner.clone())).await;
+                            }
+                        };
+
+                    }
+
+                    if !message.is_text() {
                         warn!("msg is empty");
                         continue;
                     }
 
-                    let text = match msg.clone().into_text() {
+                    let text = match message.clone().into_text() {
                         Ok(e) => e,
                         Err(e) => {
                             warn!("msg.into_text {:?}", e);
@@ -118,7 +132,7 @@ impl BinanceOrderBookSpot {
                     let level_event: LevelEventSpot = match serde_json::from_str(&text) {
                         Ok(e) => e,
                         Err(e) => {
-                            warn!("Error {}, {:?}", e, msg);
+                            warn!("Error {}, {:?}", e, message);
                             continue;
                         }
                     };
