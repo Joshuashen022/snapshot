@@ -107,7 +107,7 @@ where
                         Some(event) => event,
                         None => continue,
                     };
-
+                    // todo: debug
                     // debug!("Level Event {}", level_event.last_update_id);
 
                     if let Ok(mut guard) = shared.write() {
