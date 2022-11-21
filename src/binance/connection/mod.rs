@@ -137,7 +137,7 @@ impl OrderBookStore{
         let ask_len = self.asks.len();
         if ask_len > 20 {
             let mut asks = self.asks.clone();
-            let _ = asks.split_off(ask_len - 20);
+            let asks = asks.split_off(ask_len - 20);
             asks
         } else{
             self.asks.clone()
@@ -147,7 +147,7 @@ impl OrderBookStore{
     fn bids_20(&self) -> Vec<(f64,f64)>{
         if self.bids.len() > 20 {
             let mut bids = self.bids.clone();
-            let bids = bids.split_off(20);
+            let _ = bids.split_off(20);
             bids
         } else {
             self.bids.clone()
