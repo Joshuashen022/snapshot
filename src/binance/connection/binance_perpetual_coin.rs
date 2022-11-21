@@ -57,14 +57,9 @@ impl BinanceSpotOrderBookPerpetualCoin {
                 .await;
 
                 match res {
-                    Ok(success) => {
-                        if !success {
-                            error!("Try get connection failed retrying")
-                        } else {
-                            unreachable!()
-                        }
-                    }
+                    Ok(false) => error!("Try get connection failed retrying"),
                     Err(e) => error!("Error happen when try get connection {:?}", e),
+                    _ => unreachable!()
                 }
             }
         });
