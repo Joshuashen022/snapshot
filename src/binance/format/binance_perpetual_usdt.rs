@@ -24,11 +24,11 @@ impl StreamEventT for StreamEventPerpetualUSDT {
 #[derive(Deserialize, Debug)]
 pub struct StreamLevelEventPerpetualUSDT {
     pub stream: String,
-    pub data: LevelEventPerpetualU,
+    pub data: LevelEventPerpetualUSDT,
 }
 
 impl StreamEventT for StreamLevelEventPerpetualUSDT {
-    type Event = LevelEventPerpetualU;
+    type Event = LevelEventPerpetualUSDT;
     fn event(&self) -> Self::Event {
         self.data.clone()
     }
@@ -140,7 +140,7 @@ impl EventT for EventPerpetualUSDT {
 
 /// 有限档深度信息
 #[derive(Deserialize, Debug, Clone)]
-pub struct LevelEventPerpetualU {
+pub struct LevelEventPerpetualUSDT {
     /// Event type
     #[serde(rename = "e")]
     pub ttype: String,
@@ -318,7 +318,7 @@ impl SharedPerpetualUSDT {
     }
 
     /// Only used for "LevelEvent"
-    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualU) {
+    pub fn set_level_event(&mut self, level_event: LevelEventPerpetualUSDT) {
         self.asks.clear();
         for ask in level_event.asks {
             self.asks.insert(OrderedFloat(ask.price), ask.amount);

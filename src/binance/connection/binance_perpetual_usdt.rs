@@ -1,4 +1,6 @@
-use crate::binance::connection::connect::{deserialize_event_with_stream, socket_stream, try_get_connection};
+use crate::binance::connection::connect::{
+    deserialize_event_with_stream, socket_stream, try_get_connection,
+};
 use crate::binance::format::binance_perpetual_usdt::{
     BinanceSnapshotPerpetualUSDT, EventPerpetualUSDT, SharedPerpetualUSDT,
     StreamEventPerpetualUSDT, StreamLevelEventPerpetualUSDT,
@@ -98,11 +100,10 @@ impl BinanceSpotOrderBookPerpetualUSDT {
                 info!("Level Overbook initialize success, now keep listening ");
 
                 while let Ok(message) = stream.next().await.unwrap() {
-                    let level_event = match deserialize_event_with_stream::<StreamLevelEventPerpetualUSDT>(
-                        message.clone(),
-                        &mut stream,
-                    )
-                        .await
+                    let level_event = match deserialize_event_with_stream::<
+                        StreamLevelEventPerpetualUSDT,
+                    >(message.clone(), &mut stream)
+                    .await
                     {
                         Some(event) => event,
                         None => continue,
