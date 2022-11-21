@@ -1,10 +1,10 @@
-use std::fs::OpenOptions;
-use std::io::Write;
 use tokio::runtime::Runtime;
 use tokio::time::{sleep, Duration};
+use csv::Writer;
+use serde::Serialize;
 
 use snapshot::QuotationManager;
-fn main() {
+fn main(){
     println!("Hello");
 
     tracing_subscriber::fmt::init();
@@ -25,8 +25,7 @@ fn main() {
 
         tokio::spawn(async move {
             let mut receiver = manager1_clone.subscribe_depth();
-            let mut file = OpenOptions::new();
-            let mut reader = file.create(true).append(true).open("depth.cache").unwrap();
+            let mut wtr = Writer::from_path("depth.cache").unwrap();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
                 println!(
@@ -38,9 +37,8 @@ fn main() {
                     message.bids.len()
                 );
                 let message = message.transform_to_local();
-                let raw = serde_json::to_string(&message).unwrap();
-                let raw = format!("{}\n",raw);
-                reader.write_all(raw.as_bytes()).unwrap_or(());
+                wtr.serialize(message).unwrap();
+                wtr.flush().unwrap();
             }
         });
 
@@ -50,8 +48,7 @@ fn main() {
         let manager2_clone = manager2.clone();
         tokio::spawn(async move {
             let mut receiver = manager2_clone.subscribe_depth();
-            let mut file = OpenOptions::new();
-            let mut reader = file.create(true).append(true).open("normal.cache").unwrap();
+            let mut wtr = Writer::from_path("normal.cache").unwrap();
             sleep(Duration::from_secs(2)).await;
             while let Some(message) = receiver.recv().await {
                 println!(
@@ -63,9 +60,8 @@ fn main() {
                     message.bids.len()
                 );
                 let message = message.transform_to_local();
-                let raw = serde_json::to_string(&message).unwrap();
-                let raw = format!("{}\n",raw);
-                reader.write_all(raw.as_bytes()).unwrap_or(());
+                wtr.serialize(message).unwrap();
+                wtr.flush().unwrap();
             }
         });
         sleep(Duration::from_secs(3)).await;
