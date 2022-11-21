@@ -163,6 +163,7 @@ impl OrderBookStore{
         for (price, amount) in asks{
             asks_string += &format!("{},{},", price, amount);
         }
+        asks_string.pop();
 
         let bids = self.bids_20();
         assert_eq!(bids.len(), 20);
@@ -170,6 +171,7 @@ impl OrderBookStore{
         for (price, amount) in bids{
             bids_string += &format!("{},{},", price, amount);
         }
+        bids_string.pop();
 
         OrderBookStoreCSV{
             last_update_id: self.last_update_id,
