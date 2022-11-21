@@ -2,14 +2,14 @@ use crate::binance::format::{EventT, SharedT, SnapshotT, StreamEventT};
 use crate::Depth;
 
 use anyhow::{anyhow, Result};
-use futures_util::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use serde::de::DeserializeOwned;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio_tungstenite::{connect_async, tungstenite, MaybeTlsStream, WebSocketStream};
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 use tungstenite::Message;
 use url::Url;
 
@@ -76,6 +76,20 @@ pub async fn try_get_connection<
     info!(" Overbook initialize success, now keep listening ");
 
     while let Ok(message) = stream.next().await.unwrap() {
+        if message.is_ping(){
+            debug!("Receiving ping message");
+            let inner = message.clone().into_data();
+            match stream.send(Message::Pong(inner.clone())).await{
+                Ok(_) => continue,
+                Err(e) => {
+                    warn!("Send pong error {:?}", e);
+                    let _ = stream.send(Message::Pong(inner.clone())).await;
+                }
+            };
+
+        }
+
+
         let event = deserialize_event::<StreamEvent>(message.clone());
         if event.is_none() {
             warn!("Message decode error {:?}", message);
