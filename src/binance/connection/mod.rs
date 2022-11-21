@@ -9,7 +9,7 @@ use crate::binance::connection::{
 };
 use crate::Depth;
 use crate::Quote;
-
+use std::borrow::Cow;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedReceiver;
@@ -105,29 +105,89 @@ pub struct OrderBookStore{
     pub last_update_id: i64,
     pub send_time: i64,
     pub receive_time: i64,
-    pub bids: Vec<(f64,f64)>,
+    pub bids: Vec<(f64,f64)>, // price, amount
     pub asks: Vec<(f64,f64)>,
 }
 
 impl OrderBookStore{
+
+    fn ordered(&self) -> bool{
+        let mut price_last = self.asks.clone()[0].0;
+        let mut res1 = true;
+        for &(price, _) in &self.asks{
+            if !(price_last <= price){
+                res1 = false;
+            }
+            price_last = price;
+        }
+
+        let mut price_last = self.bids.clone()[0].0;
+        let mut res2 = true;
+        for &(price, _) in &self.bids{
+            if !(price_last >= price){
+                res2 = false;
+            }
+            price_last = price;
+        }
+
+        res1 || res2
+    }
+
+    fn asks_20(&self) -> Vec<(f64,f64)>{
+        let ask_len = self.asks.len();
+        if ask_len > 20 {
+            let mut asks = self.asks.clone();
+            let _ = asks.split_off(ask_len - 20);
+            asks
+        } else{
+            self.asks.clone()
+        }
+    }
+
+    fn bids_20(&self) -> Vec<(f64,f64)>{
+        if self.bids.len() > 20 {
+            let mut bids = self.bids.clone();
+            let bids = bids.split_off(20);
+            bids
+        } else {
+            self.bids.clone()
+        }
+    }
+
     pub fn csv(&self) -> OrderBookStoreCSV{
+        assert!(self.ordered());
+        let asks = self.asks_20();
+        assert_eq!(asks.len(), 20);
+
+        let mut asks_string = String::new();
+        for (price, amount) in asks{
+            asks_string += &format!("{},{},", price, amount);
+        }
+
+        let bids = self.bids_20();
+        assert_eq!(bids.len(), 20);
+        let mut bids_string = String::new();
+        for (price, amount) in bids{
+            bids_string += &format!("{},{},", price, amount);
+        }
+
         OrderBookStoreCSV{
             last_update_id: self.last_update_id,
             send_time: self.send_time,
             receive_time: self.receive_time,
-            asks: format!("{:?}", self.asks),
-            bids: format!("{:?}", self.bids),
+            asks: Cow::Owned(asks_string),
+            bids: Cow::Owned(bids_string),
         }
     }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct OrderBookStoreCSV{
+pub struct OrderBookStoreCSV<'a>{
     pub last_update_id: i64,
     pub send_time: i64,
     pub receive_time: i64,
-    pub bids: String,
-    pub asks: String,
+    pub bids: Cow<'a, str>,
+    pub asks: Cow<'a, str>,
 }
 
 #[derive(Clone)]
