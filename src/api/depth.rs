@@ -1,13 +1,19 @@
-use crate::crypto::CryptoDepth;
-use crate::{get_depth_config_from, DepthConfig, DepthConnection};
+
+use crate::{get_depth_config_from, DepthConfig};
 use serde::Deserialize;
 use std::fmt;
 use std::fmt::Debug;
+use anyhow::Result;
 use tokio::sync::mpsc::UnboundedReceiver;
+use crate::binance::connection::binance_perpetual_coin::BinanceSpotOrderBookPerpetualCoin;
+use crate::binance::connection::binance_perpetual_usdt::BinanceSpotOrderBookPerpetualUSDT;
+use crate::binance::connection::binance_spot::BinanceOrderBookSpot;
+use crate::crypto::CryptoDepth;
+use crate::config::SymbolType;
 
 pub struct DepthManager {
     pub config: DepthConfig,
-    connection: DepthConnection,
+    connection: Box<dyn DepthT>,
 }
 
 impl DepthManager {
@@ -25,9 +31,13 @@ impl DepthManager {
     pub fn subscribe_depth(&self) -> UnboundedReceiver<Depth> {
         let config = self.config.clone();
         if config.is_depth_snapshot() {
-            self.connection.connect_depth_snapshot(config)
+
+            self.connection.depth_snapshot(config).unwrap()
+
         } else if config.is_depth() {
-            self.connection.connect_depth(config)
+
+            self.connection.depth(config).unwrap()
+
         } else {
             panic!("Unsupported Config {:?}", config);
         }
@@ -35,7 +45,7 @@ impl DepthManager {
 
     /// Get one single snapshot
     pub fn latest_depth(&self) -> Option<Depth> {
-        self.connection.get_snapshot()
+        self.connection.snapshot()
     }
 
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
@@ -43,7 +53,24 @@ impl DepthManager {
 
         assert!(config.is_correct(), "Unsupported config {:?}", config);
 
-        let connection = DepthConnection::new_with(config.clone());
+        let connection: Box<dyn DepthT> = match config.exchange_type {
+            ExchangeType::Binance => {
+                match config.symbol_type {
+                    SymbolType::Spot(_) => {
+                        Box::new(BinanceOrderBookSpot::new())
+                    }
+                    SymbolType::ContractUSDT(_) => {
+                        Box::new(BinanceSpotOrderBookPerpetualUSDT::new())
+                    }
+                    SymbolType::ContractCoin(_) => {
+                        Box::new(BinanceSpotOrderBookPerpetualCoin::new())
+                    }
+                }
+            }
+            ExchangeType::Crypto => {
+                Box::new(CryptoDepth::new())
+            }
+        };
 
         Self { config, connection }
     }
@@ -85,4 +112,16 @@ pub struct Quote {
 pub enum ExchangeType {
     Binance,
     Crypto,
+}
+
+pub(crate) trait DepthT {
+    fn new() -> Self
+        where
+            Self: Sized;
+
+    fn depth_snapshot(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>>;
+
+    fn depth(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>>;
+
+    fn snapshot(&self) -> Option<Depth>;
 }

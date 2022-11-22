@@ -6,9 +6,9 @@ use crate::binance::format::binance_perpetual_usdt::{
     StreamEventPerpetualUSDT, StreamLevelEventPerpetualUSDT,
 };
 use crate::binance::format::SharedT;
-use crate::Depth;
+use crate::{Depth, DepthConfig, DepthT};
 
-use super::BinanceDepthT;
+
 use anyhow::anyhow;
 use anyhow::Result;
 use futures_util::StreamExt;
@@ -22,6 +22,7 @@ pub struct BinanceSpotOrderBookPerpetualUSDT {
     pub(crate) shared: Arc<RwLock<SharedPerpetualUSDT>>,
 }
 
+#[allow(dead_code)]
 impl BinanceSpotOrderBookPerpetualUSDT {
     pub(crate) fn set_symbol(&mut self, symbol: String) -> Result<()> {
         {
@@ -36,7 +37,7 @@ impl BinanceSpotOrderBookPerpetualUSDT {
     }
 }
 
-impl BinanceDepthT for BinanceSpotOrderBookPerpetualUSDT {
+impl DepthT for BinanceSpotOrderBookPerpetualUSDT {
     fn new() -> Self {
         BinanceSpotOrderBookPerpetualUSDT {
             status: Arc::new(Mutex::new(false)),
@@ -45,13 +46,10 @@ impl BinanceDepthT for BinanceSpotOrderBookPerpetualUSDT {
     }
 
     /// acquire a order book with "depth method"
-    fn depth_snapshot(
-        &self,
-        rest_address: String,
-        depth_address: String,
-    ) -> Result<UnboundedReceiver<Depth>> {
+    fn depth_snapshot(&self, config: DepthConfig ) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
+        let (rest_address, depth_address) = config.get_depth_snapshot_addresses();
         let (sender, receiver) = mpsc::unbounded_channel();
         let sender = sender.clone();
         // Thread to maintain Order Book
@@ -83,9 +81,9 @@ impl BinanceDepthT for BinanceSpotOrderBookPerpetualUSDT {
         Ok(receiver)
     }
 
-    fn depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
+    fn depth(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
-
+        let level_address = config.get_depth_addresses();
         // This is not actually used
         let status = self.status.clone();
 

@@ -6,7 +6,6 @@ mod ticker;
 use crate::ExchangeType;
 pub use configuration::{DepthConfig, TickerConfig};
 pub use configuration::{DepthType, Method, SymbolType};
-pub use depth::DepthConnection;
 pub use ticker::TickerConnection;
 
 use binance::{set_addr_for_binance, validate_symbol_binance};

@@ -3,9 +3,9 @@ use crate::binance::format::binance_spot::{
     BinanceSnapshotSpot, EventSpot, LevelEventSpot, SharedSpot,
 };
 use crate::binance::format::SharedT;
-use crate::Depth;
+use crate::{Depth, DepthConfig, DepthT};
 
-use super::BinanceDepthT;
+
 use anyhow::anyhow;
 use anyhow::Result;
 use futures_util::StreamExt;
@@ -19,6 +19,7 @@ pub struct BinanceOrderBookSpot {
     shared: Arc<RwLock<SharedSpot>>,
 }
 
+#[allow(dead_code)]
 impl BinanceOrderBookSpot {
     pub(crate) fn set_symbol(&mut self, symbol: String) -> Result<()> {
         {
@@ -41,7 +42,7 @@ impl BinanceOrderBookSpot {
     }
 }
 
-impl BinanceDepthT for BinanceOrderBookSpot {
+impl DepthT for BinanceOrderBookSpot {
     fn new() -> Self {
         BinanceOrderBookSpot {
             status: Arc::new(Mutex::new(false)),
@@ -49,13 +50,10 @@ impl BinanceDepthT for BinanceOrderBookSpot {
         }
     }
     /// acquire a order book with "depth method"
-    fn depth_snapshot(
-        &self,
-        rest_address: String,
-        depth_address: String,
-    ) -> Result<UnboundedReceiver<Depth>> {
+    fn depth_snapshot(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
         let status = self.status.clone();
+        let (rest_address, depth_address) = config.get_depth_snapshot_addresses();
         let (sender, receiver) = mpsc::unbounded_channel();
         let sender = sender.clone();
         // Thread to maintain Order Book
@@ -83,9 +81,9 @@ impl BinanceDepthT for BinanceOrderBookSpot {
         Ok(receiver)
     }
 
-    fn depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
+    fn depth(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
-
+        let level_address = config.get_depth_addresses();
         // This is not actually used
         let status = self.status.clone();
         let (sender, receiver) = mpsc::unbounded_channel();

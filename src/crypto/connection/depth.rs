@@ -1,4 +1,4 @@
-use crate::Depth;
+use crate::{Depth, DepthT};
 use anyhow::Result;
 use futures_util::StreamExt;
 use std::sync::{Arc, Mutex, RwLock};
@@ -19,15 +19,19 @@ pub struct CryptoDepth {
     shared: Arc<RwLock<DepthShared>>,
 }
 
-impl CryptoDepth {
-    pub fn new() -> Self {
+impl DepthT for CryptoDepth {
+    fn new() -> Self {
         CryptoDepth {
             status: Arc::new(Mutex::new(false)),
             shared: Arc::new(RwLock::new(DepthShared::new())),
         }
     }
 
-    pub fn level_depth(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
+    fn depth_snapshot(&self, _config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
+        unreachable!()
+    }
+
+    fn depth(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
         let level_address = config.get_depth_addresses();
         let symbol = config.get_symbol();
 
@@ -104,7 +108,7 @@ impl CryptoDepth {
         Ok(receiver)
     }
 
-    pub fn snapshot(&self) -> Option<Depth> {
+    fn snapshot(&self) -> Option<Depth> {
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock() {

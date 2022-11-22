@@ -7,18 +7,12 @@ mod ticker;
 
 pub use ticker::BinanceTicker;
 
-use crate::binance::connection::{
-    binance_perpetual_coin::BinanceSpotOrderBookPerpetualCoin,
-    binance_perpetual_usdt::BinanceSpotOrderBookPerpetualUSDT, binance_spot::BinanceOrderBookSpot,
-};
 use crate::Depth;
 use crate::Quote;
-use crate::SymbolType;
 
 use anyhow::Result;
 use serde::Deserialize;
 use tokio::sync::mpsc::UnboundedReceiver;
-use tracing::error;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct BinanceOrderBookSnapshot {
