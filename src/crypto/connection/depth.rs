@@ -1,5 +1,5 @@
 use crate::Depth;
-use anyhow::{Error, Result};
+use anyhow::Result;
 use futures_util::StreamExt;
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::mpsc;

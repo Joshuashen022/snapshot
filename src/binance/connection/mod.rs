@@ -33,6 +33,7 @@ pub struct BinanceOrderBookSnapshot {
 
 impl BinanceOrderBookSnapshot {
     /// Compare self with other Order Book
+    #[allow(dead_code)]
     pub fn if_contains(&self, other: &BinanceOrderBookSnapshot) -> bool {
         let mut contains_bids = true;
         let mut contains_asks = true;
@@ -55,6 +56,7 @@ impl BinanceOrderBookSnapshot {
 
     /// Find different `bids` and `asks`,
     /// and return as `(bids, asks)`
+    #[allow(dead_code)]
     pub fn find_different(&self, other: &BinanceOrderBookSnapshot) -> (Vec<Quote>, Vec<Quote>) {
         let mut bid_different = Vec::new();
         let mut ask_different = Vec::new();

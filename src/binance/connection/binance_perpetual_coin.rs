@@ -9,12 +9,11 @@ use crate::binance::format::SharedT;
 use crate::Depth;
 
 use anyhow::anyhow;
-use anyhow::{Error, Result};
-use futures_util::{SinkExt, StreamExt};
+use anyhow::Result;
+use futures_util::StreamExt;
 use std::sync::{Arc, Mutex, RwLock};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
-use tokio_tungstenite::tungstenite::Message;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 #[derive(Clone)]
 pub struct BinanceSpotOrderBookPerpetualCoin {

@@ -1,7 +1,7 @@
 use crate::config::TickerConfig;
 use crate::crypto::format::TickerEventStream;
 use crate::Ticker;
-use anyhow::{Error, Result};
+use anyhow::Result;
 use futures_util::StreamExt;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
