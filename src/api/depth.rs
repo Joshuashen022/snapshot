@@ -1,4 +1,3 @@
-use crate::binance::connection::BinanceDepth;
 use crate::crypto::CryptoDepth;
 use crate::{get_depth_config_from, DepthConfig, DepthConnection};
 use serde::Deserialize;
@@ -6,7 +5,6 @@ use std::fmt;
 use std::fmt::Debug;
 use tokio::sync::mpsc::UnboundedReceiver;
 
-#[derive(Clone)]
 pub struct DepthManager {
     pub config: DepthConfig,
     connection: DepthConnection,
@@ -26,16 +24,10 @@ impl DepthManager {
     /// Get snapshot stream
     pub fn subscribe_depth(&self) -> UnboundedReceiver<Depth> {
         let config = self.config.clone();
-        if config.is_depth() {
-            let rest_address = config.rest_url.expect("rest address is empty");
-
-            let depth_address = config.depth_url.expect("depth address is empty");
-
-            self.connection
-                .clone()
-                .connect_depth(rest_address, depth_address)
-        } else if config.is_normal() {
-            self.connection.clone().connect_depth_level(config)
+        if config.is_depth_snapshot() {
+            self.connection.connect_depth_snapshot(config)
+        } else if config.is_depth() {
+            self.connection.connect_depth(config)
         } else {
             panic!("Unsupported Config {:?}", config);
         }
@@ -43,7 +35,7 @@ impl DepthManager {
 
     /// Get one single snapshot
     pub fn latest_depth(&self) -> Option<Depth> {
-        self.connection.clone().get_snapshot()
+        self.connection.get_snapshot()
     }
 
     fn new_from(exchange: &str, symbol: &str, limit: Option<i32>) -> Self {
@@ -51,17 +43,7 @@ impl DepthManager {
 
         assert!(config.is_correct(), "Unsupported config {:?}", config);
 
-        let connection = match config.exchange_type {
-            ExchangeType::Binance => {
-                let types = config.symbol_type.clone();
-                let connection_inner = BinanceDepth::with_type(types);
-                DepthConnection::Binance(connection_inner)
-            }
-            ExchangeType::Crypto => {
-                let connection_inner = CryptoDepth::new();
-                DepthConnection::Crypto(connection_inner)
-            }
-        };
+        let connection = DepthConnection::new_with(config.clone());
 
         Self { config, connection }
     }

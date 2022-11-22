@@ -28,10 +28,7 @@ impl CryptoDepth {
     }
 
     pub fn level_depth(&self, config: DepthConfig) -> Result<UnboundedReceiver<Depth>> {
-        let level_address = config
-            .level_depth_url
-            .clone()
-            .expect("level address is empty");
+        let level_address = config.get_depth_addresses();
         let symbol = config.get_symbol();
 
         let shared = self.shared.clone();

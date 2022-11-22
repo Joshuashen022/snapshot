@@ -8,6 +8,7 @@ use crate::binance::format::binance_perpetual_coin::{
 use crate::binance::format::SharedT;
 use crate::Depth;
 
+use super::BinanceDepthT;
 use anyhow::anyhow;
 use anyhow::Result;
 use futures_util::StreamExt;
@@ -22,7 +23,21 @@ pub struct BinanceSpotOrderBookPerpetualCoin {
 }
 
 impl BinanceSpotOrderBookPerpetualCoin {
-    pub fn new() -> Self {
+    pub(crate) fn set_symbol(&mut self, symbol: String) -> Result<()> {
+        {
+            match self.shared.clone().write() {
+                Ok(mut shared) => {
+                    (*shared).symbol = symbol;
+                    Ok(())
+                }
+                Err(e) => Err(anyhow!("{:?}", e)),
+            }
+        }
+    }
+}
+
+impl BinanceDepthT for BinanceSpotOrderBookPerpetualCoin {
+    fn new() -> Self {
         BinanceSpotOrderBookPerpetualCoin {
             status: Arc::new(Mutex::new(false)),
             shared: Arc::new(RwLock::new(SharedPerpetualCoin::new())),
@@ -30,7 +45,7 @@ impl BinanceSpotOrderBookPerpetualCoin {
     }
 
     /// acquire a order book with "depth method"
-    pub fn depth(
+    fn depth_snapshot(
         &self,
         rest_address: String,
         depth_address: String,
@@ -68,7 +83,7 @@ impl BinanceSpotOrderBookPerpetualCoin {
         Ok(receiver)
     }
 
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
+    fn depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
         let shared = self.shared.clone();
 
         // This is not actually used
@@ -134,9 +149,8 @@ impl BinanceSpotOrderBookPerpetualCoin {
         Ok(receiver)
     }
 
-    #[allow(unused_assignments)]
     /// Get the snapshot of the current Order Book
-    pub fn snapshot(&self) -> Option<Depth> {
+    fn snapshot(&self) -> Option<Depth> {
         let mut current_status = false;
 
         if let Ok(status_guard) = self.status.lock() {
@@ -152,19 +166,8 @@ impl BinanceSpotOrderBookPerpetualCoin {
             None
         }
     }
-
-    pub(crate) fn set_symbol(&mut self, symbol: String) -> Result<()> {
-        {
-            match self.shared.clone().write() {
-                Ok(mut shared) => {
-                    (*shared).symbol = symbol;
-                    Ok(())
-                }
-                Err(e) => Err(anyhow!("{:?}", e)),
-            }
-        }
-    }
 }
+
 #[cfg(test)]
 mod tests {
     use crate::binance::connection::BinanceSpotOrderBookPerpetualCoin;

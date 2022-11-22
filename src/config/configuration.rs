@@ -3,11 +3,32 @@ use anyhow::{anyhow, Result};
 
 #[derive(Clone, Debug)]
 pub struct DepthConfig {
-    pub rest_url: Option<String>,
-    pub depth_url: Option<String>,
-    pub level_depth_url: Option<String>,
+    pub depth_url: DepthType,
     pub symbol_type: SymbolType,
     pub exchange_type: ExchangeType,
+}
+
+#[derive(Clone, Debug)]
+pub enum DepthType {
+    Depth(String),
+    DepthSnapshot(String, String),
+}
+
+impl DepthType {
+    pub fn new(
+        rest_address: Option<String>,
+        depth_address: Option<String>,
+        level_depth_address: Option<String>,
+    ) -> Option<Self> {
+        if rest_address.is_some() && depth_address.is_some() && level_depth_address.is_none() {
+            Some(DepthType::DepthSnapshot(rest_address?, depth_address?))
+        } else if rest_address.is_none() && depth_address.is_none() && level_depth_address.is_some()
+        {
+            Some(DepthType::Depth(level_depth_address?))
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -34,12 +55,34 @@ impl DepthConfig {
         }
     }
 
-    pub fn is_depth(&self) -> bool {
-        self.depth_url.is_some() && self.rest_url.is_some() && self.level_depth_url.is_none()
+    pub fn get_depth_addresses(&self) -> String {
+        match &self.depth_url {
+            DepthType::Depth(address) => address.clone(),
+            _ => panic!("No Depth address"),
+        }
     }
 
-    pub fn is_normal(&self) -> bool {
-        self.level_depth_url.is_some() && self.depth_url.is_none() && self.rest_url.is_none()
+    pub fn get_depth_snapshot_addresses(&self) -> (String, String) {
+        match &self.depth_url {
+            DepthType::DepthSnapshot(rest_address, depth_address) => {
+                (rest_address.clone(), depth_address.clone())
+            }
+            _ => panic!("No DepthSnapshot address"),
+        }
+    }
+
+    pub fn is_depth_snapshot(&self) -> bool {
+        match self.depth_url {
+            DepthType::DepthSnapshot(_, _) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_depth(&self) -> bool {
+        match self.depth_url {
+            DepthType::Depth(_) => true,
+            _ => false,
+        }
     }
 
     pub fn is_binance(&self) -> bool {

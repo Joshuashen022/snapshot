@@ -87,64 +87,18 @@ impl BinanceOrderBookSnapshot {
     }
 }
 
-#[derive(Clone)]
-pub enum BinanceDepth {
-    Spot(BinanceOrderBookSpot),
-    PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT),
-    PerpetualCoin(BinanceSpotOrderBookPerpetualCoin),
-}
+pub trait BinanceDepthT {
+    fn new() -> Self
+    where
+        Self: Sized;
 
-impl BinanceDepth {
-    pub fn with_type(types: SymbolType) -> Self {
-        match types {
-            SymbolType::Spot(_) => BinanceDepth::Spot(BinanceOrderBookSpot::new()),
-            SymbolType::ContractUSDT(_) => {
-                BinanceDepth::PerpetualUSDT(BinanceSpotOrderBookPerpetualUSDT::new())
-            }
-            SymbolType::ContractCoin(_) => {
-                BinanceDepth::PerpetualCoin(BinanceSpotOrderBookPerpetualCoin::new())
-            }
-        }
-    }
-
-    pub fn depth(
+    fn depth_snapshot(
         &self,
         rest_address: String,
         depth_address: String,
-    ) -> Result<UnboundedReceiver<Depth>> {
-        match self {
-            BinanceDepth::Spot(inner) => inner.depth(rest_address, depth_address),
-            BinanceDepth::PerpetualUSDT(inner) => inner.depth(rest_address, depth_address),
-            BinanceDepth::PerpetualCoin(inner) => inner.depth(rest_address, depth_address),
-        }
-    }
+    ) -> Result<UnboundedReceiver<Depth>>;
 
-    pub fn level_depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>> {
-        match self {
-            BinanceDepth::Spot(inner) => inner.level_depth(level_address),
-            BinanceDepth::PerpetualUSDT(inner) => inner.level_depth(level_address),
-            BinanceDepth::PerpetualCoin(inner) => inner.level_depth(level_address),
-        }
-    }
+    fn depth(&self, level_address: String) -> Result<UnboundedReceiver<Depth>>;
 
-    pub fn snapshot(&self) -> Option<Depth> {
-        match self {
-            BinanceDepth::Spot(inner) => inner.snapshot(),
-            BinanceDepth::PerpetualUSDT(inner) => inner.snapshot(),
-            BinanceDepth::PerpetualCoin(inner) => inner.snapshot(),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn set_symbol(&mut self, symbol: String) {
-        let res = match self {
-            BinanceDepth::Spot(inner) => inner.set_symbol(symbol),
-            BinanceDepth::PerpetualUSDT(inner) => inner.set_symbol(symbol),
-            BinanceDepth::PerpetualCoin(inner) => inner.set_symbol(symbol),
-        };
-
-        if let Err(e) = res {
-            error!("set symbol error {:?}", e);
-        }
-    }
+    fn snapshot(&self) -> Option<Depth>;
 }

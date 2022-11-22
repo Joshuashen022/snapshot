@@ -5,7 +5,7 @@ mod depth;
 mod ticker;
 use crate::ExchangeType;
 pub use configuration::{DepthConfig, TickerConfig};
-pub use configuration::{Method, SymbolType};
+pub use configuration::{DepthType, Method, SymbolType};
 pub use depth::DepthConnection;
 pub use ticker::TickerConnection;
 
@@ -37,10 +37,10 @@ pub fn get_depth_config_from(exchange: &str, symbol: &str, limit: Option<i32>) -
         }
     };
 
+    let depth_url = DepthType::new(rest_address, depth_address, level_depth_address);
+
     DepthConfig {
-        rest_url: rest_address,
-        depth_url: depth_address,
-        level_depth_url: level_depth_address,
+        depth_url: depth_url.expect("depth url is empty"),
         symbol_type,
         exchange_type,
     }
